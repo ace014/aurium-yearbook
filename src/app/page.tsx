@@ -1,21 +1,440 @@
+"use client";
 
+import React from "react";
+import Link from "next/link";
+import Image from "next/image"; 
+import { motion, useScroll, useTransform, easeOut } from "framer-motion";
+import { 
+  ArrowRight, 
+  BookOpen, 
+  Clock, 
+  GraduationCap, 
+  Search, 
+  Shield, // Kept in imports because it is used in the "Features" section
+  Users, 
+  Trophy,
+  CalendarDays,
+  CheckCircle,
+  LayoutGrid,
+  HelpCircle,
+  UserCircle,
+  ScrollText,
+  Star
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
+export default function AuriumLandingPage() {
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
+  // Animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: easeOut } }
+  };
 
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
+  // --- DATA: EDITIONS ---
+  const editions = [
+    {
+      year: "2025",
+      theme: "Timeless White",
+      desc: "Embodying purity, elegance, and the enduring nature of memories. Like a blank canvas, it reflects the clarity and simplicity of the moments that define our journey.",
+      color: "bg-stone-100 text-stone-800"
+    },
+    {
+      year: "2024",
+      theme: "Vintage",
+      desc: "Celebrating the enduring nature of memories. Just as vintage items become more meaningful over time, our triumphs and challenges deepen in significance as we look back.",
+      color: "bg-amber-100 text-amber-900"
+    },
+    {
+      year: "2024",
+      theme: "Sablay",
+      desc: "Honoring the lasting value of memories. Like vintage items that grow richer with time, our experiences deepen in meaning. Celebrating the importance of the journey shared.",
+      color: "bg-red-900 text-white" 
+    },
+    {
+      year: "2023",
+      theme: "Oscars",
+      desc: "Symbolizing enduring excellence. Celebrating stories that connect across generations. Teaching us that true greatness lies not only in the present but in the legacy we create.",
+      color: "bg-yellow-950 text-yellow-100"
+    },
+    {
+      year: "2022",
+      theme: "Oscars",
+      desc: "Embracing the sparkling charm of the Oscars. Beyond the glitz, reflecting hard work and the constant pursuit of excellence—our journey filled with unforgettable cinematic moments.",
+      color: "bg-stone-900 text-yellow-200"
+    }
+  ];
 
-
-
-
-
-
-
-import RegistrationWizard from "@/components/forms/RegistrationWizard";
-
-export default function Home() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-aurium-cream p-4">
-      <RegistrationWizard />
-    </main>
+    <div className="min-h-screen bg-stone-50 text-stone-800 font-sans selection:bg-amber-200 selection:text-amber-900">
+      
+      {/* --- NAVIGATION BAR --- */}
+      <nav className="fixed top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-amber-100/50 shadow-sm transition-all duration-300">
+        <div className="container mx-auto px-6 h-24 flex items-center justify-between">
+          
+          {/* Logo Area */}
+          <Link href="/" className="flex items-center gap-4 group">
+            <div className="flex items-center gap-2">
+                {/* LOGO 1: UMTC Logo */}
+                <div className="relative w-12 h-12 overflow-hidden hover:scale-105 transition-transform duration-300">
+                   {/* Ensure 'umtc-logo.png' exists in public/images/ */}
+                   <Image 
+                     src="/images/umtc-logo.png" 
+                     alt="UMTC Logo" 
+                     fill 
+                     className="object-contain"
+                   />
+                </div>
+                
+                {/* Divider */}
+                <div className="h-8 w-[1px] bg-stone-300 mx-1"></div>
+
+                {/* LOGO 2: AURIUM Logo */}
+                <div className="relative w-12 h-12 overflow-hidden hover:scale-105 transition-transform duration-300">
+                   {/* Ensure 'aurium-logo.png' exists in public/images/ */}
+                   <Image 
+                     src="/images/aurium-logo.png" 
+                     alt="Aurium Logo" 
+                     fill 
+                     className="object-contain"
+                   />
+                </div>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xl font-serif font-bold text-amber-950 leading-none tracking-tight">
+                AURIUM
+              </span>
+              <span className="text-[10px] text-amber-700 uppercase tracking-[0.1em] font-bold mt-1">
+                UM Tagum College
+              </span>
+            </div>
+          </Link>
+
+          {/* Desktop Menu */}
+          <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-stone-600">
+            <Link href="#services" className="hover:text-amber-800 hover:underline decoration-amber-400 underline-offset-4 transition-all">Services</Link>
+            <Link href="#editions" className="hover:text-amber-800 hover:underline decoration-amber-400 underline-offset-4 transition-all">Editions</Link>
+            <Link href="#about" className="hover:text-amber-800 hover:underline decoration-amber-400 underline-offset-4 transition-all">About</Link>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3">
+            <Link href="/login">
+              <Button variant="ghost" className="text-amber-900 hover:bg-amber-50 gap-2 font-medium">
+                <UserCircle size={20} />
+                <span className="hidden sm:inline">Portal Login</span>
+              </Button>
+            </Link>
+            <Link href="/register">
+              <Button className="bg-amber-900 hover:bg-amber-800 text-white shadow-lg shadow-amber-900/20 rounded-full px-6 transition-all hover:scale-105">
+                Pre-Register
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* --- HERO SECTION --- */}
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-28">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+           <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-200/20 rounded-full blur-[100px]" />
+           <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-yellow-500/10 rounded-full blur-[120px]" />
+           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] opacity-40 mix-blend-multiply"></div>
+        </div>
+
+        <div className="container relative z-10 px-6 text-center">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="max-w-5xl mx-auto"
+          >
+            <motion.div variants={fadeInUp} className="mb-8 flex justify-center">
+              {/* UPDATED: Removed Shield Icon */}
+              <div className="inline-flex items-center gap-3 py-2 px-6 rounded-full bg-white/80 border border-amber-200 shadow-sm backdrop-blur-sm text-amber-900 text-xs font-bold tracking-widest uppercase">
+                The Official Yearbook of UM Tagum College
+              </div>
+            </motion.div>
+
+            <motion.h1 variants={fadeInUp} className="text-6xl md:text-8xl lg:text-9xl font-serif font-bold text-amber-950 mb-8 leading-[1] tracking-tight drop-shadow-sm">
+              A Timeless Work <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-800 italic">
+                Of Art.
+              </span>
+            </motion.h1>
+
+            <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-stone-600 max-w-3xl mx-auto mb-12 leading-relaxed">
+              We aim to produce a yearbook edition that serves as a monument to your journey. 
+              Honoring and celebrating the graduating class with excellence.
+            </motion.p>
+            
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link href="/register" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-amber-900 hover:bg-amber-800 text-white px-10 h-16 text-lg rounded-full shadow-xl shadow-amber-900/20 transition-transform hover:-translate-y-1 font-bold">
+                  Start Registration
+                </Button>
+              </Link>
+              <Link href="#editions" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-amber-200 bg-white/50 backdrop-blur-sm text-amber-900 hover:bg-white px-10 h-16 text-lg rounded-full font-medium">
+                  View Editions
+                </Button>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-stone-400 text-xs tracking-widest uppercase"
+        >
+          <span>Scroll to Discover</span>
+          <div className="w-[1px] h-12 bg-gradient-to-b from-amber-900/0 via-amber-900/50 to-amber-900/0"></div>
+        </motion.div>
+      </section>
+
+      {/* --- MISSION STATEMENT --- */}
+      <section id="about" className="py-24 bg-white border-y border-amber-100">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row gap-16 items-center">
+            
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="w-full md:w-1/2"
+            >
+              <div className="inline-block mb-4 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                 <ScrollText size={32} className="text-amber-700"/>
+              </div>
+              <h2 className="text-4xl font-serif font-bold text-amber-950 mb-6">
+                The AURIUM Vision
+              </h2>
+              <div className="text-lg text-stone-600 leading-relaxed space-y-6 text-justify">
+                <p>
+                  <strong className="text-amber-900">AURIUM</strong> stands for the <em>Ambitious United Responsive Individuals of the University of Mindanao</em>. 
+                </p>
+                <p>
+                  With every edition, we strive to make each year memorable, honoring and celebrating the graduating class of UM Tagum College. 
+                  Reflecting this vision, AURIUM consistently upholds its commitment to quality service.
+                </p>
+                <p>
+                  By maintaining the university’s renowned standard of excellence, this dedication acts as a guiding principle for the creation of each yearbook.
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="w-full md:w-1/2 relative"
+            >
+               <div className="absolute inset-0 bg-gradient-to-r from-amber-200 to-yellow-100 rounded-2xl transform rotate-3 blur-sm opacity-50"></div>
+               <div className="relative bg-stone-900 p-12 rounded-2xl text-center text-white shadow-2xl border border-stone-700">
+                  <div className="mb-6 flex justify-center"><Trophy size={64} className="text-yellow-400 drop-shadow-glow" /></div>
+                  <h3 className="text-3xl font-serif font-bold mb-4">Standard of Excellence</h3>
+                  <p className="text-stone-300 text-lg italic leading-relaxed">
+                    "Producing a yearbook edition that serves as a timeless work of art."
+                  </p>
+               </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* --- EDITIONS GALLERY --- */}
+      <section id="editions" className="py-24 bg-stone-50 overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-serif font-bold text-amber-950 mb-4">Our Heritage Editions</h2>
+            <p className="text-stone-500 text-lg">A journey through the themes that defined our history.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {editions.map((edition, index) => (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -10 }}
+                className="group relative flex flex-col h-full"
+              >
+                {/* Book Cover Look */}
+                <div className={`relative h-72 rounded-t-2xl p-8 flex flex-col justify-center items-center text-center shadow-md ${edition.color} transition-all`}>
+                   <div className="absolute inset-0 border-[1px] border-black/10 m-3 rounded-xl"></div>
+                   <h3 className="text-5xl font-serif font-bold tracking-widest mb-3 z-10">{edition.year}</h3>
+                   <p className="text-sm font-sans uppercase tracking-[0.3em] font-bold z-10">{edition.theme}</p>
+                   {edition.theme.includes("Oscars") && <Star className="mt-4 opacity-50 w-8 h-8" />}
+                   {edition.theme.includes("Vintage") && <Clock className="mt-4 opacity-50 w-8 h-8" />}
+                </div>
+                
+                {/* Description */}
+                <div className="bg-white p-8 rounded-b-2xl border-x border-b border-stone-200 shadow-sm flex-1 flex flex-col justify-between">
+                   <p className="text-stone-600 text-sm leading-relaxed mb-6">
+                     {edition.desc}
+                   </p>
+                   <div className="flex items-center justify-between mt-auto pt-4 border-t border-stone-100">
+                     <span className="text-xs text-stone-400 font-bold uppercase tracking-wider">Theme Concept</span>
+                     <ArrowRight size={16} className="text-amber-800 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                   </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- GRADUATE SERVICES GRID --- */}
+      <section id="services" className="py-24 bg-white relative z-10">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-serif font-bold text-amber-950 mb-4">Graduate Services</h2>
+            <p className="text-stone-500 max-w-lg mx-auto text-lg">Everything you need to prepare for graduation.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            {/* Card 1: Pre-Registration */}
+            <motion.div whileHover={{ y: -5 }} className="p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
+              <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
+                <UserCircle size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-stone-800 mb-3">Pre-Registration</h3>
+              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Create your profile, submit your details, and initialize your yearbook entry.</p>
+              <Link href="/register" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                Register Now <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+            {/* Card 2: Pictorial Schedule */}
+            <motion.div id="schedule" whileHover={{ y: -5 }} className="p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
+              <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
+                <CalendarDays size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-stone-800 mb-3">Pictorial Schedule</h3>
+              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Book your slot for the official creative and toga photoshoot.</p>
+              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                View Calendar <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+            {/* Card 3: Endorsed Graduates */}
+            <motion.div id="endorsed" whileHover={{ y: -5 }} className="p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
+              <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
+                <CheckCircle size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-stone-800 mb-3">Endorsed Graduates</h3>
+              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Check the official list of candidates eligible for the current yearbook batch.</p>
+              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                Check List <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+            {/* Card 4: Digital Yearbook */}
+            <motion.div id="yearbook" whileHover={{ y: -5 }} className="p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
+              <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
+                <BookOpen size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-stone-800 mb-3">The Yearbook</h3>
+              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Access the digital archives of previous batches and preview the current edition.</p>
+              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                Browse Archives <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+            {/* Card 5: Other Services */}
+            <motion.div whileHover={{ y: -5 }} className="p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
+              <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
+                <LayoutGrid size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-stone-800 mb-3">Other Services</h3>
+              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Hard copy orders, photo retouching requests, and editorial services.</p>
+              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                View All <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+             {/* Card 6: Support / FAQ */}
+             <motion.div whileHover={{ y: -5 }} className="p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
+              <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
+                <HelpCircle size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-stone-800 mb-3">Help & Support</h3>
+              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Having trouble with your account? Check our FAQs or contact support.</p>
+              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                Get Help <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* --- FOOTER --- */}
+      <footer className="bg-stone-950 text-stone-400 py-16 border-t border-stone-800">
+        <div className="container mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-12 mb-16">
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex items-center gap-4 mb-6">
+                {/* Footer Logo Area */}
+                <div className="relative w-10 h-10 grayscale opacity-80">
+                   {/* Ensure 'aurium-logo.png' exists in public/images/ */}
+                   <Image src="/images/aurium-logo.png" alt="Aurium" fill className="object-contain" />
+                </div>
+                <span className="text-2xl font-serif font-bold text-stone-200 tracking-wide">AURIUM</span>
+              </div>
+              <p className="text-stone-500 leading-relaxed max-w-sm text-sm">
+                The official yearbook and alumni tracking system of UM Tagum College. <br/>
+                Ambitious. United. Responsive.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-bold text-stone-200 mb-6 uppercase tracking-widest text-xs">Platform</h4>
+              <ul className="space-y-4 text-stone-500 text-sm">
+                <li><Link href="#yearbook" className="hover:text-amber-500 transition-colors">Browse Yearbook</Link></li>
+                <li><Link href="#endorsed" className="hover:text-amber-500 transition-colors">Endorsed List</Link></li>
+                <li><Link href="/login" className="hover:text-amber-500 transition-colors">Graduate Portal</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-stone-200 mb-6 uppercase tracking-widest text-xs">Legal & Support</h4>
+              <ul className="space-y-4 text-stone-500 text-sm">
+                <li><Link href="#" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
+                <li><Link href="#" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
+                <li><Link href="#" className="hover:text-amber-500 transition-colors">Contact Admin</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-stone-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-stone-500">
+            <p>&copy; 2026 AURIUM Yearbook Committee. All rights reserved.</p>
+            <p>Designed with <span className="text-amber-900">♥</span> for the students of UMTC.</p>
+          </div>
+        </div>
+      </footer>
+
+    </div>
   );
 }
