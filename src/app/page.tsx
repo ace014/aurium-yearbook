@@ -87,7 +87,6 @@ export default function AuriumLandingPage() {
   ];
 
   // --- DATA: STAFF / EDITORIAL BOARD ---
-  // FIXED: Added 'staff-' prefix to match your screenshot
   const staff = [
     { year: "2025 Board", image: "/images/staff/staff-2025.jpg", quote: "Stewards of Excellence." },
     { year: "2024 Board", image: "/images/staff/staff-2024.jpg", quote: "Capturing the vintage charm of memories." },
@@ -109,12 +108,10 @@ export default function AuriumLandingPage() {
           <Link href="/" className="flex items-center gap-2 md:gap-4 group z-50">
             <div className="flex items-center gap-2">
                 <div className="relative w-8 h-8 md:w-12 md:h-12 overflow-hidden hover:scale-105 transition-transform duration-300">
-                   {/* NOTE: Ensure this file is named 'umtc-logo.jpg' in your folder */}
                    <Image src="/images/umtc-logo.png" alt="UMTC Logo" fill className="object-contain" />
                 </div>
                 <div className="h-6 md:h-8 w-[1px] bg-stone-300"></div>
                 <div className="relative w-8 h-8 md:w-12 md:h-12 overflow-hidden hover:scale-105 transition-transform duration-300">
-                   {/* NOTE: Ensure this file is named 'aurium-logo.png' in your folder */}
                    <Image src="/images/aurium-logo.png" alt="Aurium Logo" fill className="object-contain" />
                 </div>
             </div>
@@ -413,7 +410,8 @@ export default function AuriumLandingPage() {
               </div>
               <h3 className="text-xl font-bold text-stone-800 mb-3">Pictorial Schedule</h3>
               <p className="text-stone-500 mb-6 text-sm leading-relaxed">Book your slot for the official creative and toga photoshoot.</p>
-              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+              {/* FIXED: ROUTING UPDATED TO /schedule */}
+              <Link href="/schedule" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
                 View Calendar <ArrowRight size={16} />
               </Link>
             </motion.div>
