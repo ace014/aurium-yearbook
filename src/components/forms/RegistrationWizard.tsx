@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox"; 
-import { UserCircle, ClipboardCheck } from "lucide-react";
+// Added new icons for the review section
+import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar } from "lucide-react";
 
 // --- 1. DATA IMPORTS ---
 import provinces from "@/data/province.json";
@@ -57,7 +58,7 @@ const steps = [
   { id: 3, name: "Academic", title: "Academic & Contact" },
   { id: 4, name: "Family", title: "Parents or Guardian" },
   { id: 5, name: "Photo", title: "Upload Formal Photo" },
-  { id: 6, name: "Review", title: "Review Details" }, // New Step
+  { id: 6, name: "Review", title: "Review Details" }, 
   { id: 7, name: "Privacy", title: "Data Privacy" },
 ];
 
@@ -72,6 +73,17 @@ export default function RegistrationWizard() {
   const [suffix, setSuffix] = useState("");
   const [nickname, setNickname] = useState("");
   const [bdate, setBdate] = useState("");
+
+  // --- NEW: Helper to format birthdate as word ---
+  const formattedBirthdate = useMemo(() => {
+    if (!bdate) return "-";
+    const date = new Date(bdate);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }, [bdate]);
 
   // --- STATE: Address ---
   const [selectedProvinceCode, setSelectedProvinceCode] = useState("");
@@ -444,7 +456,7 @@ export default function RegistrationWizard() {
                 </div>
               )}
 
-               {/* --- STEP 4: FAMILY (NOW CONNECTED TO STATE) --- */}
+               {/* --- STEP 4: FAMILY --- */}
                {currentStep === 4 && (
                 <div className="space-y-6">
                   <div className="flex items-center space-x-2 bg-amber-50 p-4 rounded-lg border border-amber-100">
@@ -577,8 +589,8 @@ export default function RegistrationWizard() {
                       <div>
                         <strong>Requirements:</strong>
                         <ul className="list-disc pl-4 mt-1 space-y-1 text-blue-700/80">
-                          <li>White background required</li>
-                          <li>Wear formal attire (Toga or Business)</li>
+                          <li>Plain or solid background color</li>
+                          <li>Wear formal business attire</li>
                           <li>High resolution (not blurry)</li>
                         </ul>
                       </div>
@@ -586,104 +598,147 @@ export default function RegistrationWizard() {
                 </div>
               )}
 
-              {/* --- STEP 6: REVIEW DETAILS (UPDATED WITH PARENTS) --- */}
+              {/* --- STEP 6: REVIEW (IMPROVED UI) --- */}
               {currentStep === 6 && (
-                <div className="space-y-6">
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-amber-100 p-2 rounded-full">
-                        <ClipboardCheck className="text-amber-700 w-5 h-5" />
+                <div className="space-y-8 animate-in fade-in duration-500">
+                  <div className="bg-stone-50/80 border border-stone-200 rounded-xl p-6 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-stone-200">
+                      <div className="bg-amber-100 p-2.5 rounded-full">
+                        <ClipboardCheck className="text-amber-800 w-6 h-6" />
                       </div>
-                      <h3 className="font-bold text-amber-900 text-lg">Confirm Your Details</h3>
+                      <div>
+                         <h3 className="font-serif font-bold text-amber-950 text-xl">Review Registration</h3>
+                         <p className="text-stone-500 text-xs">Please verify your information before submitting.</p>
+                      </div>
                     </div>
                     
-                    <div className="space-y-4 text-sm text-stone-700 divide-y divide-amber-200/50">
+                    <div className="space-y-8">
                       
                       {/* Personal Info Review */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
-                        <div>
-                          <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Full Name</span>
-                          <span className="font-medium text-lg">{fname} {mname} {lname} {suffix}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Nickname</span>
-                          <span>{nickname || "-"}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Birthdate</span>
-                          <span>{bdate || "-"}</span>
+                      <div className="space-y-3">
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
+                           <UserCircle size={16} /> Personal Identity
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 bg-white p-4 rounded-lg border border-stone-100 shadow-sm">
+                           <div>
+                              <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Full Name</span>
+                              <span className="text-stone-900 font-semibold text-lg">{fname} {mname} {lname} {suffix}</span>
+                           </div>
+                           <div>
+                              <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Nickname</span>
+                              <span className="text-stone-900 font-medium">{nickname || "-"}</span>
+                           </div>
+                           <div>
+                              <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Birthdate</span>
+                              <div className="flex items-center gap-2 text-stone-900 font-medium">
+                                 <Calendar size={14} className="text-amber-600"/> {formattedBirthdate || "-"}
+                              </div>
+                           </div>
                         </div>
                       </div>
 
                       {/* Address Review */}
-                      <div className="py-4">
-                        <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Home Address</span>
-                        <span>{barangayName}, {cityName}, {provinceName}</span>
+                      <div className="space-y-3">
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
+                           <MapPin size={16} /> Residence
+                        </h4>
+                        <div className="bg-white p-4 rounded-lg border border-stone-100 shadow-sm">
+                            <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Home Address</span>
+                            <span className="text-stone-900 font-medium">{barangayName}, {cityName}, {provinceName}</span>
+                        </div>
                       </div>
 
                       {/* Academic Review */}
-                      <div className="py-4">
-                        <div className="mb-2">
-                          <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Course & Major</span>
-                          <span className="font-medium">{selectedCourse}</span>
-                          {selectedMajor !== "N/A" && <span className="block text-stone-500">{selectedMajor}</span>}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+                      <div className="space-y-3">
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
+                           <GraduationCap size={16} /> Academic Profile
+                        </h4>
+                        <div className="bg-white p-4 rounded-lg border border-stone-100 shadow-sm space-y-4">
                            <div>
-                              <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">UM Email</span>
-                              <span className="text-blue-700 font-medium">{umEmail || "-"}</span>
+                              <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Course & Major</span>
+                              <span className="text-stone-900 font-bold block">{selectedCourse}</span>
+                              {selectedMajor !== "N/A" && <span className="text-amber-700 text-sm font-medium block mt-1">{selectedMajor}</span>}
                            </div>
-                           <div>
-                              <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Personal Email</span>
-                              <span className="font-medium">{email || "-"}</span>
-                           </div>
-                           <div className="mt-2 md:col-span-2">
-                              <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Contact</span>
-                              <span>{contactNum || "-"}</span>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-stone-100">
+                             <div>
+                                <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">UM Student Email</span>
+                                <div className="flex items-center gap-2 text-blue-700 font-medium break-all">
+                                   <Mail size={14}/> {umEmail || "-"}
+                                </div>
+                             </div>
+                             <div>
+                                <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Contact Number</span>
+                                <div className="flex items-center gap-2 text-stone-900 font-medium">
+                                   <Phone size={14} className="text-amber-600"/> {contactNum || "-"}
+                                </div>
+                             </div>
+                             <div className="md:col-span-2">
+                                <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Personal Email</span>
+                                <span className="text-stone-700 font-medium">{email || "-"}</span>
+                             </div>
                            </div>
                         </div>
                       </div>
 
-                      {/* Family Information Review */}
-                      <div className="py-4">
-                        <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide mb-2">Family Information</span>
-                        {useGuardian ? (
-                          <div className="bg-white/50 p-2 rounded border border-amber-100">
-                            <span className="text-xs text-stone-500 block">Guardian</span>
-                            <span className="font-medium">{guardianTitle} {guardianFname} {guardianLname} ({guardianRel})</span>
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-1 gap-2">
-                            <div className="bg-white/50 p-2 rounded border border-amber-100">
-                              <span className="text-xs text-stone-500 block">Father</span>
-                              <span className="font-medium">{fatherTitle} {fatherFname} {fatherMname} {fatherLname} {fatherSuffix}</span>
-                            </div>
-                            <div className="bg-white/50 p-2 rounded border border-amber-100">
-                              <span className="text-xs text-stone-500 block">Mother</span>
-                              <span className="font-medium">{motherTitle} {motherFname} {motherMname} {motherLname}</span>
-                            </div>
-                          </div>
-                        )}
+                      {/* Family Review */}
+                      <div className="space-y-3">
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
+                           <Users size={16} /> Family Background
+                        </h4>
+                        <div className="bg-white p-4 rounded-lg border border-stone-100 shadow-sm">
+                           {useGuardian ? (
+                              <div className="grid grid-cols-1 gap-2">
+                                 <div>
+                                    <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Guardian</span>
+                                    <span className="text-stone-900 font-medium">{guardianTitle} {guardianFname} {guardianLname}</span>
+                                    <span className="text-stone-400 text-xs ml-2">({guardianRel})</span>
+                                 </div>
+                              </div>
+                           ) : (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                 <div>
+                                    <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Father</span>
+                                    <span className="text-stone-900 font-medium">{fatherTitle} {fatherFname} {fatherMname} {fatherLname} {fatherSuffix}</span>
+                                 </div>
+                                 <div>
+                                    <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Mother</span>
+                                    <span className="text-stone-900 font-medium">{motherTitle} {motherFname} {motherMname} {motherLname}</span>
+                                 </div>
+                              </div>
+                           )}
+                        </div>
                       </div>
 
                       {/* Photo Review */}
-                      <div className="pt-4">
-                        <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide mb-2">Attached Photo</span>
-                        {photoPreview ? (
-                          <div className="flex items-center gap-3">
-                            <img src={photoPreview} className="w-12 h-12 rounded-full object-cover border border-amber-300" />
-                            <span className="text-green-700 font-medium text-xs">Photo Uploaded Successfully</span>
-                          </div>
-                        ) : (
-                          <span className="text-red-500 text-xs italic">No photo uploaded</span>
-                        )}
+                      <div className="space-y-3">
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
+                           Attached Photo
+                        </h4>
+                        <div className="bg-white p-4 rounded-lg border border-stone-100 shadow-sm flex items-center justify-between">
+                            {photoPreview ? (
+                              <div className="flex items-center gap-4">
+                                <img src={photoPreview} className="w-16 h-16 rounded-full object-cover border-2 border-amber-500 shadow-sm" />
+                                <div>
+                                   <span className="text-green-700 font-bold text-sm block mb-1">Photo Attached Successfully</span>
+                                   <span className="text-stone-400 text-xs">Ready for submission</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-red-500 text-sm font-medium flex items-center gap-2">
+                                 <div className="w-2 h-2 rounded-full bg-red-500"></div> No photo uploaded
+                              </span>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={() => jumpToStep(5)} className="text-amber-700 hover:text-amber-900 text-xs">
+                               Edit
+                            </Button>
+                        </div>
                       </div>
 
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3 p-4 border border-stone-200 bg-stone-50 rounded-lg">
-                      <Checkbox id="confirm-review" className="mt-1" />
+                  <div className="flex items-start space-x-3 p-4 border border-stone-200 bg-amber-50/30 rounded-lg">
+                      <Checkbox id="confirm-review" className="mt-1 border-amber-400 text-amber-700 focus:ring-amber-700" />
                       <Label htmlFor="confirm-review" className="text-sm font-medium leading-snug cursor-pointer text-stone-700">
                           I hereby confirm that the details shown above are true, correct, and free from errors.
                       </Label>
