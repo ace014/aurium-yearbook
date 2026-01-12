@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox"; 
-import { UserCircle } from "lucide-react";
+import { UserCircle, ClipboardCheck } from "lucide-react";
 
 // --- 1. DATA IMPORTS ---
 import provinces from "@/data/province.json";
@@ -50,23 +50,38 @@ const courseOptions = [
   { course: "MASTER IN MANAGEMENT", majors: [] }
 ];
 
+// UPDATED STEPS: Added 'Review' as Step 6
 const steps = [
   { id: 1, name: "Personal", title: "Personal Information" },
   { id: 2, name: "Address", title: "Home Address" },
   { id: 3, name: "Academic", title: "Academic & Contact" },
   { id: 4, name: "Family", title: "Parents or Guardian" },
   { id: 5, name: "Photo", title: "Upload Formal Photo" },
-  { id: 6, name: "Privacy", title: "Data Privacy" },
+  { id: 6, name: "Review", title: "Review Details" }, // New Step
+  { id: 7, name: "Privacy", title: "Data Privacy" },
 ];
 
 export default function RegistrationWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(0); 
 
+  // --- STATE: Personal ---
+  const [lname, setLname] = useState("");
+  const [fname, setFname] = useState("");
+  const [mname, setMname] = useState("");
+  const [suffix, setSuffix] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [bdate, setBdate] = useState("");
+
   // --- STATE: Address ---
   const [selectedProvinceCode, setSelectedProvinceCode] = useState("");
   const [selectedCityCode, setSelectedCityCode] = useState("");
   const [selectedBarangayCode, setSelectedBarangayCode] = useState("");
+
+  // Get names for review display
+  const provinceName = useMemo(() => provinceList.find(p => p.province_code === selectedProvinceCode)?.province_name || "", [selectedProvinceCode]);
+  const cityName = useMemo(() => cityList.find(c => c.city_code === selectedCityCode)?.city_name || "", [selectedCityCode]);
+  const barangayName = useMemo(() => barangayList.find(b => b.brgy_code === selectedBarangayCode)?.brgy_name || "", [selectedBarangayCode]);
 
   const sortedProvinceList = useMemo(() => {
     const target = "Davao del Norte"; 
@@ -98,12 +113,31 @@ export default function RegistrationWizard() {
   // --- STATE: Academic ---
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedMajor, setSelectedMajor] = useState("");
+  const [contactNum, setContactNum] = useState("");
+  const [email, setEmail] = useState("");
+  const [umEmail, setUmEmail] = useState(""); 
 
   // --- STATE: Family ---
   const [useGuardian, setUseGuardian] = useState(false);
+  
+  // Father
   const [fatherTitle, setFatherTitle] = useState("Mr.");
+  const [fatherFname, setFatherFname] = useState("");
+  const [fatherLname, setFatherLname] = useState("");
+  const [fatherMname, setFatherMname] = useState("");
+  const [fatherSuffix, setFatherSuffix] = useState("");
+
+  // Mother
   const [motherTitle, setMotherTitle] = useState("Mrs.");
+  const [motherFname, setMotherFname] = useState("");
+  const [motherLname, setMotherLname] = useState("");
+  const [motherMname, setMotherMname] = useState("");
+
+  // Guardian
   const [guardianTitle, setGuardianTitle] = useState("Mrs.");
+  const [guardianFname, setGuardianFname] = useState("");
+  const [guardianLname, setGuardianLname] = useState("");
+  const [guardianRel, setGuardianRel] = useState("");
 
   // --- STATE: Photo Upload ---
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -252,30 +286,30 @@ export default function RegistrationWizard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="lname">Last Name <span className="text-red-500">*</span></Label>
-                          <Input id="lname" placeholder="Dela Cruz" className="h-11" />
+                          <Input id="lname" value={lname} onChange={e => setLname(e.target.value)} placeholder="Dela Cruz" className="h-11" />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="fname">First Name <span className="text-red-500">*</span></Label>
-                          <Input id="fname" placeholder="Juan" className="h-11" />
+                          <Input id="fname" value={fname} onChange={e => setFname(e.target.value)} placeholder="Juan" className="h-11" />
                       </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="mname">Middle Name</Label>
-                          <Input id="mname" placeholder="Santos" className="h-11" />
+                          <Input id="mname" value={mname} onChange={e => setMname(e.target.value)} placeholder="Santos" className="h-11" />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="suffix">Suffix</Label>
-                          <Input id="suffix" placeholder="Jr., III (Optional)" className="h-11" />
+                          <Input id="suffix" value={suffix} onChange={e => setSuffix(e.target.value)} placeholder="Jr., III (Optional)" className="h-11" />
                       </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="nickname">Nickname (for Yearbook)</Label>
-                    <Input id="nickname" placeholder="Juanny" className="h-11" />
+                    <Input id="nickname" value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Juanny" className="h-11" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="bdate">Birthdate</Label>
-                    <Input id="bdate" type="date" className="block w-full h-11" />
+                    <Input id="bdate" type="date" value={bdate} onChange={e => setBdate(e.target.value)} className="block w-full h-11" />
                   </div>
                 </div>
               )}
@@ -339,7 +373,7 @@ export default function RegistrationWizard() {
                 </div>
               )}
 
-              {/* --- STEP 3: ACADEMIC (UPDATED WITH UM EMAIL) --- */}
+              {/* --- STEP 3: ACADEMIC --- */}
               {currentStep === 3 && (
                 <div className="space-y-5">
                    <div className="space-y-2">
@@ -396,21 +430,21 @@ export default function RegistrationWizard() {
 
                   <div className="space-y-2">
                       <Label>Primary Contact Number</Label>
-                      <Input placeholder="09XXXXXXXXX" inputMode="numeric" className="h-11" />
+                      <Input value={contactNum} onChange={e => setContactNum(e.target.value)} placeholder="09XXXXXXXXX" inputMode="numeric" className="h-11" />
                   </div>
                    <div className="space-y-2">
                       <Label>Personal Email Address</Label>
-                      <Input type="email" placeholder="you@email.com" className="h-11" />
+                      <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com" className="h-11" />
                   </div>
-                  {/* NEW UM EMAIL FIELD */}
+                  {/* UM EMAIL FIELD */}
                   <div className="space-y-2">
                       <Label>UM Student Email</Label>
-                      <Input type="email" placeholder="a.cursiga.142496.tc@umindanao.edu.ph" className="h-11" />
+                      <Input type="email" value={umEmail} onChange={e => setUmEmail(e.target.value)} placeholder="IDNUMBER.tc@umindanao.edu.ph" className="h-11" />
                   </div>
                 </div>
               )}
 
-               {/* --- STEP 4: FAMILY --- */}
+               {/* --- STEP 4: FAMILY (NOW CONNECTED TO STATE) --- */}
                {currentStep === 4 && (
                 <div className="space-y-6">
                   <div className="flex items-center space-x-2 bg-amber-50 p-4 rounded-lg border border-amber-100">
@@ -432,7 +466,7 @@ export default function RegistrationWizard() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label>Last Name</Label>
-                                <Input placeholder="Dela Cruz" className="h-10" />
+                                <Input value={fatherLname} onChange={e => setFatherLname(e.target.value)} placeholder="Dela Cruz" className="h-10" />
                              </div>
                              <div className="space-y-2">
                                 <Label>First Name</Label>
@@ -441,13 +475,13 @@ export default function RegistrationWizard() {
                                     <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                     <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                                   </Select>
-                                  <Input placeholder="Juan" className="flex-1 h-10"/>
+                                  <Input value={fatherFname} onChange={e => setFatherFname(e.target.value)} placeholder="Juan" className="flex-1 h-10"/>
                                 </div>
                              </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div className="space-y-2"><Label>Middle Name</Label><Input placeholder="Santos" className="h-10" /></div>
-                             <div className="space-y-2"><Label>Suffix</Label><Input placeholder="Jr." className="h-10" /></div>
+                             <div className="space-y-2"><Label>Middle Name</Label><Input value={fatherMname} onChange={e => setFatherMname(e.target.value)} placeholder="Santos" className="h-10" /></div>
+                             <div className="space-y-2"><Label>Suffix</Label><Input value={fatherSuffix} onChange={e => setFatherSuffix(e.target.value)} placeholder="Jr." className="h-10" /></div>
                           </div>
                       </div>
 
@@ -457,7 +491,7 @@ export default function RegistrationWizard() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label>Last Name</Label>
-                                <Input placeholder="Dela Cruz" className="h-10" />
+                                <Input value={motherLname} onChange={e => setMotherLname(e.target.value)} placeholder="Dela Cruz" className="h-10" />
                              </div>
                              <div className="space-y-2">
                                 <Label>First Name</Label>
@@ -466,12 +500,12 @@ export default function RegistrationWizard() {
                                     <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                     <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                                   </Select>
-                                  <Input placeholder="Maria" className="flex-1 h-10"/>
+                                  <Input value={motherFname} onChange={e => setMotherFname(e.target.value)} placeholder="Maria" className="flex-1 h-10"/>
                                 </div>
                              </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div className="space-y-2"><Label>Middle Name</Label><Input placeholder="Santos" className="h-10" /></div>
+                             <div className="space-y-2"><Label>Middle Name</Label><Input value={motherMname} onChange={e => setMotherMname(e.target.value)} placeholder="Santos" className="h-10" /></div>
                           </div>
                       </div>
                     </>
@@ -480,7 +514,7 @@ export default function RegistrationWizard() {
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                        <h3 className="font-bold text-amber-900 text-sm uppercase tracking-wide">Guardian's Information</h3>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-2"><Label>Last Name</Label><Input placeholder="Last Name" className="h-10" /></div>
+                         <div className="space-y-2"><Label>Last Name</Label><Input value={guardianLname} onChange={e => setGuardianLname(e.target.value)} placeholder="Last Name" className="h-10" /></div>
                          <div className="space-y-2">
                             <Label>First Name</Label>
                             <div className="flex gap-2">
@@ -488,11 +522,11 @@ export default function RegistrationWizard() {
                                 <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                 <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                               </Select>
-                              <Input placeholder="First Name" className="flex-1 h-10"/>
+                              <Input value={guardianFname} onChange={e => setGuardianFname(e.target.value)} placeholder="First Name" className="flex-1 h-10"/>
                             </div>
                          </div>
                        </div>
-                       <div className="space-y-2"><Label>Relationship</Label><Input placeholder="e.g. Grandmother" className="h-10" /></div>
+                       <div className="space-y-2"><Label>Relationship</Label><Input value={guardianRel} onChange={e => setGuardianRel(e.target.value)} placeholder="e.g. Grandmother" className="h-10" /></div>
                     </div>
                   )}
                 </div>
@@ -552,8 +586,113 @@ export default function RegistrationWizard() {
                 </div>
               )}
 
-               {/* --- STEP 6: PRIVACY --- */}
-               {currentStep === 6 && (
+              {/* --- STEP 6: REVIEW DETAILS (UPDATED WITH PARENTS) --- */}
+              {currentStep === 6 && (
+                <div className="space-y-6">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-amber-100 p-2 rounded-full">
+                        <ClipboardCheck className="text-amber-700 w-5 h-5" />
+                      </div>
+                      <h3 className="font-bold text-amber-900 text-lg">Confirm Your Details</h3>
+                    </div>
+                    
+                    <div className="space-y-4 text-sm text-stone-700 divide-y divide-amber-200/50">
+                      
+                      {/* Personal Info Review */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+                        <div>
+                          <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Full Name</span>
+                          <span className="font-medium text-lg">{fname} {mname} {lname} {suffix}</span>
+                        </div>
+                        <div>
+                          <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Nickname</span>
+                          <span>{nickname || "-"}</span>
+                        </div>
+                        <div>
+                          <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Birthdate</span>
+                          <span>{bdate || "-"}</span>
+                        </div>
+                      </div>
+
+                      {/* Address Review */}
+                      <div className="py-4">
+                        <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Home Address</span>
+                        <span>{barangayName}, {cityName}, {provinceName}</span>
+                      </div>
+
+                      {/* Academic Review */}
+                      <div className="py-4">
+                        <div className="mb-2">
+                          <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Course & Major</span>
+                          <span className="font-medium">{selectedCourse}</span>
+                          {selectedMajor !== "N/A" && <span className="block text-stone-500">{selectedMajor}</span>}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+                           <div>
+                              <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">UM Email</span>
+                              <span className="text-blue-700 font-medium">{umEmail || "-"}</span>
+                           </div>
+                           <div>
+                              <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Personal Email</span>
+                              <span className="font-medium">{email || "-"}</span>
+                           </div>
+                           <div className="mt-2 md:col-span-2">
+                              <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide">Contact</span>
+                              <span>{contactNum || "-"}</span>
+                           </div>
+                        </div>
+                      </div>
+
+                      {/* Family Information Review */}
+                      <div className="py-4">
+                        <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide mb-2">Family Information</span>
+                        {useGuardian ? (
+                          <div className="bg-white/50 p-2 rounded border border-amber-100">
+                            <span className="text-xs text-stone-500 block">Guardian</span>
+                            <span className="font-medium">{guardianTitle} {guardianFname} {guardianLname} ({guardianRel})</span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 gap-2">
+                            <div className="bg-white/50 p-2 rounded border border-amber-100">
+                              <span className="text-xs text-stone-500 block">Father</span>
+                              <span className="font-medium">{fatherTitle} {fatherFname} {fatherMname} {fatherLname} {fatherSuffix}</span>
+                            </div>
+                            <div className="bg-white/50 p-2 rounded border border-amber-100">
+                              <span className="text-xs text-stone-500 block">Mother</span>
+                              <span className="font-medium">{motherTitle} {motherFname} {motherMname} {motherLname}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Photo Review */}
+                      <div className="pt-4">
+                        <span className="block text-xs font-bold text-amber-800 uppercase tracking-wide mb-2">Attached Photo</span>
+                        {photoPreview ? (
+                          <div className="flex items-center gap-3">
+                            <img src={photoPreview} className="w-12 h-12 rounded-full object-cover border border-amber-300" />
+                            <span className="text-green-700 font-medium text-xs">Photo Uploaded Successfully</span>
+                          </div>
+                        ) : (
+                          <span className="text-red-500 text-xs italic">No photo uploaded</span>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3 p-4 border border-stone-200 bg-stone-50 rounded-lg">
+                      <Checkbox id="confirm-review" className="mt-1" />
+                      <Label htmlFor="confirm-review" className="text-sm font-medium leading-snug cursor-pointer text-stone-700">
+                          I hereby confirm that the details shown above are true, correct, and free from errors.
+                      </Label>
+                  </div>
+                </div>
+              )}
+
+               {/* --- STEP 7: PRIVACY (Formerly Step 6) --- */}
+               {currentStep === 7 && (
                 <div className="space-y-4">
                   <div className="p-5 bg-stone-50 border border-stone-200 rounded-lg h-72 overflow-y-auto text-sm text-stone-600 leading-relaxed text-justify pr-2">
                       <h4 className="font-bold text-amber-900 mb-3 text-base">Data Privacy Consent</h4>
@@ -597,7 +736,7 @@ export default function RegistrationWizard() {
               className="bg-amber-900 hover:bg-amber-800 text-white min-w-[140px] shadow-lg shadow-amber-900/20"
               onClick={handleNext}
             >
-              {currentStep === 6 ? "Submit Registration" : "Next Step"}
+              {currentStep === 7 ? "Submit Registration" : "Next Step"}
             </Button>
           </CardFooter>
         </Card>
