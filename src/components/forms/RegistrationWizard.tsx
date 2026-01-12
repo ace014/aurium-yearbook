@@ -168,7 +168,6 @@ export default function RegistrationWizard() {
           <Link href="/" className="flex items-center gap-2 group">
             <div className="flex items-center gap-2">
                 <div className="relative w-8 h-8 md:w-10 md:h-10 overflow-hidden">
-                   {/* FIXED: Changed to .png to match your file structure */}
                    <Image src="/images/umtc-logo.png" alt="UMTC Logo" fill className="object-contain"/>
                 </div>
                 <div className="h-6 w-[1px] bg-stone-300"></div>
@@ -340,7 +339,7 @@ export default function RegistrationWizard() {
                 </div>
               )}
 
-              {/* --- STEP 3: ACADEMIC --- */}
+              {/* --- STEP 3: ACADEMIC (UPDATED WITH UM EMAIL) --- */}
               {currentStep === 3 && (
                 <div className="space-y-5">
                    <div className="space-y-2">
@@ -402,6 +401,11 @@ export default function RegistrationWizard() {
                    <div className="space-y-2">
                       <Label>Personal Email Address</Label>
                       <Input type="email" placeholder="you@email.com" className="h-11" />
+                  </div>
+                  {/* NEW UM EMAIL FIELD */}
+                  <div className="space-y-2">
+                      <Label>UM Student Email</Label>
+                      <Input type="email" placeholder="a.cursiga.142496.tc@umindanao.edu.ph" className="h-11" />
                   </div>
                 </div>
               )}
