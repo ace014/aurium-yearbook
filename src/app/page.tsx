@@ -410,7 +410,6 @@ export default function AuriumLandingPage() {
               </div>
               <h3 className="text-xl font-bold text-stone-800 mb-3">Pictorial Schedule</h3>
               <p className="text-stone-500 mb-6 text-sm leading-relaxed">Book your slot for the official creative and toga photoshoot.</p>
-              {/* FIXED: ROUTING UPDATED TO /schedule */}
               <Link href="/schedule" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
                 View Calendar <ArrowRight size={16} />
               </Link>
@@ -453,16 +452,18 @@ export default function AuriumLandingPage() {
             </motion.div>
 
              {/* Card 6: Support / FAQ */}
-             <motion.div whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
-                <HelpCircle size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-stone-800 mb-3">Help & Support</h3>
-              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Having trouble with your account? Check our FAQs or contact support.</p>
-              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
-                Get Help <ArrowRight size={16} />
-              </Link>
-            </motion.div>
+             <Link href="/support" className="block h-full"> 
+               <motion.div whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group h-full">
+                 <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
+                   <HelpCircle size={28} />
+                 </div>
+                 <h3 className="text-xl font-bold text-stone-800 mb-3">Help & Support</h3>
+                 <p className="text-stone-500 mb-6 text-sm leading-relaxed">Having trouble with your account? Check our FAQs or contact support.</p>
+                 <div className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                   Get Help <ArrowRight size={16} />
+                 </div>
+               </motion.div>
+             </Link>
 
           </div>
         </div>
