@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox"; 
-// Added new icons for the review section
 import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar } from "lucide-react";
 
 // --- 1. DATA IMPORTS ---
@@ -18,8 +17,21 @@ import provinces from "@/data/province.json";
 import cities from "@/data/city.json";
 import barangays from "@/data/barangay.json";
 
-// Type assertions
-const provinceList = provinces as Array<{ province_code: string; province_name: string }>;
+// --- DATA CORRECTION & TYPE ASSERTION ---
+const provinceList = (provinces as Array<{ province_code: string; province_name: string }>).map((p) => {
+  let newName = p.province_name;
+  
+  // Apply specific renaming rules
+  if (p.province_name === "Compostela Valley") newName = "Davao de Oro";
+  if (p.province_name === "Davao Del Norte") newName = "Davao del Norte";
+  if (p.province_name === "Davao Del Sur") newName = "Davao del Sur";
+  // Ensure consistent casing for others if needed
+  if (p.province_name === "Davao Occidental") newName = "Davao Occidental";
+  if (p.province_name === "Davao Oriental") newName = "Davao Oriental";
+
+  return { ...p, province_name: newName };
+});
+
 const cityList = cities as Array<{ city_code: string; city_name: string; province_code: string }>;
 const barangayList = barangays as Array<{ brgy_code: string; brgy_name: string; city_code: string }>;
 
@@ -51,7 +63,6 @@ const courseOptions = [
   { course: "MASTER IN MANAGEMENT", majors: [] }
 ];
 
-// UPDATED STEPS: Added 'Review' as Step 6
 const steps = [
   { id: 1, name: "Personal", title: "Personal Information" },
   { id: 2, name: "Address", title: "Home Address" },
@@ -61,6 +72,13 @@ const steps = [
   { id: 6, name: "Review", title: "Review Details" }, 
   { id: 7, name: "Privacy", title: "Data Privacy" },
 ];
+
+// --- HELPER FUNCTION: Title Case ---
+const toTitleCase = (str: string) => {
+  return str.replace(/\w\S*/g, (txt) => {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  });
+};
 
 export default function RegistrationWizard() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -74,7 +92,6 @@ export default function RegistrationWizard() {
   const [nickname, setNickname] = useState("");
   const [bdate, setBdate] = useState("");
 
-  // --- NEW: Helper to format birthdate as word ---
   const formattedBirthdate = useMemo(() => {
     if (!bdate) return "-";
     const date = new Date(bdate);
@@ -90,17 +107,37 @@ export default function RegistrationWizard() {
   const [selectedCityCode, setSelectedCityCode] = useState("");
   const [selectedBarangayCode, setSelectedBarangayCode] = useState("");
 
-  // Get names for review display
   const provinceName = useMemo(() => provinceList.find(p => p.province_code === selectedProvinceCode)?.province_name || "", [selectedProvinceCode]);
   const cityName = useMemo(() => cityList.find(c => c.city_code === selectedCityCode)?.city_name || "", [selectedCityCode]);
   const barangayName = useMemo(() => barangayList.find(b => b.brgy_code === selectedBarangayCode)?.brgy_name || "", [selectedBarangayCode]);
 
+  // --- UPDATED SORTING LOGIC ---
   const sortedProvinceList = useMemo(() => {
-    const target = "Davao del Norte"; 
-    const priority = provinceList.find(p => p.province_name === target);
-    const others = provinceList.filter(p => p.province_name !== target);
-    others.sort((a, b) => a.province_name.localeCompare(b.province_name));
-    return priority ? [priority, ...others] : others;
+    // Define the priority provinces (All Davao Region)
+    const priorityNames = [
+      "Davao de Oro", 
+      "Davao del Norte", 
+      "Davao del Sur", 
+      "Davao Occidental", 
+      "Davao Oriental"
+    ];
+    
+    // Filter out the priority provinces
+    const priorityProvinces = provinceList.filter(p => priorityNames.includes(p.province_name));
+    
+    // Sort priority provinces based on the order in priorityNames array
+    priorityProvinces.sort((a, b) => {
+       return priorityNames.indexOf(a.province_name) - priorityNames.indexOf(b.province_name);
+    });
+
+    // Get all other provinces
+    const otherProvinces = provinceList.filter(p => !priorityNames.includes(p.province_name));
+    
+    // Sort other provinces alphabetically
+    otherProvinces.sort((a, b) => a.province_name.localeCompare(b.province_name));
+
+    // Combine them
+    return [...priorityProvinces, ...otherProvinces];
   }, []);
 
   const filteredCities = useMemo(() => {
@@ -209,8 +246,6 @@ export default function RegistrationWizard() {
       {/* --- HEADER (Full Width & Sticky) --- */}
       <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-amber-100/50 shadow-sm">
         <div className="container mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
-          
-          {/* Logo Area */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="flex items-center gap-2">
                 <div className="relative w-8 h-8 md:w-10 md:h-10 overflow-hidden">
@@ -227,7 +262,6 @@ export default function RegistrationWizard() {
             </div>
           </Link>
 
-          {/* Action Button */}
           <Link href="/">
              <Button variant="ghost" size="sm" className="text-stone-500 hover:text-amber-900 text-xs md:text-sm">
                Exit Wizard
@@ -264,7 +298,6 @@ export default function RegistrationWizard() {
               </div>
             ))}
           </div>
-          {/* Progress Line */}
           <div className="relative h-1 w-[90%] mx-auto bg-gray-200 rounded-full -mt-6 md:-mt-8 z-0">
              <div 
                className="absolute top-0 left-0 h-full bg-amber-500/50 transition-all duration-500 ease-out rounded-full"
@@ -298,17 +331,20 @@ export default function RegistrationWizard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="lname">Last Name <span className="text-red-500">*</span></Label>
-                          <Input id="lname" value={lname} onChange={e => setLname(e.target.value)} placeholder="Dela Cruz" className="h-11" />
+                          {/* UPDATED: Applied toTitleCase */}
+                          <Input id="lname" value={lname} onChange={e => setLname(toTitleCase(e.target.value))} placeholder="Dela Cruz" className="h-11" />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="fname">First Name <span className="text-red-500">*</span></Label>
-                          <Input id="fname" value={fname} onChange={e => setFname(e.target.value)} placeholder="Juan" className="h-11" />
+                          {/* UPDATED: Applied toTitleCase */}
+                          <Input id="fname" value={fname} onChange={e => setFname(toTitleCase(e.target.value))} placeholder="Juan" className="h-11" />
                       </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="mname">Middle Name</Label>
-                          <Input id="mname" value={mname} onChange={e => setMname(e.target.value)} placeholder="Santos" className="h-11" />
+                          {/* UPDATED: Applied toTitleCase */}
+                          <Input id="mname" value={mname} onChange={e => setMname(toTitleCase(e.target.value))} placeholder="Santos" className="h-11" />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="suffix">Suffix</Label>
@@ -317,7 +353,8 @@ export default function RegistrationWizard() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="nickname">Nickname (for Yearbook)</Label>
-                    <Input id="nickname" value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Juanny" className="h-11" />
+                    {/* UPDATED: Applied toTitleCase */}
+                    <Input id="nickname" value={nickname} onChange={e => setNickname(toTitleCase(e.target.value))} placeholder="Juanny" className="h-11" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="bdate">Birthdate</Label>
@@ -456,7 +493,7 @@ export default function RegistrationWizard() {
                 </div>
               )}
 
-               {/* --- STEP 4: FAMILY --- */}
+               {/* --- STEP 4: FAMILY (UPDATED WITH TITLE CASE) --- */}
                {currentStep === 4 && (
                 <div className="space-y-6">
                   <div className="flex items-center space-x-2 bg-amber-50 p-4 rounded-lg border border-amber-100">
@@ -478,7 +515,8 @@ export default function RegistrationWizard() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label>Last Name</Label>
-                                <Input value={fatherLname} onChange={e => setFatherLname(e.target.value)} placeholder="Dela Cruz" className="h-10" />
+                                {/* UPDATED: Applied toTitleCase */}
+                                <Input value={fatherLname} onChange={e => setFatherLname(toTitleCase(e.target.value))} placeholder="Dela Cruz" className="h-10" />
                              </div>
                              <div className="space-y-2">
                                 <Label>First Name</Label>
@@ -487,12 +525,16 @@ export default function RegistrationWizard() {
                                     <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                     <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                                   </Select>
-                                  <Input value={fatherFname} onChange={e => setFatherFname(e.target.value)} placeholder="Juan" className="flex-1 h-10"/>
+                                  {/* UPDATED: Applied toTitleCase */}
+                                  <Input value={fatherFname} onChange={e => setFatherFname(toTitleCase(e.target.value))} placeholder="Juan" className="flex-1 h-10"/>
                                 </div>
                              </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div className="space-y-2"><Label>Middle Name</Label><Input value={fatherMname} onChange={e => setFatherMname(e.target.value)} placeholder="Santos" className="h-10" /></div>
+                             <div className="space-y-2"><Label>Middle Name</Label>
+                                {/* UPDATED: Applied toTitleCase */}
+                                <Input value={fatherMname} onChange={e => setFatherMname(toTitleCase(e.target.value))} placeholder="Santos" className="h-10" />
+                             </div>
                              <div className="space-y-2"><Label>Suffix</Label><Input value={fatherSuffix} onChange={e => setFatherSuffix(e.target.value)} placeholder="Jr." className="h-10" /></div>
                           </div>
                       </div>
@@ -503,7 +545,8 @@ export default function RegistrationWizard() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label>Last Name</Label>
-                                <Input value={motherLname} onChange={e => setMotherLname(e.target.value)} placeholder="Dela Cruz" className="h-10" />
+                                {/* UPDATED: Applied toTitleCase */}
+                                <Input value={motherLname} onChange={e => setMotherLname(toTitleCase(e.target.value))} placeholder="Dela Cruz" className="h-10" />
                              </div>
                              <div className="space-y-2">
                                 <Label>First Name</Label>
@@ -512,12 +555,16 @@ export default function RegistrationWizard() {
                                     <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                     <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                                   </Select>
-                                  <Input value={motherFname} onChange={e => setMotherFname(e.target.value)} placeholder="Maria" className="flex-1 h-10"/>
+                                  {/* UPDATED: Applied toTitleCase */}
+                                  <Input value={motherFname} onChange={e => setMotherFname(toTitleCase(e.target.value))} placeholder="Maria" className="flex-1 h-10"/>
                                 </div>
                              </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div className="space-y-2"><Label>Middle Name</Label><Input value={motherMname} onChange={e => setMotherMname(e.target.value)} placeholder="Santos" className="h-10" /></div>
+                             <div className="space-y-2"><Label>Middle Name</Label>
+                                {/* UPDATED: Applied toTitleCase */}
+                                <Input value={motherMname} onChange={e => setMotherMname(toTitleCase(e.target.value))} placeholder="Santos" className="h-10" />
+                             </div>
                           </div>
                       </div>
                     </>
@@ -526,7 +573,10 @@ export default function RegistrationWizard() {
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                        <h3 className="font-bold text-amber-900 text-sm uppercase tracking-wide">Guardian's Information</h3>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-2"><Label>Last Name</Label><Input value={guardianLname} onChange={e => setGuardianLname(e.target.value)} placeholder="Last Name" className="h-10" /></div>
+                         <div className="space-y-2"><Label>Last Name</Label>
+                            {/* UPDATED: Applied toTitleCase */}
+                            <Input value={guardianLname} onChange={e => setGuardianLname(toTitleCase(e.target.value))} placeholder="Last Name" className="h-10" />
+                         </div>
                          <div className="space-y-2">
                             <Label>First Name</Label>
                             <div className="flex gap-2">
@@ -534,18 +584,22 @@ export default function RegistrationWizard() {
                                 <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                 <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                               </Select>
-                              <Input value={guardianFname} onChange={e => setGuardianFname(e.target.value)} placeholder="First Name" className="flex-1 h-10"/>
+                              {/* UPDATED: Applied toTitleCase */}
+                              <Input value={guardianFname} onChange={e => setGuardianFname(toTitleCase(e.target.value))} placeholder="First Name" className="flex-1 h-10"/>
                             </div>
                          </div>
                        </div>
-                       <div className="space-y-2"><Label>Relationship</Label><Input value={guardianRel} onChange={e => setGuardianRel(e.target.value)} placeholder="e.g. Grandmother" className="h-10" /></div>
+                       <div className="space-y-2"><Label>Relationship</Label>
+                          {/* UPDATED: Applied toTitleCase */}
+                          <Input value={guardianRel} onChange={e => setGuardianRel(toTitleCase(e.target.value))} placeholder="e.g. Grandmother" className="h-10" />
+                       </div>
                     </div>
                   )}
                 </div>
               )}
 
-               {/* --- STEP 5: PHOTO --- */}
-               {currentStep === 5 && (
+              {/* --- STEP 5: PHOTO --- */}
+              {currentStep === 5 && (
                 <div className="space-y-6">
                    <input 
                       type="file" 
@@ -598,7 +652,7 @@ export default function RegistrationWizard() {
                 </div>
               )}
 
-              {/* --- STEP 6: REVIEW (IMPROVED UI) --- */}
+              {/* --- STEP 6: REVIEW --- */}
               {currentStep === 6 && (
                 <div className="space-y-8 animate-in fade-in duration-500">
                   <div className="bg-stone-50/80 border border-stone-200 rounded-xl p-6 shadow-sm">
