@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -10,30 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox"; 
-import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar } from "lucide-react";
-
-// --- 1. DATA IMPORTS ---
-import provinces from "@/data/province.json";
-import cities from "@/data/city.json";
-import barangays from "@/data/barangay.json";
-
-// --- DATA CORRECTION & TYPE ASSERTION ---
-const provinceList = (provinces as Array<{ province_code: string; province_name: string }>).map((p) => {
-  let newName = p.province_name;
-  
-  // Apply specific renaming rules
-  if (p.province_name === "Compostela Valley") newName = "Davao de Oro";
-  if (p.province_name === "Davao Del Norte") newName = "Davao del Norte";
-  if (p.province_name === "Davao Del Sur") newName = "Davao del Sur";
-  // Ensure consistent casing for others if needed
-  if (p.province_name === "Davao Occidental") newName = "Davao Occidental";
-  if (p.province_name === "Davao Oriental") newName = "Davao Oriental";
-
-  return { ...p, province_name: newName };
-});
-
-const cityList = cities as Array<{ city_code: string; city_name: string; province_code: string }>;
-const barangayList = barangays as Array<{ brgy_code: string; brgy_name: string; city_code: string }>;
+import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar, Wifi, WifiOff, Loader2 } from "lucide-react";
 
 // --- 2. CONFIGURATION DATA ---
 const titleOptions = ["Mr.", "Mrs.", "Ms.", "Dr.", "Atty.", "Engr.", "Arch.", "Prof.", "Rev."];
@@ -73,7 +50,6 @@ const steps = [
   { id: 7, name: "Privacy", title: "Data Privacy" },
 ];
 
-// --- HELPER FUNCTION: Title Case ---
 const toTitleCase = (str: string) => {
   return str.replace(/\w\S*/g, (txt) => {
     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
@@ -83,6 +59,7 @@ const toTitleCase = (str: string) => {
 export default function RegistrationWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(0); 
+  const [isOnline, setIsOnline] = useState(true); 
 
   // --- STATE: Personal ---
   const [lname, setLname] = useState("");
@@ -95,25 +72,28 @@ export default function RegistrationWizard() {
   const formattedBirthdate = useMemo(() => {
     if (!bdate) return "-";
     const date = new Date(bdate);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }, [bdate]);
 
-  // --- STATE: Address ---
+  // --- STATE: Address (Dynamic API Data Only) ---
+  const [provinceList, setProvinceList] = useState<any[]>([]);
+  const [cityList, setCityList] = useState<any[]>([]);
+  const [barangayList, setBarangayList] = useState<any[]>([]);
+
+  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [isLoadingBarangays, setIsLoadingBarangays] = useState(false);
+
   const [selectedProvinceCode, setSelectedProvinceCode] = useState("");
   const [selectedCityCode, setSelectedCityCode] = useState("");
   const [selectedBarangayCode, setSelectedBarangayCode] = useState("");
 
-  const provinceName = useMemo(() => provinceList.find(p => p.province_code === selectedProvinceCode)?.province_name || "", [selectedProvinceCode]);
-  const cityName = useMemo(() => cityList.find(c => c.city_code === selectedCityCode)?.city_name || "", [selectedCityCode]);
-  const barangayName = useMemo(() => barangayList.find(b => b.brgy_code === selectedBarangayCode)?.brgy_name || "", [selectedBarangayCode]);
+  const provinceName = useMemo(() => provinceList.find(p => String(p.code) === selectedProvinceCode)?.name || "", [selectedProvinceCode, provinceList]);
+  const cityName = useMemo(() => cityList.find(c => String(c.code) === selectedCityCode)?.name || "", [selectedCityCode, cityList]);
+  const barangayName = useMemo(() => barangayList.find(b => String(b.code) === selectedBarangayCode)?.name || "", [selectedBarangayCode, barangayList]);
 
-  // --- UPDATED SORTING LOGIC ---
-  const sortedProvinceList = useMemo(() => {
-    // Define the priority provinces (All Davao Region)
+  // --- SORTING FUNCTION (Keeps Davao on Top) ---
+  const sortProvinces = (data: any[]) => {
     const priorityNames = [
       "Davao de Oro", 
       "Davao del Norte", 
@@ -122,30 +102,95 @@ export default function RegistrationWizard() {
       "Davao Oriental"
     ];
     
-    // Filter out the priority provinces
-    const priorityProvinces = provinceList.filter(p => priorityNames.includes(p.province_name));
-    
-    // Sort priority provinces based on the order in priorityNames array
-    priorityProvinces.sort((a, b) => {
-       return priorityNames.indexOf(a.province_name) - priorityNames.indexOf(b.province_name);
+    // API returns clean names usually, but we ensure casing matches just in case
+    const normalizedData = data.map(p => {
+        let name = p.name;
+        if (name === "Compostela Valley") name = "Davao de Oro"; // Just in case API is old
+        return { ...p, name };
     });
 
-    // Get all other provinces
-    const otherProvinces = provinceList.filter(p => !priorityNames.includes(p.province_name));
-    
-    // Sort other provinces alphabetically
-    otherProvinces.sort((a, b) => a.province_name.localeCompare(b.province_name));
+    const priorityProvinces = normalizedData.filter(p => priorityNames.includes(p.name));
+    priorityProvinces.sort((a, b) => priorityNames.indexOf(a.name) - priorityNames.indexOf(b.name));
 
-    // Combine them
+    const otherProvinces = normalizedData.filter(p => !priorityNames.includes(p.name));
+    otherProvinces.sort((a, b) => a.name.localeCompare(b.name));
+
     return [...priorityProvinces, ...otherProvinces];
+  };
+
+  // --- 1. FETCH PROVINCES (API Only) ---
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      setIsLoadingProvinces(true);
+      try {
+        const res = await fetch("https://psgc.cloud/api/provinces");
+        if (!res.ok) throw new Error("API Failed");
+        const data = await res.json();
+        setProvinceList(sortProvinces(data));
+        setIsOnline(true);
+      } catch (err) {
+        console.error("Failed to load provinces:", err);
+        setIsOnline(false); // Flag UI that we are offline/error
+        setProvinceList([]); // Empty list on error
+      } finally {
+        setIsLoadingProvinces(false);
+      }
+    };
+    fetchProvinces();
   }, []);
 
-  const filteredCities = useMemo(() => {
-    return cityList.filter(city => city.province_code === selectedProvinceCode);
+  // --- 2. FETCH CITIES (API Only) ---
+  useEffect(() => {
+    if (!selectedProvinceCode) {
+      setCityList([]);
+      return;
+    }
+
+    const fetchCities = async () => {
+      setIsLoadingCities(true);
+      try {
+        const res = await fetch(`https://psgc.cloud/api/provinces/${selectedProvinceCode}/cities-municipalities`);
+        if (!res.ok) throw new Error("API Failed");
+        const data = await res.json();
+        const sortedData = data.sort((a: any, b: any) => a.name.localeCompare(b.name));
+        setCityList(sortedData);
+        setIsOnline(true);
+      } catch (err) {
+        console.error("Failed to load cities:", err);
+        setIsOnline(false);
+        setCityList([]);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    };
+    fetchCities();
   }, [selectedProvinceCode]);
 
-  const filteredBarangays = useMemo(() => {
-    return barangayList.filter(brgy => brgy.city_code === selectedCityCode);
+  // --- 3. FETCH BARANGAYS (API Only) ---
+  useEffect(() => {
+    if (!selectedCityCode) {
+      setBarangayList([]);
+      return;
+    }
+
+    const fetchBarangays = async () => {
+      setIsLoadingBarangays(true);
+      try {
+        const res = await fetch(`https://psgc.cloud/api/cities-municipalities/${selectedCityCode}/barangays`);
+        if (!res.ok) throw new Error("API Failed");
+        const data = await res.json();
+        const sortedData = data.sort((a: any, b: any) => a.name.localeCompare(b.name));
+        setBarangayList(sortedData);
+        setIsOnline(true);
+      } catch (err) {
+        console.error("Failed to load barangays:", err);
+        setIsOnline(false);
+        setBarangayList([]);
+      } finally {
+        setIsLoadingBarangays(false);
+      }
+    };
+    fetchBarangays();
   }, [selectedCityCode]);
 
   const handleProvinceChange = (code: string) => {
@@ -159,7 +204,7 @@ export default function RegistrationWizard() {
     setSelectedBarangayCode("");
   };
 
-  // --- STATE: Academic ---
+  // --- STATE: Academic & Other ---
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedMajor, setSelectedMajor] = useState("");
   const [contactNum, setContactNum] = useState("");
@@ -188,9 +233,11 @@ export default function RegistrationWizard() {
   const [guardianLname, setGuardianLname] = useState("");
   const [guardianRel, setGuardianRel] = useState("");
 
-  // --- STATE: Photo Upload ---
+  // --- STATE: Photo & Privacy ---
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
 
   const currentMajors = useMemo(() => {
     return courseOptions.find(c => c.course === selectedCourse)?.majors || [];
@@ -221,8 +268,34 @@ export default function RegistrationWizard() {
     fileInputRef.current?.click();
   };
 
+  // --- VALIDATION ---
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1: 
+        return lname.trim() !== "" && fname.trim() !== "" && bdate !== "";
+      case 2: 
+        return selectedProvinceCode !== "" && selectedCityCode !== "" && selectedBarangayCode !== "";
+      case 3: 
+        return selectedCourse !== "" && selectedMajor !== "" && contactNum.trim() !== "" && email.trim() !== "" && umEmail.trim() !== "";
+      case 4: 
+        if (useGuardian) {
+           return guardianLname.trim() !== "" && guardianFname.trim() !== "" && guardianRel.trim() !== "";
+        } else {
+           return (fatherLname.trim() !== "" && fatherFname.trim() !== "") && (motherLname.trim() !== "" && motherFname.trim() !== "");
+        }
+      case 5: 
+        return photoPreview !== null;
+      case 6: 
+        return reviewConfirmed;
+      case 7: 
+        return privacyAgreed;
+      default:
+        return false;
+    }
+  };
+
   const handleNext = () => {
-    if (currentStep < steps.length) {
+    if (currentStep < steps.length && isStepValid()) {
       setDirection(1);
       setCurrentStep((prev) => prev + 1);
     }
@@ -236,14 +309,16 @@ export default function RegistrationWizard() {
   };
 
   const jumpToStep = (stepId: number) => {
-    setDirection(stepId > currentStep ? 1 : -1);
-    setCurrentStep(stepId);
+    if (stepId < currentStep) {
+       setDirection(-1);
+       setCurrentStep(stepId);
+    } 
   };
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col font-sans">
       
-      {/* --- HEADER (Full Width & Sticky) --- */}
+      {/* --- HEADER --- */}
       <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-amber-100/50 shadow-sm">
         <div className="container mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
@@ -273,15 +348,15 @@ export default function RegistrationWizard() {
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 flex flex-col items-center justify-center py-10 px-4 md:px-6">
         
-        {/* Progress Bar (Responsive) */}
+        {/* Progress Bar */}
         <div className="w-full max-w-2xl mb-8">
           <div className="flex justify-between relative z-10">
             {steps.map((step) => (
               <div
                 key={step.id}
-                onClick={() => jumpToStep(step.id)}
+                onClick={() => step.id <= currentStep ? jumpToStep(step.id) : null}
                 className={`flex flex-col items-center cursor-pointer group ${
-                  step.id <= currentStep ? "text-amber-700 font-bold" : "text-gray-300"
+                  step.id <= currentStep ? "text-amber-700 font-bold" : "text-gray-300 cursor-not-allowed"
                 }`}
               >
                 <div
@@ -309,12 +384,23 @@ export default function RegistrationWizard() {
         {/* Form Card */}
         <Card className="w-full max-w-2xl shadow-xl bg-white border-t-4 border-amber-900 rounded-xl overflow-hidden">
           <CardHeader className="bg-stone-50/50 border-b border-stone-100 pb-6 text-center md:text-left">
-            <CardTitle className="text-xl md:text-2xl font-serif text-amber-950">
-              {steps[currentStep - 1].title}
-            </CardTitle>
-            <CardDescription className="text-stone-500 text-xs md:text-sm">
-              Please provide accurate information for your yearbook entry.
-            </CardDescription>
+            <div className="flex justify-between items-start">
+               <div>
+                  <CardTitle className="text-xl md:text-2xl font-serif text-amber-950">
+                    {steps[currentStep - 1].title}
+                  </CardTitle>
+                  <CardDescription className="text-stone-500 text-xs md:text-sm">
+                    Please provide accurate information for your yearbook entry.
+                  </CardDescription>
+               </div>
+               {/* Online Status Indicator */}
+               {currentStep === 2 && (
+                 <div className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full ${isOnline ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
+                    <span>{isOnline ? "Live Data" : "Offline"}</span>
+                 </div>
+               )}
+            </div>
           </CardHeader>
 
           <CardContent className="min-h-[400px] pt-6">
@@ -331,19 +417,16 @@ export default function RegistrationWizard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="lname">Last Name <span className="text-red-500">*</span></Label>
-                          {/* UPDATED: Applied toTitleCase */}
                           <Input id="lname" value={lname} onChange={e => setLname(toTitleCase(e.target.value))} placeholder="Dela Cruz" className="h-11" />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="fname">First Name <span className="text-red-500">*</span></Label>
-                          {/* UPDATED: Applied toTitleCase */}
                           <Input id="fname" value={fname} onChange={e => setFname(toTitleCase(e.target.value))} placeholder="Juan" className="h-11" />
                       </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="mname">Middle Name</Label>
-                          {/* UPDATED: Applied toTitleCase */}
                           <Input id="mname" value={mname} onChange={e => setMname(toTitleCase(e.target.value))} placeholder="Santos" className="h-11" />
                       </div>
                       <div className="space-y-2">
@@ -353,67 +436,66 @@ export default function RegistrationWizard() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="nickname">Nickname (for Yearbook)</Label>
-                    {/* UPDATED: Applied toTitleCase */}
                     <Input id="nickname" value={nickname} onChange={e => setNickname(toTitleCase(e.target.value))} placeholder="Juanny" className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bdate">Birthdate</Label>
+                    <Label htmlFor="bdate">Birthdate <span className="text-red-500">*</span></Label>
                     <Input id="bdate" type="date" value={bdate} onChange={e => setBdate(e.target.value)} className="block w-full h-11" />
                   </div>
                 </div>
               )}
 
-              {/* --- STEP 2: ADDRESS --- */}
+              {/* --- STEP 2: ADDRESS (API ONLY) --- */}
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                     <Label>Province</Label>
+                     <Label>Province <span className="text-red-500">*</span> {isLoadingProvinces && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing data...)</span>}</Label>
                      <Select value={selectedProvinceCode} onValueChange={handleProvinceChange}>
                        <SelectTrigger className="h-11">
-                         <SelectValue placeholder="Select Province" />
+                         <SelectValue placeholder={isLoadingProvinces ? "Loading..." : "Select Province"} />
                        </SelectTrigger>
                        <SelectContent className="max-h-[200px]">
-                         {sortedProvinceList.map((prov) => (
-                           <SelectItem key={prov.province_code} value={prov.province_code}>
-                             {prov.province_name}
+                         {provinceList.map((prov) => (
+                           <SelectItem key={prov.code} value={String(prov.code)}>
+                             {prov.name}
                            </SelectItem>
                          ))}
                        </SelectContent>
                      </Select>
                   </div>
                   <div className="space-y-2">
-                     <Label>Municipality / City</Label>
+                     <Label>Municipality / City <span className="text-red-500">*</span> {isLoadingCities && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing...)</span>}</Label>
                      <Select 
                        value={selectedCityCode} 
                        onValueChange={handleCityChange}
                        disabled={!selectedProvinceCode}
                      >
                        <SelectTrigger className={`h-11 ${!selectedProvinceCode ? "bg-gray-100" : ""}`}>
-                         <SelectValue placeholder="Select Municipality/City" />
+                         <SelectValue placeholder={isLoadingCities ? "Loading..." : "Select Municipality/City"} />
                        </SelectTrigger>
                        <SelectContent className="max-h-[200px]">
-                         {filteredCities.map((city) => (
-                           <SelectItem key={city.city_code} value={city.city_code}>
-                             {city.city_name}
+                         {cityList.map((city) => (
+                           <SelectItem key={city.code} value={String(city.code)}>
+                             {city.name}
                            </SelectItem>
                          ))}
                        </SelectContent>
                      </Select>
                   </div>
                   <div className="space-y-2">
-                     <Label>Barangay</Label>
+                     <Label>Barangay <span className="text-red-500">*</span> {isLoadingBarangays && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing...)</span>}</Label>
                      <Select 
                        value={selectedBarangayCode} 
                        onValueChange={setSelectedBarangayCode}
                        disabled={!selectedCityCode}
                      >
                        <SelectTrigger className={`h-11 ${!selectedCityCode ? "bg-gray-100" : ""}`}>
-                         <SelectValue placeholder="Select Barangay" />
+                         <SelectValue placeholder={isLoadingBarangays ? "Loading..." : "Select Barangay"} />
                        </SelectTrigger>
                        <SelectContent className="max-h-[200px]">
-                         {filteredBarangays.map((brgy) => (
-                           <SelectItem key={brgy.brgy_code} value={brgy.brgy_code}>
-                             {brgy.brgy_name}
+                         {barangayList.map((brgy) => (
+                           <SelectItem key={brgy.code} value={String(brgy.code)}>
+                             {brgy.name}
                            </SelectItem>
                          ))}
                        </SelectContent>
@@ -426,7 +508,7 @@ export default function RegistrationWizard() {
               {currentStep === 3 && (
                 <div className="space-y-5">
                    <div className="space-y-2">
-                    <Label>Program / Course</Label>
+                    <Label>Program / Course <span className="text-red-500">*</span></Label>
                     <Select onValueChange={handleCourseChange} value={selectedCourse}>
                       <SelectTrigger className="w-full h-auto min-h-[50px] py-3 text-left flex items-center">
                         <span className="whitespace-normal leading-tight block text-left w-full">
@@ -448,7 +530,7 @@ export default function RegistrationWizard() {
                   </div>
 
                   <div className="space-y-2">
-                     <Label>Major / Specialization</Label>
+                     <Label>Major / Specialization <span className="text-red-500">*</span></Label>
                      <Select 
                        value={selectedMajor} 
                        onValueChange={setSelectedMajor}
@@ -478,22 +560,21 @@ export default function RegistrationWizard() {
                   <div className="h-px bg-gray-200 my-2"></div>
 
                   <div className="space-y-2">
-                      <Label>Primary Contact Number</Label>
+                      <Label>Primary Contact Number <span className="text-red-500">*</span></Label>
                       <Input value={contactNum} onChange={e => setContactNum(e.target.value)} placeholder="09XXXXXXXXX" inputMode="numeric" className="h-11" />
                   </div>
                    <div className="space-y-2">
-                      <Label>Personal Email Address</Label>
+                      <Label>Personal Email Address <span className="text-red-500">*</span></Label>
                       <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com" className="h-11" />
                   </div>
-                  {/* UM EMAIL FIELD */}
                   <div className="space-y-2">
-                      <Label>UM Student Email</Label>
+                      <Label>UM Student Email <span className="text-red-500">*</span></Label>
                       <Input type="email" value={umEmail} onChange={e => setUmEmail(e.target.value)} placeholder="IDNUMBER.tc@umindanao.edu.ph" className="h-11" />
                   </div>
                 </div>
               )}
 
-               {/* --- STEP 4: FAMILY (UPDATED WITH TITLE CASE) --- */}
+               {/* --- STEP 4: FAMILY --- */}
                {currentStep === 4 && (
                 <div className="space-y-6">
                   <div className="flex items-center space-x-2 bg-amber-50 p-4 rounded-lg border border-amber-100">
@@ -514,25 +595,22 @@ export default function RegistrationWizard() {
                           <h3 className="font-bold text-amber-900 text-sm uppercase tracking-wide">Father's Information</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div className="space-y-2">
-                                <Label>Last Name</Label>
-                                {/* UPDATED: Applied toTitleCase */}
+                                <Label>Last Name <span className="text-red-500">*</span></Label>
                                 <Input value={fatherLname} onChange={e => setFatherLname(toTitleCase(e.target.value))} placeholder="Dela Cruz" className="h-10" />
                              </div>
                              <div className="space-y-2">
-                                <Label>First Name</Label>
+                                <Label>First Name <span className="text-red-500">*</span></Label>
                                 <div className="flex gap-2">
                                   <Select value={fatherTitle} onValueChange={setFatherTitle}>
                                     <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                     <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                                   </Select>
-                                  {/* UPDATED: Applied toTitleCase */}
                                   <Input value={fatherFname} onChange={e => setFatherFname(toTitleCase(e.target.value))} placeholder="Juan" className="flex-1 h-10"/>
                                 </div>
                              </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div className="space-y-2"><Label>Middle Name</Label>
-                                {/* UPDATED: Applied toTitleCase */}
                                 <Input value={fatherMname} onChange={e => setFatherMname(toTitleCase(e.target.value))} placeholder="Santos" className="h-10" />
                              </div>
                              <div className="space-y-2"><Label>Suffix</Label><Input value={fatherSuffix} onChange={e => setFatherSuffix(e.target.value)} placeholder="Jr." className="h-10" /></div>
@@ -544,25 +622,22 @@ export default function RegistrationWizard() {
                           <h3 className="font-bold text-amber-900 text-sm uppercase tracking-wide">Mother's Information</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div className="space-y-2">
-                                <Label>Last Name</Label>
-                                {/* UPDATED: Applied toTitleCase */}
+                                <Label>Last Name <span className="text-red-500">*</span></Label>
                                 <Input value={motherLname} onChange={e => setMotherLname(toTitleCase(e.target.value))} placeholder="Dela Cruz" className="h-10" />
                              </div>
                              <div className="space-y-2">
-                                <Label>First Name</Label>
+                                <Label>First Name <span className="text-red-500">*</span></Label>
                                 <div className="flex gap-2">
                                   <Select value={motherTitle} onValueChange={setMotherTitle}>
                                     <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                     <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                                   </Select>
-                                  {/* UPDATED: Applied toTitleCase */}
                                   <Input value={motherFname} onChange={e => setMotherFname(toTitleCase(e.target.value))} placeholder="Maria" className="flex-1 h-10"/>
                                 </div>
                              </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div className="space-y-2"><Label>Middle Name</Label>
-                                {/* UPDATED: Applied toTitleCase */}
                                 <Input value={motherMname} onChange={e => setMotherMname(toTitleCase(e.target.value))} placeholder="Santos" className="h-10" />
                              </div>
                           </div>
@@ -573,24 +648,21 @@ export default function RegistrationWizard() {
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                        <h3 className="font-bold text-amber-900 text-sm uppercase tracking-wide">Guardian's Information</h3>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-2"><Label>Last Name</Label>
-                            {/* UPDATED: Applied toTitleCase */}
+                         <div className="space-y-2"><Label>Last Name <span className="text-red-500">*</span></Label>
                             <Input value={guardianLname} onChange={e => setGuardianLname(toTitleCase(e.target.value))} placeholder="Last Name" className="h-10" />
                          </div>
                          <div className="space-y-2">
-                            <Label>First Name</Label>
+                            <Label>First Name <span className="text-red-500">*</span></Label>
                             <div className="flex gap-2">
                               <Select value={guardianTitle} onValueChange={setGuardianTitle}>
                                 <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
                                 <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                               </Select>
-                              {/* UPDATED: Applied toTitleCase */}
                               <Input value={guardianFname} onChange={e => setGuardianFname(toTitleCase(e.target.value))} placeholder="First Name" className="flex-1 h-10"/>
                             </div>
                          </div>
                        </div>
-                       <div className="space-y-2"><Label>Relationship</Label>
-                          {/* UPDATED: Applied toTitleCase */}
+                       <div className="space-y-2"><Label>Relationship <span className="text-red-500">*</span></Label>
                           <Input value={guardianRel} onChange={e => setGuardianRel(toTitleCase(e.target.value))} placeholder="e.g. Grandmother" className="h-10" />
                        </div>
                     </div>
@@ -667,8 +739,7 @@ export default function RegistrationWizard() {
                     </div>
                     
                     <div className="space-y-8">
-                      
-                      {/* Personal Info Review */}
+                      {/* REVIEW CONTENT */}
                       <div className="space-y-3">
                         <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
                            <UserCircle size={16} /> Personal Identity
@@ -691,7 +762,6 @@ export default function RegistrationWizard() {
                         </div>
                       </div>
 
-                      {/* Address Review */}
                       <div className="space-y-3">
                         <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
                            <MapPin size={16} /> Residence
@@ -702,7 +772,6 @@ export default function RegistrationWizard() {
                         </div>
                       </div>
 
-                      {/* Academic Review */}
                       <div className="space-y-3">
                         <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
                            <GraduationCap size={16} /> Academic Profile
@@ -734,7 +803,6 @@ export default function RegistrationWizard() {
                         </div>
                       </div>
 
-                      {/* Family Review */}
                       <div className="space-y-3">
                         <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
                            <Users size={16} /> Family Background
@@ -763,7 +831,6 @@ export default function RegistrationWizard() {
                         </div>
                       </div>
 
-                      {/* Photo Review */}
                       <div className="space-y-3">
                         <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 uppercase tracking-wider">
                            Attached Photo
@@ -787,12 +854,16 @@ export default function RegistrationWizard() {
                             </Button>
                         </div>
                       </div>
-
                     </div>
                   </div>
 
                   <div className="flex items-start space-x-3 p-4 border border-stone-200 bg-amber-50/30 rounded-lg">
-                      <Checkbox id="confirm-review" className="mt-1 border-amber-400 text-amber-700 focus:ring-amber-700" />
+                      <Checkbox 
+                        id="confirm-review" 
+                        className="mt-1 border-amber-400 text-amber-700 focus:ring-amber-700" 
+                        checked={reviewConfirmed}
+                        onCheckedChange={(checked) => setReviewConfirmed(checked as boolean)}
+                      />
                       <Label htmlFor="confirm-review" className="text-sm font-medium leading-snug cursor-pointer text-stone-700">
                           I hereby confirm that the details shown above are true, correct, and free from errors.
                       </Label>
@@ -800,7 +871,7 @@ export default function RegistrationWizard() {
                 </div>
               )}
 
-               {/* --- STEP 7: PRIVACY (Formerly Step 6) --- */}
+               {/* --- STEP 7: PRIVACY --- */}
                {currentStep === 7 && (
                 <div className="space-y-4">
                   <div className="p-5 bg-stone-50 border border-stone-200 rounded-lg h-72 overflow-y-auto text-sm text-stone-600 leading-relaxed text-justify pr-2">
@@ -821,7 +892,12 @@ export default function RegistrationWizard() {
                       </p>
                   </div>
                   <div className="flex items-start space-x-3 p-4 border border-amber-100 bg-amber-50/50 rounded-lg">
-                      <Checkbox id="terms" className="mt-1" />
+                      <Checkbox 
+                        id="terms" 
+                        className="mt-1" 
+                        checked={privacyAgreed}
+                        onCheckedChange={(checked) => setPrivacyAgreed(checked as boolean)}
+                      />
                       <Label htmlFor="terms" className="text-sm font-medium leading-snug cursor-pointer text-amber-900">
                           I have read and understood the Data Privacy Statement and agree to the processing of my personal data.
                       </Label>
@@ -842,8 +918,9 @@ export default function RegistrationWizard() {
               Previous
             </Button>
             <Button 
-              className="bg-amber-900 hover:bg-amber-800 text-white min-w-[140px] shadow-lg shadow-amber-900/20"
+              className={`min-w-[140px] shadow-lg ${isStepValid() ? "bg-amber-900 hover:bg-amber-800 text-white shadow-amber-900/20" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
               onClick={handleNext}
+              disabled={!isStepValid()}
             >
               {currentStep === 7 ? "Submit Registration" : "Next Step"}
             </Button>
@@ -851,20 +928,11 @@ export default function RegistrationWizard() {
         </Card>
       </main>
 
-      {/* --- FOOTER --- */}
       <footer className="bg-white border-t border-stone-200 py-8 mt-auto">
         <div className="container mx-auto px-6 text-center text-xs text-stone-400">
-          <p className="mb-2">&copy; 2026 AURIUM Yearbook Committee. All rights reserved.</p>
-          <div className="flex justify-center gap-4">
-             <Link href="#" className="hover:text-amber-700">Privacy Policy</Link>
-             <span className="text-stone-300">•</span>
-             <Link href="#" className="hover:text-amber-700">Terms of Use</Link>
-             <span className="text-stone-300">•</span>
-             <Link href="#" className="hover:text-amber-700">Get Help</Link>
-          </div>
+          <p>© 2026 AURIUM Yearbook Committee.</p>
         </div>
       </footer>
-
     </div>
   );
 }
