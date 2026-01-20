@@ -321,6 +321,7 @@ export default function RegistrationWizard() {
 
     //sample data
     const body = {
+      id: 1,
       user: "koi",
       course: "CS"
     };
