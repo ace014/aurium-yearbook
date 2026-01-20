@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image"; // Added Image import
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,15 +39,28 @@ export default function QueuePage() {
   return (
     <div className="min-h-screen bg-stone-950 text-white font-sans flex flex-col overflow-hidden">
       
-      {/* HEADER BAR */}
+      {/* --- UPDATED HEADER --- */}
       <header className="bg-amber-900/20 border-b border-amber-900/50 p-6 flex justify-between items-center">
         <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-600 rounded-lg flex items-center justify-center font-serif font-bold text-2xl">A</div>
-            <div>
-                <h1 className="text-2xl font-serif font-bold tracking-wider text-amber-50">NOW SERVING</h1>
-                <p className="text-amber-500/80 text-sm uppercase tracking-[0.2em] font-bold">Pictorial Queue</p>
+            {/* Logos */}
+            <div className="flex items-center gap-3">
+                <div className="relative w-12 h-12 overflow-hidden">
+                    <Image src="/images/umtc-logo.png" alt="UMTC Logo" fill className="object-contain"/>
+                </div>
+                <div className="h-8 w-[1px] bg-stone-600"></div>
+                <div className="relative w-12 h-12 overflow-hidden">
+                    <Image src="/images/aurium-logo.png" alt="Aurium Logo" fill className="object-contain"/>
+                </div>
+            </div>
+            
+            {/* Title Text */}
+            <div className="flex flex-col justify-center">
+                <h1 className="text-2xl font-serif font-bold tracking-wider text-amber-50 leading-none">AURIUM</h1>
+                <p className="text-amber-500/80 text-xs uppercase tracking-[0.2em] font-bold mt-1">Pictorial Queue</p>
             </div>
         </div>
+
+        {/* Clock (Right Side) */}
         <div className="text-right">
             <p className="text-4xl font-mono font-bold text-stone-100">
                 {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
