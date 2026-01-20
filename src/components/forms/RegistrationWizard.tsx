@@ -317,6 +317,36 @@ export default function RegistrationWizard() {
     } 
   };
 
+  const onSubmit = async () => {
+
+    //sample data
+    const body = {
+      id: 1,
+      user: "koi",
+      course: "CS"
+    };
+
+    try {
+      //local testing for now
+      const res = await fetch("http://localhost:4000/api/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      const json = await res.json();
+      console.log(json);
+    } catch (err) {
+      console.error("Something went wrong..", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col font-sans">
       
@@ -938,7 +968,7 @@ export default function RegistrationWizard() {
             </Button>
             <Button 
               className={`min-w-[140px] shadow-lg ${isStepValid() ? "bg-amber-900 hover:bg-amber-800 text-white shadow-amber-900/20" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
-              onClick={handleNext}
+              onClick={currentStep === 7 ? onSubmit : handleNext}
               disabled={!isStepValid()}
             >
               {currentStep === 7 ? "Submit Registration" : "Next Step"}
