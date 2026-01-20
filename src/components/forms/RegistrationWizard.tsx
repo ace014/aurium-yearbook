@@ -207,6 +207,7 @@ export default function RegistrationWizard() {
   // --- STATE: Academic & Other ---
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedMajor, setSelectedMajor] = useState("");
+  const [thesisTitle, setThesisTitle] = useState(""); // --- ADDED THESIS STATE ---
   const [contactNum, setContactNum] = useState("");
   const [email, setEmail] = useState("");
   const [umEmail, setUmEmail] = useState(""); 
@@ -276,7 +277,8 @@ export default function RegistrationWizard() {
       case 2: 
         return selectedProvinceCode !== "" && selectedCityCode !== "" && selectedBarangayCode !== "";
       case 3: 
-        return selectedCourse !== "" && selectedMajor !== "" && contactNum.trim() !== "" && email.trim() !== "" && umEmail.trim() !== "";
+        // --- ADDED THESIS VALIDATION ---
+        return selectedCourse !== "" && selectedMajor !== "" && thesisTitle.trim() !== "" && contactNum.trim() !== "" && email.trim() !== "" && umEmail.trim() !== "";
       case 4: 
         if (useGuardian) {
            return guardianLname.trim() !== "" && guardianFname.trim() !== "" && guardianRel.trim() !== "";
@@ -449,57 +451,57 @@ export default function RegistrationWizard() {
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                     <Label>Province <span className="text-red-500">*</span> {isLoadingProvinces && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing data...)</span>}</Label>
-                     <Select value={selectedProvinceCode} onValueChange={handleProvinceChange}>
-                       <SelectTrigger className="h-11">
-                         <SelectValue placeholder={isLoadingProvinces ? "Loading..." : "Select Province"} />
-                       </SelectTrigger>
-                       <SelectContent className="max-h-[200px]">
-                         {provinceList.map((prov) => (
-                           <SelectItem key={prov.code} value={String(prov.code)}>
-                             {prov.name}
-                           </SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
+                      <Label>Province <span className="text-red-500">*</span> {isLoadingProvinces && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing data...)</span>}</Label>
+                      <Select value={selectedProvinceCode} onValueChange={handleProvinceChange}>
+                        <SelectTrigger className="h-11">
+                          <SelectValue placeholder={isLoadingProvinces ? "Loading..." : "Select Province"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {provinceList.map((prov) => (
+                            <SelectItem key={prov.code} value={String(prov.code)}>
+                              {prov.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                   </div>
                   <div className="space-y-2">
-                     <Label>Municipality / City <span className="text-red-500">*</span> {isLoadingCities && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing...)</span>}</Label>
-                     <Select 
-                       value={selectedCityCode} 
-                       onValueChange={handleCityChange}
-                       disabled={!selectedProvinceCode}
-                     >
-                       <SelectTrigger className={`h-11 ${!selectedProvinceCode ? "bg-gray-100" : ""}`}>
-                         <SelectValue placeholder={isLoadingCities ? "Loading..." : "Select Municipality/City"} />
-                       </SelectTrigger>
-                       <SelectContent className="max-h-[200px]">
-                         {cityList.map((city) => (
-                           <SelectItem key={city.code} value={String(city.code)}>
-                             {city.name}
-                           </SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
+                      <Label>Municipality / City <span className="text-red-500">*</span> {isLoadingCities && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing...)</span>}</Label>
+                      <Select 
+                        value={selectedCityCode} 
+                        onValueChange={handleCityChange}
+                        disabled={!selectedProvinceCode}
+                      >
+                        <SelectTrigger className={`h-11 ${!selectedProvinceCode ? "bg-gray-100" : ""}`}>
+                          <SelectValue placeholder={isLoadingCities ? "Loading..." : "Select Municipality/City"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {cityList.map((city) => (
+                            <SelectItem key={city.code} value={String(city.code)}>
+                              {city.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                   </div>
                   <div className="space-y-2">
-                     <Label>Barangay <span className="text-red-500">*</span> {isLoadingBarangays && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing...)</span>}</Label>
-                     <Select 
-                       value={selectedBarangayCode} 
-                       onValueChange={setSelectedBarangayCode}
-                       disabled={!selectedCityCode}
-                     >
-                       <SelectTrigger className={`h-11 ${!selectedCityCode ? "bg-gray-100" : ""}`}>
-                         <SelectValue placeholder={isLoadingBarangays ? "Loading..." : "Select Barangay"} />
-                       </SelectTrigger>
-                       <SelectContent className="max-h-[200px]">
-                         {barangayList.map((brgy) => (
-                           <SelectItem key={brgy.code} value={String(brgy.code)}>
-                             {brgy.name}
-                           </SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
+                      <Label>Barangay <span className="text-red-500">*</span> {isLoadingBarangays && <span className="text-xs text-stone-400 font-normal ml-2">(Refreshing...)</span>}</Label>
+                      <Select 
+                        value={selectedBarangayCode} 
+                        onValueChange={setSelectedBarangayCode}
+                        disabled={!selectedCityCode}
+                      >
+                        <SelectTrigger className={`h-11 ${!selectedCityCode ? "bg-gray-100" : ""}`}>
+                          <SelectValue placeholder={isLoadingBarangays ? "Loading..." : "Select Barangay"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {barangayList.map((brgy) => (
+                            <SelectItem key={brgy.code} value={String(brgy.code)}>
+                              {brgy.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                   </div>
                 </div>
               )}
@@ -530,20 +532,20 @@ export default function RegistrationWizard() {
                   </div>
 
                   <div className="space-y-2">
-                     <Label>Major / Specialization <span className="text-red-500">*</span></Label>
-                     <Select 
-                       value={selectedMajor} 
-                       onValueChange={setSelectedMajor}
-                       disabled={!selectedCourse || selectedMajor === "N/A"}
-                     >
-                       <SelectTrigger 
-                         className={`w-full h-auto min-h-[50px] py-3 text-left items-center ${selectedMajor === "N/A" ? "bg-gray-100 text-gray-500" : ""}`}
-                       >
-                         <span className="whitespace-normal leading-tight block text-left w-full">
-                            <SelectValue placeholder={selectedMajor === "N/A" ? "N/A (Not Applicable)" : "Select Major"} />
-                         </span>
-                       </SelectTrigger>
-                       <SelectContent className="max-w-[90vw]">
+                      <Label>Major / Specialization <span className="text-red-500">*</span></Label>
+                      <Select 
+                        value={selectedMajor} 
+                        onValueChange={setSelectedMajor}
+                        disabled={!selectedCourse || selectedMajor === "N/A"}
+                      >
+                        <SelectTrigger 
+                          className={`w-full h-auto min-h-[50px] py-3 text-left items-center ${selectedMajor === "N/A" ? "bg-gray-100 text-gray-500" : ""}`}
+                        >
+                          <span className="whitespace-normal leading-tight block text-left w-full">
+                             <SelectValue placeholder={selectedMajor === "N/A" ? "N/A (Not Applicable)" : "Select Major"} />
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent className="max-w-[90vw]">
                           {selectedMajor === "N/A" ? (
                             <SelectItem value="N/A">N/A</SelectItem>
                           ) : (
@@ -553,8 +555,19 @@ export default function RegistrationWizard() {
                               </SelectItem>
                             ))
                           )}
-                       </SelectContent>
-                     </Select>
+                        </SelectContent>
+                      </Select>
+                  </div>
+
+                  {/* --- ADDED THESIS TITLE FIELD --- */}
+                  <div className="space-y-2">
+                      <Label>Thesis / Capstone Title <span className="text-red-500">*</span></Label>
+                      <Input 
+                        value={thesisTitle} 
+                        onChange={e => setThesisTitle(e.target.value)} 
+                        placeholder="Enter complete title of your Thesis or Capstone Project" 
+                        className="h-11" 
+                      />
                   </div>
 
                   <div className="h-px bg-gray-200 my-2"></div>
@@ -652,14 +665,14 @@ export default function RegistrationWizard() {
                             <Input value={guardianLname} onChange={e => setGuardianLname(toTitleCase(e.target.value))} placeholder="Last Name" className="h-10" />
                          </div>
                          <div className="space-y-2">
-                            <Label>First Name <span className="text-red-500">*</span></Label>
-                            <div className="flex gap-2">
-                              <Select value={guardianTitle} onValueChange={setGuardianTitle}>
-                                <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
-                                <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                              </Select>
-                              <Input value={guardianFname} onChange={e => setGuardianFname(toTitleCase(e.target.value))} placeholder="First Name" className="flex-1 h-10"/>
-                            </div>
+                           <Label>First Name <span className="text-red-500">*</span></Label>
+                           <div className="flex gap-2">
+                             <Select value={guardianTitle} onValueChange={setGuardianTitle}>
+                               <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
+                               <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                             </Select>
+                             <Input value={guardianFname} onChange={e => setGuardianFname(toTitleCase(e.target.value))} placeholder="First Name" className="flex-1 h-10"/>
+                           </div>
                          </div>
                        </div>
                        <div className="space-y-2"><Label>Relationship <span className="text-red-500">*</span></Label>
@@ -709,8 +722,8 @@ export default function RegistrationWizard() {
                       <Button variant="outline" className="mt-4 pointer-events-none border-amber-200 text-amber-900">
                         {photoPreview ? "Replace Photo" : "Select from Device"}
                       </Button>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border border-blue-100 flex gap-3">
+                   </div>
+                   <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border border-blue-100 flex gap-3">
                       <div className="mt-0.5">ℹ️</div>
                       <div>
                         <strong>Requirements:</strong>
@@ -720,7 +733,7 @@ export default function RegistrationWizard() {
                           <li>High resolution (not blurry)</li>
                         </ul>
                       </div>
-                    </div>
+                   </div>
                 </div>
               )}
 
@@ -733,8 +746,8 @@ export default function RegistrationWizard() {
                         <ClipboardCheck className="text-amber-800 w-6 h-6" />
                       </div>
                       <div>
-                         <h3 className="font-serif font-bold text-amber-950 text-xl">Review Registration</h3>
-                         <p className="text-stone-500 text-xs">Please verify your information before submitting.</p>
+                          <h3 className="font-serif font-bold text-amber-900 text-xl">Review Registration</h3>
+                          <p className="text-stone-500 text-xs">Please verify your information before submitting.</p>
                       </div>
                     </div>
                     
@@ -782,6 +795,12 @@ export default function RegistrationWizard() {
                               <span className="text-stone-900 font-bold block">{selectedCourse}</span>
                               {selectedMajor !== "N/A" && <span className="text-amber-700 text-sm font-medium block mt-1">{selectedMajor}</span>}
                            </div>
+                           {/* --- ADDED THESIS REVIEW --- */}
+                           <div className="pt-2 border-t border-stone-100 mt-2">
+                              <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Thesis / Capstone Title</span>
+                              <span className="text-stone-900 font-medium italic">"{thesisTitle}"</span>
+                           </div>
+
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-stone-100">
                              <div>
                                 <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">UM Student Email</span>
