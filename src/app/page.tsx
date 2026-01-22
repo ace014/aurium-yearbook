@@ -20,7 +20,8 @@ import {
   Ribbon,
   Users,
   Menu, 
-  X     
+  X,
+  Camera
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -46,6 +47,18 @@ export default function AuriumLandingPage() {
       transition: { staggerChildren: 0.1 }
     }
   };
+
+  // --- DATA: GALLERY IMAGES (From your screenshot) ---
+  const galleryImages = [
+    "/images/gradpics/DSC_0496.jpg",
+    "/images/gradpics/DSC_0938.jpg",
+    "/images/gradpics/DSC_0954.jpg",
+    "/images/gradpics/DSC_0963.jpg",
+    "/images/gradpics/DSC_0485.jpg",
+    "/images/gradpics/DSC_0486.jpg",
+    "/images/gradpics/DSC_0489.jpg",
+    "/images/gradpics/DSC_0491.jpg",
+  ];
 
   // --- DATA: EDITIONS ---
   const editions = [
@@ -347,6 +360,54 @@ export default function AuriumLandingPage() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* --- NEW: MOMENTS OF TRIUMPH (INFINITE GALLERY) --- */}
+      <section className="py-0 overflow-hidden bg-stone-900 border-t-4 border-b-4 border-amber-900 relative">
+        {/* Cinematic Overlay */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-transparent to-stone-900 z-20 pointer-events-none"></div>
+
+        <div className="py-12 md:py-16">
+            <div className="container mx-auto px-6 mb-8 text-center relative z-20">
+                <div className="inline-flex items-center justify-center p-3 bg-amber-900/30 rounded-full border border-amber-800/50 backdrop-blur-sm mb-4">
+                    <Camera size={24} className="text-amber-400" />
+                </div>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-amber-50 tracking-tight">Moments of Triumph</h2>
+                <p className="text-amber-200/60 mt-2">Capturing the joy of achievement.</p>
+            </div>
+
+            {/* Infinite Marquee Wrapper */}
+            <div className="flex w-full overflow-hidden relative z-0">
+                <motion.div 
+                    className="flex gap-4 md:gap-6 px-4"
+                    animate={{ x: ["0%", "-50%"] }}
+                    transition={{ 
+                        repeat: Infinity, 
+                        ease: "linear", 
+                        duration: 30 // Adjust speed here (higher = slower)
+                    }}
+                    style={{ width: "fit-content" }}
+                >
+                    {/* Render images twice to create seamless loop */}
+                    {[...galleryImages, ...galleryImages].map((src, index) => (
+                        <div 
+                            key={index} 
+                            className="relative w-[280px] h-[180px] md:w-[400px] md:h-[260px] shrink-0 rounded-lg overflow-hidden border-2 border-stone-800 shadow-2xl hover:border-amber-700 hover:scale-105 transition-all duration-300"
+                        >
+                            <Image 
+                                src={src} 
+                                alt={`Graduation Moment ${index}`} 
+                                fill 
+                                className="object-cover sepia-[.2] hover:sepia-0 transition-all duration-500" 
+                            />
+                            {/* Film Grain/Vignette Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
+                        </div>
+                    ))}
+                </motion.div>
+            </div>
         </div>
       </section>
 
