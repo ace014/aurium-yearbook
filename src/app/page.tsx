@@ -115,10 +115,17 @@ export default function AuriumLandingPage() {
       
       {/* --- NAVIGATION BAR --- */}
       <nav className="fixed top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-amber-100/50 shadow-sm transition-all duration-300">
-        <div className="container mx-auto px-4 md:px-6 h-20 md:h-24 flex items-center justify-between">
+        <div className="container mx-auto px-4 md:px-6 h-16 md:h-24 flex items-center justify-between relative">
           
-          {/* Logo Area */}
-          <Link href="/" className="flex items-center gap-2 md:gap-4 group z-50">
+          {/* Mobile Burger Button (Left) */}
+          <div className="lg:hidden z-50 absolute left-4">
+            <Button variant="ghost" onClick={toggleMobileMenu} className="text-amber-950 p-2">
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </Button>
+          </div>
+
+          {/* Logo Area (Center on Mobile, Left on Desktop) */}
+          <Link href="/" className="flex items-center gap-2 md:gap-4 group z-50 mx-auto lg:mx-0">
             <div className="flex items-center gap-2">
                 <div className="relative w-8 h-8 md:w-12 md:h-12 overflow-hidden hover:scale-105 transition-transform duration-300">
                    <Image src="/images/umtc-logo.png" alt="UMTC Logo" fill className="object-contain" />
@@ -157,12 +164,8 @@ export default function AuriumLandingPage() {
             </Link>
           </div>
 
-          {/* Mobile Burger Button */}
-          <div className="lg:hidden flex items-center z-50">
-            <Button variant="ghost" onClick={toggleMobileMenu} className="text-amber-950 p-2">
-              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </Button>
-          </div>
+          {/* Placeholder to balance the flex layout on mobile (invisible) */}
+          <div className="w-10 lg:hidden"></div>
         </div>
 
         {/* Mobile Menu Overlay */}
@@ -172,7 +175,7 @@ export default function AuriumLandingPage() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-20 left-0 w-full bg-white border-b border-amber-100 shadow-xl lg:hidden flex flex-col p-6 space-y-6 z-40"
+              className="absolute top-16 left-0 w-full bg-white border-b border-amber-100 shadow-xl lg:hidden flex flex-col p-6 space-y-6 z-40"
             >
               <nav className="flex flex-col space-y-4 text-center text-lg font-serif font-medium text-stone-700">
                 <Link href="#services" onClick={toggleMobileMenu} className="hover:text-amber-800 py-2 border-b border-stone-100">Services</Link>
