@@ -187,12 +187,19 @@ export default function AuriumLandingPage() {
       {/* --- HERO SECTION --- */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-28">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+           {/* Background Blobs */}
            <div className="absolute top-[-10%] right-[-5%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-amber-200/20 rounded-full blur-[100px]" />
            <div className="absolute bottom-[-10%] left-[-10%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-yellow-500/10 rounded-full blur-[120px]" />
+           
+           {/* Texture Background */}
            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] opacity-40 mix-blend-multiply"></div>
+
+           {/* --- SMOOTH GRADIENT FADE --- */}
+           {/* Changed 'from-stone-50' to 'from-white' to blend into the white section below. Increased height to h-48. */}
+           <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-white via-white/80 to-transparent z-10"></div>
         </div>
 
-        <div className="container relative z-10 px-4 md:px-6 text-center">
+        <div className="container relative z-20 px-4 md:px-6 text-center">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -234,7 +241,8 @@ export default function AuriumLandingPage() {
       </section>
 
       {/* --- MISSION STATEMENT --- */}
-      <section id="about" className="py-16 md:py-24 bg-white border-y border-amber-100">
+      {/* Changed border-y to border-b to remove the line separating this from the hero fade */}
+      <section id="about" className="py-16 md:py-24 bg-white border-b border-amber-100">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-center">
             
@@ -318,13 +326,13 @@ export default function AuriumLandingPage() {
                    
                    {/* Text on top of Image */}
                    <div className="absolute bottom-0 left-0 p-6 text-white w-full">
-                      <h3 className="text-3xl md:text-4xl font-serif font-bold tracking-widest mb-1 shadow-black/50 drop-shadow-md">{edition.year}</h3>
-                      <div className="flex items-center gap-2">
-                        {edition.theme.includes("Oscars") && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
-                        {edition.theme.includes("Vintage") && <Clock size={16} className="text-amber-200" />}
-                        {edition.theme.includes("Sablay") && <Ribbon size={16} className="text-red-300" />}
-                        <p className="text-xs font-sans uppercase tracking-[0.3em] font-bold opacity-90">{edition.theme}</p>
-                      </div>
+                     <h3 className="text-3xl md:text-4xl font-serif font-bold tracking-widest mb-1 shadow-black/50 drop-shadow-md">{edition.year}</h3>
+                     <div className="flex items-center gap-2">
+                       {edition.theme.includes("Oscars") && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
+                       {edition.theme.includes("Vintage") && <Clock size={16} className="text-amber-200" />}
+                       {edition.theme.includes("Sablay") && <Ribbon size={16} className="text-red-300" />}
+                       <p className="text-xs font-sans uppercase tracking-[0.3em] font-bold opacity-90">{edition.theme}</p>
+                     </div>
                    </div>
                 </div>
                 
