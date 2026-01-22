@@ -195,7 +195,6 @@ export default function AuriumLandingPage() {
            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] opacity-40 mix-blend-multiply"></div>
 
            {/* --- SMOOTH GRADIENT FADE --- */}
-           {/* Changed 'from-stone-50' to 'from-white' to blend into the white section below. Increased height to h-48. */}
            <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-white via-white/80 to-transparent z-10"></div>
         </div>
 
@@ -241,7 +240,6 @@ export default function AuriumLandingPage() {
       </section>
 
       {/* --- MISSION STATEMENT --- */}
-      {/* Changed border-y to border-b to remove the line separating this from the hero fade */}
       <section id="about" className="py-16 md:py-24 bg-white border-b border-amber-100">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-center">
@@ -423,15 +421,15 @@ export default function AuriumLandingPage() {
               </Link>
             </motion.div>
 
-            {/* Card 3: Endorsed Graduates */}
-            <motion.div id="endorsed" whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
+            {/* Card 3: FAQ (Replaced Endorsed Graduates) */}
+            <motion.div id="faq" whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
               <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
-                <CheckCircle size={28} />
+                <HelpCircle size={28} />
               </div>
-              <h3 className="text-xl font-bold text-stone-800 mb-3">Endorsed Graduates</h3>
-              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Check the official list of candidates eligible for the current yearbook batch.</p>
-              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
-                Check List <ArrowRight size={16} />
+              <h3 className="text-xl font-bold text-stone-800 mb-3">FAQ</h3>
+              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Got questions? Find answers to common queries about the yearbook process and services.</p>
+              <Link href="/faq" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                View FAQs <ArrowRight size={16} />
               </Link>
             </motion.div>
 
@@ -459,14 +457,14 @@ export default function AuriumLandingPage() {
               </Link>
             </motion.div>
 
-             {/* Card 6: Support / FAQ */}
+             {/* Card 6: Help & Support */}
              <Link href="/support" className="block h-full"> 
                <motion.div whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group h-full">
                  <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
                    <HelpCircle size={28} />
                  </div>
                  <h3 className="text-xl font-bold text-stone-800 mb-3">Help & Support</h3>
-                 <p className="text-stone-500 mb-6 text-sm leading-relaxed">Having trouble with your account? Check our FAQs or contact support.</p>
+                 <p className="text-stone-500 mb-6 text-sm leading-relaxed">Having trouble with your account? Contact our support team for assistance.</p>
                  <div className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
                    Get Help <ArrowRight size={16} />
                  </div>
@@ -500,7 +498,7 @@ export default function AuriumLandingPage() {
               <h4 className="font-bold text-stone-200 mb-6 uppercase tracking-widest text-xs">Platform</h4>
               <ul className="space-y-4 text-stone-500 text-sm">
                 <li><Link href="#yearbook" className="hover:text-amber-500 transition-colors">Browse Yearbook</Link></li>
-                <li><Link href="#endorsed" className="hover:text-amber-500 transition-colors">Endorsed List</Link></li>
+                <li><Link href="#faq" className="hover:text-amber-500 transition-colors">FAQ</Link></li>
                 <li><Link href="/login" className="hover:text-amber-500 transition-colors">Graduate Portal</Link></li>
               </ul>
             </div>
@@ -510,7 +508,7 @@ export default function AuriumLandingPage() {
               <ul className="space-y-4 text-stone-500 text-sm">
                 <li><Link href="#" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
                 <li><Link href="#" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
-                <li><Link href="#" className="hover:text-amber-500 transition-colors">Contact Admin</Link></li>
+                <li><Link href="/support" className="hover:text-amber-500 transition-colors">Contact Support</Link></li>
               </ul>
             </div>
           </div>
