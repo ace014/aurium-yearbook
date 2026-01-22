@@ -363,7 +363,7 @@ export default function AuriumLandingPage() {
         </div>
       </section>
 
-      {/* --- NEW: MOMENTS OF TRIUMPH (INFINITE GALLERY) --- */}
+      {/* --- NEW: MOMENTS OF TRIUMPH (INFINITE GALLERY - OPTIMIZED) --- */}
       <section className="py-0 overflow-hidden bg-stone-900 border-t-4 border-b-4 border-amber-900 relative">
         {/* Cinematic Overlay */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none z-10"></div>
@@ -381,12 +381,12 @@ export default function AuriumLandingPage() {
             {/* Infinite Marquee Wrapper */}
             <div className="flex w-full overflow-hidden relative z-0">
                 <motion.div 
-                    className="flex gap-4 md:gap-6 px-4"
+                    className="flex gap-4 md:gap-6 px-4 will-change-transform"
                     animate={{ x: ["0%", "-50%"] }}
                     transition={{ 
                         repeat: Infinity, 
                         ease: "linear", 
-                        duration: 30 // Adjust speed here (higher = slower)
+                        duration: 30 
                     }}
                     style={{ width: "fit-content" }}
                 >
@@ -400,7 +400,8 @@ export default function AuriumLandingPage() {
                                 src={src} 
                                 alt={`Graduation Moment ${index}`} 
                                 fill 
-                                className="object-cover sepia-[.2] hover:sepia-0 transition-all duration-500" 
+                                sizes="(max-width: 768px) 280px, 400px"
+                                className="object-cover transition-all duration-500" 
                             />
                             {/* Film Grain/Vignette Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
