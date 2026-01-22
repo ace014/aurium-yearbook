@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox"; 
-import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar, Wifi, WifiOff, Loader2 } from "lucide-react";
+import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar, Wifi, WifiOff, Loader2, CreditCard } from "lucide-react";
 
 // --- 2. CONFIGURATION DATA ---
 const titleOptions = ["Mr.", "Mrs.", "Ms.", "Dr.", "Atty.", "Engr.", "Arch.", "Prof.", "Rev."];
@@ -62,6 +62,7 @@ export default function RegistrationWizard() {
   const [isOnline, setIsOnline] = useState(true); 
 
   // --- STATE: Personal ---
+  const [idNumber, setIdNumber] = useState(""); 
   const [lname, setLname] = useState("");
   const [fname, setFname] = useState("");
   const [mname, setMname] = useState("");
@@ -207,7 +208,7 @@ export default function RegistrationWizard() {
   // --- STATE: Academic & Other ---
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedMajor, setSelectedMajor] = useState("");
-  const [thesisTitle, setThesisTitle] = useState(""); // --- ADDED THESIS STATE ---
+  const [thesisTitle, setThesisTitle] = useState(""); 
   const [contactNum, setContactNum] = useState("");
   const [email, setEmail] = useState("");
   const [umEmail, setUmEmail] = useState(""); 
@@ -273,11 +274,11 @@ export default function RegistrationWizard() {
   const isStepValid = () => {
     switch (currentStep) {
       case 1: 
-        return lname.trim() !== "" && fname.trim() !== "" && bdate !== "";
+        // --- ADDED ID NUMBER VALIDATION ---
+        return idNumber.trim() !== "" && lname.trim() !== "" && fname.trim() !== "" && bdate !== "";
       case 2: 
         return selectedProvinceCode !== "" && selectedCityCode !== "" && selectedBarangayCode !== "";
       case 3: 
-        // --- ADDED THESIS VALIDATION ---
         return selectedCourse !== "" && selectedMajor !== "" && thesisTitle.trim() !== "" && contactNum.trim() !== "" && email.trim() !== "" && umEmail.trim() !== "";
       case 4: 
         if (useGuardian) {
@@ -416,6 +417,20 @@ export default function RegistrationWizard() {
               {/* --- STEP 1: PERSONAL --- */}
               {currentStep === 1 && (
                 <div className="space-y-4">
+                  {/* --- NEW: ID NUMBER FIELD --- */}
+                  <div className="space-y-2">
+                      <Label htmlFor="idNumber">Student ID Number <span className="text-red-500">*</span></Label>
+                      <Input 
+                        id="idNumber" 
+                        value={idNumber} 
+                        onChange={e => setIdNumber(e.target.value)} 
+                        placeholder="e.g. 142472" 
+                        className="h-11 font-mono text-amber-900 font-medium bg-amber-50/30 border-amber-200" 
+                      />
+                  </div>
+
+                  <div className="h-px bg-gray-100 my-2"></div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="lname">Last Name <span className="text-red-500">*</span></Label>
@@ -758,6 +773,14 @@ export default function RegistrationWizard() {
                            <UserCircle size={16} /> Personal Identity
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 bg-white p-4 rounded-lg border border-stone-100 shadow-sm">
+                           {/* --- NEW ID NUMBER REVIEW --- */}
+                           <div className="md:col-span-2 pb-2 border-b border-stone-50 mb-2">
+                              <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Student ID Number</span>
+                              <div className="flex items-center gap-2 text-amber-800 font-mono font-bold text-lg">
+                                 <CreditCard size={16}/> {idNumber || "-"}
+                              </div>
+                           </div>
+
                            <div>
                               <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Full Name</span>
                               <span className="text-stone-900 font-semibold text-lg">{fname} {mname} {lname} {suffix}</span>
@@ -865,7 +888,7 @@ export default function RegistrationWizard() {
                               </div>
                             ) : (
                               <span className="text-red-500 text-sm font-medium flex items-center gap-2">
-                                 <div className="w-2 h-2 rounded-full bg-red-500"></div> No photo uploaded
+                                  <div className="w-2 h-2 rounded-full bg-red-500"></div> No photo uploaded
                               </span>
                             )}
                             <Button variant="ghost" size="sm" onClick={() => jumpToStep(5)} className="text-amber-700 hover:text-amber-900 text-xs">
@@ -928,14 +951,18 @@ export default function RegistrationWizard() {
           </CardContent>
 
           <CardFooter className="flex justify-between border-t border-stone-100 bg-stone-50/50 p-6">
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className="text-stone-500 hover:text-stone-800"
-            >
-              Previous
-            </Button>
+            {currentStep > 1 ? (
+                <Button
+                  variant="ghost"
+                  onClick={handleBack}
+                  className="text-stone-500 hover:text-stone-800"
+                >
+                  Previous
+                </Button>
+            ) : (
+                <div className="w-20"></div> // Placeholder to keep Next button on the right
+            )}
+            
             <Button 
               className={`min-w-[140px] shadow-lg ${isStepValid() ? "bg-amber-900 hover:bg-amber-800 text-white shadow-amber-900/20" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
               onClick={handleNext}
