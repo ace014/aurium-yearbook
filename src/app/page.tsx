@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image"; 
 import { motion, useScroll, useTransform, easeOut, AnimatePresence } from "framer-motion";
@@ -30,6 +30,7 @@ export default function AuriumLandingPage() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const carouselRef = useRef(null);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -48,7 +49,7 @@ export default function AuriumLandingPage() {
     }
   };
 
-  // --- DATA: GALLERY IMAGES (From your screenshot) ---
+  // --- DATA: GALLERY IMAGES ---
   const galleryImages = [
     "/images/gradpics/DSC_0496.jpg",
     "/images/gradpics/DSC_0938.jpg",
@@ -415,7 +416,7 @@ export default function AuriumLandingPage() {
         </div>
       </section>
 
-      {/* --- STAFF / EDITORIAL BOARD SECTION (Full 2019-2025) --- */}
+      {/* --- STAFF / EDITORIAL BOARD SECTION (ORIGINAL LAYOUT BUT CAROUSEL) --- */}
       <section id="staff" className="py-16 md:py-24 bg-amber-900 text-white overflow-hidden relative">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-10"></div>
         <div className="container mx-auto px-4 md:px-6 relative z-10">
@@ -427,14 +428,20 @@ export default function AuriumLandingPage() {
             <p className="text-amber-200/80 text-lg">The dedicated individuals who craft the AURIUM masterpiece.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Draggable Carousel with Snap */}
+          <motion.div 
+             ref={carouselRef}
+             className="flex gap-6 md:gap-8 overflow-x-auto pb-10 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing"
+             whileTap={{ cursor: "grabbing" }}
+          >
              {staff.map((team, index) => (
                <motion.div 
                  key={index}
                  initial={{ opacity: 0, scale: 0.95 }}
                  whileInView={{ opacity: 1, scale: 1 }}
                  viewport={{ once: true }}
-                 className="bg-amber-950/50 p-4 rounded-2xl border border-amber-800/50 backdrop-blur-sm hover:border-amber-500/50 transition-colors"
+                 // min-w-[320px] ensures it doesn't get cut off on small screens
+                 className="bg-amber-950/50 p-4 rounded-2xl border border-amber-800/50 backdrop-blur-sm hover:border-amber-500/50 transition-colors snap-center shrink-0 min-w-[320px] md:min-w-[400px]"
                >
                  <div className="relative aspect-video w-full overflow-hidden rounded-xl mb-4 shadow-2xl">
                     <Image 
@@ -448,6 +455,11 @@ export default function AuriumLandingPage() {
                  <p className="text-amber-200/60 text-sm italic">"{team.quote}"</p>
                </motion.div>
              ))}
+          </motion.div>
+
+          {/* Mobile Scroll Hint */}
+          <div className="flex justify-center mt-4 text-amber-200/40 text-xs animate-pulse md:hidden">
+             <span>&larr; Swipe to explore &rarr;</span>
           </div>
         </div>
       </section>

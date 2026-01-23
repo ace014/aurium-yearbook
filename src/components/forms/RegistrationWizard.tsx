@@ -466,7 +466,7 @@ export default function RegistrationWizard() {
                                 id="idNumber" 
                                 value={idNumber} 
                                 onChange={e => setIdNumber(e.target.value)} 
-                                placeholder="e.g. 2022-00123" 
+                                placeholder="e.g. 142478" 
                                 className="h-11 font-mono text-amber-900 font-medium bg-amber-50/30 border-amber-200" 
                             />
                         </div>
