@@ -16,13 +16,15 @@ import {
   GraduationCap,
   Mail,
   Phone,
-  Quote // Added for the new layout
+  Quote,
+  FileText 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+// We keep Image import for the logo
 import Image from "next/image"; 
 import { Label } from "@/components/ui/label";
 
@@ -50,6 +52,7 @@ interface Student {
     academic: {
       course: string;
       major: string;
+      thesisTitle: string; 
       umEmail: string;
       personalEmail: string;
       contactNum: string;
@@ -81,8 +84,8 @@ interface ScheduleSlot {
 // --- MOCK DATA ---
 const STUDENT_DATA: Student = {
   name: "Juan Dela Cruz",
-  idNumber: "2020-00123",
-  photoUrl: "https://github.com/shadcn.png",
+  idNumber: "2022-00123",
+  photoUrl: "https://i.pinimg.com/736x/09/7b/2d/097b2d53634008344447550541004724.jpg", 
   status: "verified",
   
   details: {
@@ -101,15 +104,16 @@ const STUDENT_DATA: Student = {
     },
     academic: {
       course: "BACHELOR OF SCIENCE IN COMPUTER SCIENCE",
-      major: "N/A",
+      major: "Data Science",
+      thesisTitle: "Development of an AI-Powered Yearbook Layout System using Genetic Algorithms", 
       umEmail: "202000123.tc@umindanao.edu.ph",
       personalEmail: "juan.delacruz@gmail.com",
       contactNum: "09123456789"
     },
     family: {
       useGuardian: false,
-      father: "Pedro Santos Dela Cruz",
-      mother: "Maria Santos Dela Cruz",
+      father: "Mr. Pedro Santos Dela Cruz",
+      mother: "Mrs. Maria Santos Dela Cruz",
       guardian: "",
       guardianRelation: ""
     }
@@ -128,7 +132,6 @@ export default function StudentDashboard() {
   const [user, setUser] = useState<Student>(STUDENT_DATA);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false); 
   
   // Selection State
   const [selectedDate, setSelectedDate] = useState("");
@@ -148,23 +151,11 @@ export default function StudentDashboard() {
     setIsBookingModalOpen(false);
   };
 
-  // --- 1. SAFE NAME GENERATOR (Fixes "undefined undefined") ---
+  // --- 1. SAFE NAME GENERATOR ---
   const fullName = useMemo(() => {
     const p = user.details?.personal;
     if (!p) return "Loading...";
-    // Filters out empty/undefined values so they don't appear in the string
     return [p.fname, p.mname, p.lname, p.suffix].filter(Boolean).join(" ");
-  }, [user]);
-
-  // --- 2. SAFE DATE GENERATOR (Fixes "Invalid Date") ---
-  const formattedBirthdate = useMemo(() => {
-    const bdate = user.details?.personal?.birthdate;
-    if (!bdate) return "N/A";
-    try {
-        return new Date(bdate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    } catch (e) {
-        return "N/A";
-    }
   }, [user]);
 
   return (
@@ -242,167 +233,17 @@ export default function StudentDashboard() {
                         </div>
                     </div>
                     <div>
-                        {/* Using Safe Name Generator */}
                         <h3 className="font-bold text-xl text-stone-800 font-serif">{fullName}</h3>
                         <p className="text-sm font-medium text-amber-700 mt-1">{user.idNumber}</p>
                         <p className="text-xs text-stone-500 mt-2 leading-relaxed px-4">{user.details.academic.course}</p>
                     </div>
 
-                    {/* --- ENHANCED YEARBOOK PREVIEW BUTTON & MODAL --- */}
-                    <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full text-xs border-amber-200 text-amber-900 hover:bg-amber-50 hover:text-amber-900">
-                                <Info className="w-3 h-3 mr-2" /> Check Yearbook Entry
-                            </Button>
-                        </DialogTrigger>
-                        
-                        {/* MODAL CONTENT: Sticky Header/Footer Layout */}
-                        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-stone-50">
-                            
-                            {/* 1. Header (Fixed) */}
-                            <div className="p-6 pb-4 bg-white border-b border-stone-200 shrink-0 flex justify-between items-start">
-                                <div>
-                                    <DialogTitle className="font-serif text-2xl text-amber-950">Yearbook Page Preview</DialogTitle>
-                                    <DialogDescription className="text-stone-500">
-                                        This is how your data is recorded. Please review carefully.
-                                    </DialogDescription>
-                                </div>
-                                <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
-                                    DRAFT PREVIEW
-                                </Badge>
-                            </div>
-
-                            {/* 2. Scrollable Content Area */}
-                            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-stone-100">
-                                
-                                {/* Disclaimer Banner */}
-                                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3 items-start shadow-sm mx-auto max-w-4xl">
-                                    <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                                    <div>
-                                        <h4 className="font-bold text-blue-800 text-sm">Corrections & Editing</h4>
-                                        <p className="text-xs text-blue-700 leading-relaxed">
-                                            Edits can <strong>only be made on the day of your pictorial</strong> at the venue. This ensures final verification before printing.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* THE YEARBOOK PAGE DESIGN (Magazine Style) */}
-                                <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-sm overflow-hidden flex flex-col md:flex-row min-h-[600px] border border-stone-200">
-                                    
-                                    {/* Left Column: Visuals */}
-                                    <div className="md:w-1/3 bg-stone-900 p-8 flex flex-col items-center text-center relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-amber-900/20 to-stone-900 z-0"></div>
-                                        
-                                        {/* Photo Frame - USING STANDARD IMG TAG TO FIX ERROR */}
-                                        <div className="relative z-10 w-48 h-56 bg-stone-800 mb-6 p-2 shadow-2xl rotate-1 border border-stone-700">
-                                            <div className="w-full h-full relative overflow-hidden bg-stone-700">
-                                                <img src={user.photoUrl} alt="Student" className="object-cover w-full h-full" />
-                                            </div>
-                                        </div>
-
-                                        {/* Quote Section */}
-                                        <div className="relative z-10 mt-auto mb-8">
-                                            <Quote className="w-8 h-8 text-amber-700 mx-auto mb-2 opacity-50" />
-                                            <p className="text-stone-400 text-xs italic font-serif leading-relaxed px-4">
-                                                "Success is not final, failure is not fatal: it is the courage to continue that counts."
-                                            </p>
-                                        </div>
-
-                                        <div className="relative z-10 border-t border-stone-700 w-full pt-4 mt-4">
-                                            <p className="text-amber-500 text-[10px] uppercase tracking-[0.2em] font-bold">Class of 2026</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Right Column: Data */}
-                                    <div className="md:w-2/3 p-8 md:p-12 bg-white relative">
-                                        {/* Watermark */}
-                                        <div className="absolute top-1/2 right-10 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-                                            <div className="text-[200px] font-serif font-bold text-black leading-none">UM</div>
-                                        </div>
-
-                                        {/* Name Header */}
-                                        <div className="mb-10 border-b-2 border-amber-500 pb-4 inline-block pr-10">
-                                            <h2 className="text-4xl font-serif font-bold text-stone-900 uppercase leading-none mb-2">
-                                                {user.details.personal.lname},
-                                            </h2>
-                                            <h3 className="text-2xl font-serif text-stone-600">
-                                                {user.details.personal.fname} {user.details.personal.mname?.charAt(0)}.
-                                            </h3>
-                                        </div>
-
-                                        {/* Details Grid */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
-                                            
-                                            {/* Academic */}
-                                            <div className="col-span-1 md:col-span-2">
-                                                <h4 className="text-xs font-bold text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                    <GraduationCap className="w-4 h-4" /> Degree
-                                                </h4>
-                                                <p className="font-bold text-stone-800 text-lg leading-tight">{user.details.academic.course}</p>
-                                                {user.details.academic.major !== "N/A" && (
-                                                    <p className="text-stone-500 italic mt-1">Major in {user.details.academic.major}</p>
-                                                )}
-                                            </div>
-
-                                            {/* Personal Info */}
-                                            <div>
-                                                <h4 className="text-xs font-bold text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                    <UserCircle className="w-4 h-4" /> Personal
-                                                </h4>
-                                                <ul className="space-y-2 text-sm text-stone-600">
-                                                    <li><span className="font-bold text-stone-400 text-xs uppercase mr-2">Nickname:</span> {user.details.personal.nickname || "-"}</li>
-                                                    <li><span className="font-bold text-stone-400 text-xs uppercase mr-2">Born:</span> {formattedBirthdate}</li>
-                                                </ul>
-                                            </div>
-
-                                            {/* Address */}
-                                            <div>
-                                                <h4 className="text-xs font-bold text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                    <MapPin className="w-4 h-4" /> Hometown
-                                                </h4>
-                                                <p className="text-sm text-stone-600 leading-relaxed">
-                                                    {user.details.address.barangay}, {user.details.address.city},<br/>
-                                                    {user.details.address.province}
-                                                </p>
-                                            </div>
-
-                                            {/* Family */}
-                                            <div className="col-span-1 md:col-span-2">
-                                                <h4 className="text-xs font-bold text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                    <Users className="w-4 h-4" /> Parents / Guardian
-                                                </h4>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-stone-50 p-4 rounded-lg border border-stone-100">
-                                                    {user.details.family.useGuardian ? (
-                                                        <div>
-                                                            <p className="text-xs font-bold text-stone-400 uppercase">Guardian</p>
-                                                            <p className="text-stone-800 font-medium">{user.details.family.guardian}</p>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <div>
-                                                                <p className="text-xs font-bold text-stone-400 uppercase">Father</p>
-                                                                <p className="text-stone-800 font-medium">{user.details.family.father}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs font-bold text-stone-400 uppercase">Mother</p>
-                                                                <p className="text-stone-800 font-medium">{user.details.family.mother}</p>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* 3. Footer (Fixed) */}
-                            <DialogFooter className="p-4 border-t bg-stone-50 shrink-0">
-                                <Button onClick={() => setIsDetailsOpen(false)} className="w-full sm:w-auto bg-stone-800 hover:bg-stone-900">Close Preview</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    {/* --- UPDATED: BUTTON LINKS TO CORRECT NESTED PAGE --- */}
+                    <Link href="/student/dashboard/yearbook-preview" className="w-full">
+                        <Button variant="outline" className="w-full text-xs border-amber-200 text-amber-900 hover:bg-amber-50 hover:text-amber-900">
+                            <Info className="w-3 h-3 mr-2" /> Check Yearbook Entry
+                        </Button>
+                    </Link>
 
                 </CardContent>
             </Card>
