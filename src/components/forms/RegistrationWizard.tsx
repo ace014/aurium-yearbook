@@ -69,7 +69,6 @@ export default function RegistrationWizard() {
   const [suffix, setSuffix] = useState("");
   const [nickname, setNickname] = useState("");
   const [bdate, setBdate] = useState("");
-
   const formattedBirthdate = useMemo(() => {
     if (!bdate) return "-";
     const date = new Date(bdate);
@@ -318,11 +317,46 @@ export default function RegistrationWizard() {
   };
 
   const onSubmit = async () => {
-    //sample data
+    const payload: any = {};
+    
+    //post condition if using guardian or parent
+    if (useGuardian) {
+      payload.guardian = {
+        first_name: guardianFname,
+        last_name: guardianLname,
+      }; 
+    } else {
+      payload.parent = {
+        father: {
+          first_name: fatherFname,
+          last_name: fatherLname,
+          middle_name: fatherMname,
+          suffix: fatherSuffix,
+        },
+        mother: {
+          first_name: motherFname,
+          last_name: motherLname,
+          middle_name: motherMname,
+        },
+      };
+    }
+
     const body = {
-      id: 1,
-      user: "koi",
-      course: "CS"
+      id: idNumber,
+      personal_email: email,
+      school_email: umEmail,
+      last_name: lname,
+      first_name: fname,
+      middle_name: mname,
+      suffix: suffix,
+      nickname: nickname,
+      birthdate: bdate,
+      academics: {
+        course: selectedCourse,
+        major: selectedMajor,
+        thesis: thesisTitle,
+      },
+      ...payload, //could be either guardian or parent
     };
 
     try {
