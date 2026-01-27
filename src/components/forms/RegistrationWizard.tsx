@@ -50,6 +50,7 @@ const steps = [
   { id: 7, name: "Privacy", title: "Data Privacy" },
 ];
 
+// Title Case function
 const toTitleCase = (str: string) => {
   return str.replace(/\w\S*/g, (txt) => {
     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
@@ -67,13 +68,27 @@ export default function RegistrationWizard() {
   const [fname, setFname] = useState("");
   const [mname, setMname] = useState("");
   const [suffix, setSuffix] = useState("");
-  const [nickname, setNickname] = useState("");
+  const [nickname, setNickname] = useState(""); // Stores RAW nickname without quotes for better UX
   const [bdate, setBdate] = useState("");
+  
   const formattedBirthdate = useMemo(() => {
     if (!bdate) return "-";
     const date = new Date(bdate);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }, [bdate]);
+
+  // --- NICKNAME HANDLER (UX FIX) ---
+  // We only apply Title Case here. We DO NOT add quotes while typing to avoid breaking backspace.
+  const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Just sanitize double quotes if user types them manually, otherwise just Title Case
+    const val = e.target.value.replace(/"/g, ''); 
+    setNickname(toTitleCase(val));
+  };
+
+  // Helper to format nickname with quotes for Display/Submission
+  const getFormattedNickname = () => {
+    return nickname.trim() ? `"${nickname.trim()}"` : "";
+  };
 
   // --- STATE: Address (Dynamic API Data Only) ---
   const [provinceList, setProvinceList] = useState<any[]>([]);
@@ -102,10 +117,9 @@ export default function RegistrationWizard() {
       "Davao Oriental"
     ];
     
-    // API returns clean names usually, but we ensure casing matches just in case
     const normalizedData = data.map(p => {
         let name = p.name;
-        if (name === "Compostela Valley") name = "Davao de Oro"; // Just in case API is old
+        if (name === "Compostela Valley") name = "Davao de Oro"; 
         return { ...p, name };
     });
 
@@ -349,14 +363,15 @@ export default function RegistrationWizard() {
       first_name: fname,
       middle_name: mname,
       suffix: suffix,
-      nickname: nickname,
+      // FIX: Ensure quotes are added upon submission
+      nickname: getFormattedNickname(), 
       birthdate: bdate,
       academics: {
         course: selectedCourse,
         major: selectedMajor,
         thesis: thesisTitle,
       },
-      ...payload, //could be either guardian or parent
+      ...payload, 
     };
 
     try {
@@ -529,7 +544,19 @@ export default function RegistrationWizard() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="nickname">Nickname (for Yearbook)</Label>
-                            <Input id="nickname" value={nickname} onChange={e => setNickname(toTitleCase(e.target.value))} placeholder="Juanny" className="h-11" />
+                            {/* FIX: Input is raw value to allow easy editing */}
+                            <Input 
+                                id="nickname" 
+                                value={nickname} 
+                                onChange={handleNicknameChange} 
+                                placeholder="Juanny" 
+                                className="h-11" 
+                            />
+                            {nickname && (
+                                <p className="text-xs text-stone-500 mt-1">
+                                    Preview: <span className="font-bold text-amber-800">"{nickname}"</span>
+                                </p>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="bdate">Birthdate <span className="text-red-500">*</span></Label>
@@ -863,7 +890,8 @@ export default function RegistrationWizard() {
                                 </div>
                                 <div>
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Nickname</span>
-                                    <span className="text-stone-900 font-medium">{nickname || "-"}</span>
+                                    {/* FIX: Use the helper to show the quotes on review page */}
+                                    <span className="text-stone-900 font-medium">{getFormattedNickname() || "-"}</span>
                                 </div>
                                 <div>
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Birthdate</span>
