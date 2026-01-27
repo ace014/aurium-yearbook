@@ -1,195 +1,382 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { 
   ScanLine, 
   CheckCircle, 
   XCircle, 
-  Calendar, 
-  Clock, 
-  User, 
-  History 
+  Camera, 
+  CameraOff,
+  Search,
+  ListFilter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// --- MOCK DATABASE OF STUDENTS ---
-const STUDENTS_DB = [
-  { 
-    id: "2020-00123", 
-    name: "Juan Dela Cruz", 
-    photo: "https://github.com/shadcn.png", 
-    schedule: { date: "2026-03-15", session: "AM" } 
-  },
-  { 
-    id: "2020-00456", 
-    name: "Maria Clara", 
-    photo: "https://github.com/shadcn.png", 
-    schedule: { date: "2026-03-15", session: "PM" } // Scheduled for PM
-  },
+// --- NEW LIBRARY IMPORT ---
+import { Scanner } from '@yudiel/react-qr-scanner';
+
+// --- TYPES ---
+interface Student {
+  id: string;
+  name: string;
+  photo: string;
+  status: "present" | "absent";
+  timeIn?: string;
+  schedule: {
+      date: string;
+      session: "AM" | "PM";
+  };
+}
+
+// --- MOCK DATABASE ---
+const GLOBAL_STUDENT_DB: Student[] = [
+    { id: "2020-00123", name: "Juan Dela Cruz", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "AM" } },
+    { id: "2020-00124", name: "Maria Clara", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "AM" } },
+    { id: "2020-00125", name: "Jose Rizal", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "AM" } },
+    { id: "2020-00456", name: "Emilio Aguinaldo", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "PM" } },
+    { id: "2020-00457", name: "Apolinario Mabini", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "PM" } },
+    { id: "2020-00789", name: "Lapu Lapu", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-16", session: "AM" } },
+];
+
+const SESSION_OPTIONS = [
+    { label: "March 15 - Morning (AM)", date: "2026-03-15", session: "AM" },
+    { label: "March 15 - Afternoon (PM)", date: "2026-03-15", session: "PM" },
+    { label: "March 16 - Morning (AM)", date: "2026-03-16", session: "AM" },
 ];
 
 export default function ScannerPage() {
   const [scanInput, setScanInput] = useState("");
   const [scanResult, setScanResult] = useState<"idle" | "success" | "error">("idle");
-  const [scannedStudent, setScannedStudent] = useState<any>(null);
+  const [scannedStudent, setScannedStudent] = useState<Student | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [isCameraActive, setIsCameraActive] = useState(true);
+  
+  // --- SESSION STATE ---
+  const [currentSessionKey, setCurrentSessionKey] = useState("2026-03-15-AM"); 
+  const [selectedDate, selectedSession] = currentSessionKey.split("-").length === 4 
+      ? [currentSessionKey.substring(0, 10), currentSessionKey.substring(11)] 
+      : ["2026-03-15", "AM"]; 
 
-  // Simulate "Today's Date" and "Current Session"
-  const TODAY = "2026-03-15";
-  const CURRENT_SESSION = "AM"; 
+  // --- LOCAL ATTENDANCE STATE ---
+  const [localStudentDB, setLocalStudentDB] = useState<Student[]>(GLOBAL_STUDENT_DB);
+  const [filter, setFilter] = useState<"all" | "present" | "absent">("all");
 
-  const handleScan = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!scanInput) return;
+  // --- DERIVED LISTS ---
+  const sessionList = useMemo(() => {
+      return localStudentDB.filter(s => 
+          s.schedule.date === selectedDate && s.schedule.session === selectedSession
+      );
+  }, [localStudentDB, selectedDate, selectedSession]);
 
-    const student = STUDENTS_DB.find(s => s.id === scanInput);
+  const displayedList = useMemo(() => {
+      if (filter === "all") return sessionList;
+      return sessionList.filter(s => s.status === filter);
+  }, [sessionList, filter]);
 
-    // 1. CHECK: Does student exist?
-    if (!student) {
+  const totalStudents = sessionList.length;
+  const presentCount = sessionList.filter(s => s.status === "present").length;
+  const absentCount = totalStudents - presentCount;
+
+  // --- CORE SCAN LOGIC ---
+  const processScan = (idToScan: string) => {
+    if (!idToScan) return;
+
+    const studentRecord = localStudentDB.find(s => s.id === idToScan);
+
+    if (!studentRecord) {
         setScanResult("error");
-        setErrorMessage("Student ID not found in system.");
+        setErrorMessage("ID not found in database.");
         setScannedStudent(null);
         return;
     }
 
-    // 2. CHECK: Is it the right day?
-    if (student.schedule.date !== TODAY) {
+    setScannedStudent(studentRecord);
+
+    if (studentRecord.schedule.date !== selectedDate || studentRecord.schedule.session !== selectedSession) {
         setScanResult("error");
-        setErrorMessage(`Wrong Date! Scheduled for: ${student.schedule.date}`);
-        setScannedStudent(student);
+        setErrorMessage(`Wrong Session! Scheduled for: ${studentRecord.schedule.date} (${studentRecord.schedule.session})`);
         return;
     }
 
-    // 3. CHECK: Is it the right session?
-    if (student.schedule.session !== CURRENT_SESSION) {
-        setScanResult("error");
-        setErrorMessage(`Wrong Session! Scheduled for: ${student.schedule.session} (Currently ${CURRENT_SESSION})`);
-        setScannedStudent(student);
+    if (studentRecord.status === 'present') {
+        setScanResult("error"); 
+        setErrorMessage("Student already scanned!");
         return;
     }
 
-    // SUCCESS!
     setScanResult("success");
-    setScannedStudent(student);
     setErrorMessage("");
     
-    // Add to local logs
-    setRecentLogs(prev => [{...student, time: new Date().toLocaleTimeString()}, ...prev]);
-    
-    // Reset input for next scan
+    setLocalStudentDB(prev => prev.map(student => 
+        student.id === studentRecord.id 
+            ? { ...student, status: "present", timeIn: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) } 
+            : student
+    ));
+
+    setTimeout(() => {
+        setScanResult("idle");
+        setScannedStudent(null);
+    }, 3000);
+  };
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    processScan(scanInput);
     setScanInput("");
   };
 
+  // --- NEW HANDLER FOR @yudiel/react-qr-scanner ---
+  const handleQrScan = (detectedCodes: any[]) => {
+    if (detectedCodes && detectedCodes.length > 0) {
+        const rawValue = detectedCodes[0].rawValue;
+        if (rawValue && scanResult === "idle") {
+            processScan(rawValue);
+        }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-stone-900 text-stone-100 flex flex-col md:flex-row font-sans">
+    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col lg:flex-row font-sans overflow-hidden">
       
-      {/* LEFT: SCANNER AREA */}
-      <div className="flex-1 p-8 flex flex-col justify-center items-center relative overflow-hidden">
-        {/* Background Pulse Effect for Success/Error */}
-        <div className={`absolute inset-0 transition-colors duration-500 opacity-20 pointer-events-none 
-            ${scanResult === 'success' ? 'bg-green-500' : scanResult === 'error' ? 'bg-red-500' : 'bg-transparent'}`} 
-        />
-
-        <div className="z-10 w-full max-w-md space-y-8">
-            <div className="text-center space-y-2">
-                <Badge variant="outline" className="text-amber-400 border-amber-500/50 bg-amber-900/20 px-4 py-1 text-xs">
-                    SESSION: {CURRENT_SESSION} • {TODAY}
-                </Badge>
-                <h1 className="text-3xl font-serif font-bold text-white tracking-wide">Entrance Scanner</h1>
-                <p className="text-stone-400 text-sm">Scan QR Code to validate attendance</p>
+      {/* LEFT: SCANNER AREA (60%) */}
+      <div className="flex-1 flex flex-col relative border-r border-stone-800">
+        
+        {/* Header Overlay */}
+        <div className="absolute top-0 left-0 w-full p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center z-20 gap-4 pointer-events-none">
+            <div className="pointer-events-auto">
+                <h1 className="text-2xl font-serif font-bold text-white tracking-wide flex items-center gap-2">
+                    <ScanLine className="text-amber-500"/> Entrance Scanner
+                </h1>
+                <p className="text-stone-400 text-xs mt-1">AURIUM Event Management System</p>
             </div>
+            
+            <div className="w-full sm:w-64 pointer-events-auto">
+                <Select value={currentSessionKey} onValueChange={setCurrentSessionKey}>
+                    <SelectTrigger className="w-full bg-stone-900 border-stone-700 text-amber-400 font-bold">
+                        <SelectValue placeholder="Select Session" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-stone-900 border-stone-700 text-stone-200">
+                        {SESSION_OPTIONS.map(opt => (
+                            <SelectItem key={`${opt.date}-${opt.session}`} value={`${opt.date}-${opt.session}`}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
 
-            {/* SCANNER FORM */}
-            <Card className="bg-stone-800 border-stone-700 shadow-2xl">
-                <CardContent className="p-6 space-y-4">
-                    <form onSubmit={handleScan} className="flex gap-2">
-                        <Input 
-                            autoFocus
-                            placeholder="Scan or Type ID Number..." 
-                            className="bg-stone-900 border-stone-600 text-white h-12 text-lg font-mono placeholder:text-stone-600"
-                            value={scanInput}
-                            onChange={(e) => setScanInput(e.target.value)}
-                        />
-                        <Button type="submit" size="lg" className="bg-amber-600 hover:bg-amber-700">
-                            <ScanLine className="w-6 h-6" />
-                        </Button>
-                    </form>
+        {/* Scanner Content */}
+        <div className="flex-1 flex flex-col justify-center items-center p-8 relative pt-24">
+            
+            <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none opacity-20
+                ${scanResult === 'success' ? 'bg-green-500' : scanResult === 'error' ? 'bg-red-500' : 'bg-transparent'}`} 
+            />
 
-                    {/* RESULT DISPLAY */}
-                    <div className="min-h-[200px] flex flex-col items-center justify-center p-4 rounded-xl border border-stone-700/50 bg-stone-900/50">
-                        {scanResult === 'idle' && (
-                            <div className="text-center text-stone-600">
-                                <ScanLine className="w-16 h-16 mx-auto mb-2 opacity-20" />
-                                <p>Ready to Scan...</p>
-                            </div>
-                        )}
-
-                        {scanResult === 'success' && scannedStudent && (
-                            <div className="text-center space-y-3 animate-in zoom-in-95 duration-200">
-                                <div className="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-2">
-                                    <CheckCircle className="w-12 h-12 text-green-500" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-green-400">ACCESS GRANTED</h2>
-                                <div>
-                                    <p className="text-xl font-bold text-white">{scannedStudent.name}</p>
-                                    <p className="text-stone-400">{scannedStudent.id}</p>
-                                </div>
-                                <Badge className="bg-green-600">Added to Queue</Badge>
-                            </div>
-                        )}
-
-                        {scanResult === 'error' && (
-                            <div className="text-center space-y-3 animate-in shake duration-300">
-                                <div className="w-24 h-24 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-2">
-                                    <XCircle className="w-12 h-12 text-red-500" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-red-400">ACCESS DENIED</h2>
-                                {scannedStudent && (
-                                    <div>
-                                        <p className="text-xl font-bold text-white">{scannedStudent.name}</p>
-                                        <p className="text-red-300 text-sm font-bold mt-1">{errorMessage}</p>
-                                    </div>
-                                )}
-                                {!scannedStudent && <p className="text-stone-400">{errorMessage}</p>}
-                            </div>
-                        )}
+            <div className="z-10 w-full max-w-md space-y-6">
+                
+                {/* --- FUTURISTIC SCANNER CARD --- */}
+                <div className="relative group">
+                    <div className={`absolute -inset-1 rounded-xl opacity-75 blur transition duration-500 
+                        ${scanResult === 'success' ? 'bg-green-500' : scanResult === 'error' ? 'bg-red-500' : 'bg-amber-500/20'}`}>
                     </div>
-                </CardContent>
-            </Card>
+                    
+                    <Card className={`relative border-0 shadow-2xl overflow-hidden bg-stone-900`}>
+                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-amber-500/50 rounded-tl-lg z-20 animate-pulse"></div>
+                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-amber-500/50 rounded-tr-lg z-20 animate-pulse"></div>
+                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-amber-500/50 rounded-bl-lg z-20 animate-pulse"></div>
+                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-amber-500/50 rounded-br-lg z-20 animate-pulse"></div>
+
+                        {/* --- CAMERA AREA --- */}
+                        <div className="relative w-full aspect-square bg-black flex items-center justify-center overflow-hidden">
+                            
+                            {isCameraActive ? (
+                                <div className="absolute inset-0 z-0">
+                                    <Scanner 
+                                        onScan={handleQrScan}
+                                        scanDelay={3000} // Pauses for 3s after a scan
+                                        constraints={{ facingMode: 'environment' }}
+                                        styles={{ container: { width: '100%', height: '100%' }, video: { objectFit: 'cover' } }}
+                                    />
+                                    {/* Scan Line Overlay */}
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.8)] animate-[scan_2s_ease-in-out_infinite] z-10"></div>
+                                </div>
+                            ) : (
+                                <div className="text-stone-600 flex flex-col items-center">
+                                    <CameraOff className="w-12 h-12 mb-2" />
+                                    <p className="text-sm">Camera Paused</p>
+                                </div>
+                            )}
+
+                            {/* RESULT OVERLAYS */}
+                            {scanResult === 'success' && scannedStudent && (
+                                <div className="absolute inset-0 z-30 bg-stone-900/90 flex flex-col items-center justify-center animate-in zoom-in-95 duration-200 p-4 text-center">
+                                    <Avatar className="w-24 h-24 border-4 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.6)] mb-4">
+                                        <AvatarImage src={scannedStudent.photo} />
+                                        <AvatarFallback>JD</AvatarFallback>
+                                    </Avatar>
+                                    <h2 className="text-3xl font-black text-green-400 tracking-widest drop-shadow-md">PRESENT</h2>
+                                    <p className="text-xl font-bold text-white mt-2 truncate max-w-full">{scannedStudent.name}</p>
+                                    <p className="text-stone-400 font-mono text-lg">{scannedStudent.id}</p>
+                                </div>
+                            )}
+
+                            {scanResult === 'error' && (
+                                <div className="absolute inset-0 z-30 bg-stone-900/90 flex flex-col items-center justify-center animate-in zoom-in-95 duration-200 p-4 text-center">
+                                    <XCircle className="w-24 h-24 text-red-500 mb-4 shadow-[0_0_30px_rgba(239,68,68,0.4)]" />
+                                    <h2 className="text-3xl font-black text-red-500 tracking-widest">DENIED</h2>
+                                    <p className="text-red-200 font-medium text-sm mt-2 bg-red-950/50 px-3 py-1 rounded">{errorMessage}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Controls */}
+                        <div className="p-4 bg-stone-900 border-t border-stone-800 flex justify-between items-center z-20 relative">
+                            <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${isCameraActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                                <span className="text-xs text-stone-400 uppercase tracking-wider font-bold">
+                                    {isCameraActive ? 'Camera Live' : 'Camera Off'}
+                                </span>
+                            </div>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setIsCameraActive(!isCameraActive)}
+                                className="h-8 w-8 p-0 text-stone-400 hover:text-white"
+                            >
+                                {isCameraActive ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
+                            </Button>
+                        </div>
+
+                    </Card>
+                </div>
+
+                <form onSubmit={handleManualSubmit} className="relative group">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-stone-500 group-focus-within:text-amber-500 transition-colors"/>
+                    </div>
+                    <Input 
+                        placeholder="Manual Entry: Type ID & Enter..." 
+                        className="bg-stone-900 border-stone-700 text-white h-14 pl-10 text-lg font-mono placeholder:text-stone-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all rounded-xl shadow-inner"
+                        value={scanInput}
+                        onChange={(e) => setScanInput(e.target.value)}
+                    />
+                    <Button type="submit" className="absolute right-2 top-2 bottom-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg">
+                        Enter
+                    </Button>
+                </form>
+
+            </div>
         </div>
       </div>
 
-      {/* RIGHT: ATTENDANCE LOG */}
-      <div className="w-full md:w-96 bg-stone-800 border-l border-stone-700 p-6 flex flex-col">
-        <h3 className="flex items-center gap-2 font-bold text-stone-300 mb-4">
-            <History className="w-4 h-4" /> Live Attendance Log
-        </h3>
-        <ScrollArea className="flex-1 pr-4">
-            <div className="space-y-3">
-                {recentLogs.map((log, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-stone-900/50 border border-stone-700">
-                        <Avatar className="h-10 w-10 border border-green-500/50">
-                            <AvatarImage src={log.photo} />
-                            <AvatarFallback>JD</AvatarFallback>
+      {/* RIGHT: ATTENDANCE LIST (40%) */}
+      <div className="w-full lg:w-[450px] bg-stone-900 flex flex-col border-l border-stone-800 shadow-2xl z-20">
+        
+        {/* Stats Header */}
+        <div className="p-6 bg-stone-900 border-b border-stone-800">
+            <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                <ListFilter className="w-5 h-5 text-amber-500"/> Attendance: {selectedSession} Session
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+                <div className="bg-stone-800 p-3 rounded-lg border border-stone-700 text-center">
+                    <p className="text-2xl font-bold text-white">{totalStudents}</p>
+                    <p className="text-[10px] uppercase text-stone-500 font-bold tracking-wider">Total</p>
+                </div>
+                <div className="bg-green-900/20 p-3 rounded-lg border border-green-900/30 text-center">
+                    <p className="text-2xl font-bold text-green-400">{presentCount}</p>
+                    <p className="text-[10px] uppercase text-green-600 font-bold tracking-wider">Present</p>
+                </div>
+                <div className="bg-stone-800 p-3 rounded-lg border border-stone-700 text-center opacity-60">
+                    <p className="text-2xl font-bold text-stone-400">{absentCount}</p>
+                    <p className="text-[10px] uppercase text-stone-500 font-bold tracking-wider">Absent</p>
+                </div>
+            </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="px-6 pt-4">
+            <Tabs defaultValue="all" className="w-full" onValueChange={(val) => setFilter(val as any)}>
+                <TabsList className="w-full bg-stone-800">
+                    <TabsTrigger value="all" className="flex-1 text-xs">All Students</TabsTrigger>
+                    <TabsTrigger value="present" className="flex-1 text-xs text-green-400 data-[state=active]:bg-green-900/20">Present</TabsTrigger>
+                    <TabsTrigger value="absent" className="flex-1 text-xs text-stone-400">Absent</TabsTrigger>
+                </TabsList>
+            </Tabs>
+        </div>
+
+        {/* Scrollable List */}
+        <ScrollArea className="flex-1 p-6">
+            <div className="space-y-2">
+                {displayedList.map((student) => (
+                    <div 
+                        key={student.id} 
+                        className={`group flex items-center gap-3 p-3 rounded-lg border transition-all duration-300
+                        ${student.status === 'present' 
+                            ? 'bg-green-900/10 border-green-900/30' 
+                            : 'bg-stone-900 border-stone-800 opacity-60 hover:opacity-100 hover:bg-stone-800'
+                        }`}
+                    >
+                        <Avatar className={`h-10 w-10 border-2 ${student.status === 'present' ? 'border-green-500' : 'border-stone-700'}`}>
+                            <AvatarImage src={student.photo} />
+                            <AvatarFallback className="bg-stone-800 text-stone-400">JD</AvatarFallback>
                         </Avatar>
+                        
+                        <div className="flex-1 min-w-0">
+                            <p className={`font-bold text-sm truncate ${student.status === 'present' ? 'text-white' : 'text-stone-400'}`}>
+                                {student.name}
+                            </p>
+                            <p className="text-xs text-stone-500 font-mono truncate">{student.id}</p>
+                        </div>
+
                         <div>
-                            <p className="font-bold text-sm text-stone-200">{log.name}</p>
-                            <p className="text-xs text-stone-500 font-mono">{log.time}</p>
+                            {student.status === 'present' ? (
+                                <div className="text-right">
+                                    <Badge className="bg-green-600 hover:bg-green-600 text-[10px] px-2 h-5">Present</Badge>
+                                    <p className="text-[10px] text-green-400/70 font-mono mt-1">{student.timeIn}</p>
+                                </div>
+                            ) : (
+                                <Badge variant="outline" className="border-stone-700 text-stone-600 text-[10px] px-2 h-5">
+                                    Waiting
+                                </Badge>
+                            )}
                         </div>
                     </div>
                 ))}
-                {recentLogs.length === 0 && (
-                    <p className="text-center text-stone-600 text-sm py-10">No scans yet today.</p>
+
+                {displayedList.length === 0 && (
+                    <div className="text-center py-12 text-stone-500 text-sm">
+                        No students found for this session.
+                    </div>
                 )}
             </div>
         </ScrollArea>
+
+        {/* Footer Actions */}
+        <div className="p-4 bg-stone-900 border-t border-stone-800 text-center">
+            <Button variant="ghost" className="w-full text-stone-500 hover:text-white hover:bg-stone-800 text-xs">
+                Export Attendance Report
+            </Button>
+        </div>
+
       </div>
+      
+      {/* CSS Animation for Scan Line */}
+      <style jsx global>{`
+        @keyframes scan {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+      `}</style>
 
     </div>
   );
