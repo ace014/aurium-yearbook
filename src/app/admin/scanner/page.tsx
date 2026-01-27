@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   ScanLine, 
   CheckCircle, 
@@ -21,6 +21,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // --- NEW LIBRARY IMPORT ---
 import { Scanner } from '@yudiel/react-qr-scanner';
+
+// --- SOUND ASSETS ---
+// Success: A pleasant chime
+const AUDIO_SUCCESS = "https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3?filename=success-1-6297.mp3"; 
+// Error: A harsh buzzer sound ("Eeeeeek!")
+const AUDIO_ERROR = "https://www.myinstants.com/media/sounds/wrong-answer-sound-effect.mp3";
 
 // --- TYPES ---
 interface Student {
@@ -68,6 +74,13 @@ export default function ScannerPage() {
   const [localStudentDB, setLocalStudentDB] = useState<Student[]>(GLOBAL_STUDENT_DB);
   const [filter, setFilter] = useState<"all" | "present" | "absent">("all");
 
+  // --- AUDIO PLAYER HELPER ---
+  const playAudio = (type: "success" | "error") => {
+      const audio = new Audio(type === "success" ? AUDIO_SUCCESS : AUDIO_ERROR);
+      audio.volume = 0.5;
+      audio.play().catch(e => console.log("Audio play failed (user interaction needed first)", e));
+  };
+
   // --- DERIVED LISTS ---
   const sessionList = useMemo(() => {
       return localStudentDB.filter(s => 
@@ -88,31 +101,51 @@ export default function ScannerPage() {
   const processScan = (idToScan: string) => {
     if (!idToScan) return;
 
+    // Helper to reset scanner after 3 seconds
+    const triggerReset = () => {
+        setTimeout(() => {
+            setScanResult("idle");
+            setScannedStudent(null);
+            setErrorMessage("");
+        }, 3000);
+    };
+
     const studentRecord = localStudentDB.find(s => s.id === idToScan);
 
+    // ERROR 1: ID NOT FOUND
     if (!studentRecord) {
         setScanResult("error");
         setErrorMessage("ID not found in database.");
         setScannedStudent(null);
+        playAudio("error"); // <--- PLAY ERROR SOUND
+        triggerReset(); 
         return;
     }
 
     setScannedStudent(studentRecord);
 
+    // ERROR 2: WRONG SESSION
     if (studentRecord.schedule.date !== selectedDate || studentRecord.schedule.session !== selectedSession) {
         setScanResult("error");
         setErrorMessage(`Wrong Session! Scheduled for: ${studentRecord.schedule.date} (${studentRecord.schedule.session})`);
+        playAudio("error"); // <--- PLAY ERROR SOUND
+        triggerReset();
         return;
     }
 
+    // ERROR 3: ALREADY SCANNED
     if (studentRecord.status === 'present') {
         setScanResult("error"); 
         setErrorMessage("Student already scanned!");
+        playAudio("error"); // <--- PLAY ERROR SOUND
+        triggerReset();
         return;
     }
 
+    // SUCCESS
     setScanResult("success");
     setErrorMessage("");
+    playAudio("success"); // <--- PLAY SUCCESS SOUND
     
     setLocalStudentDB(prev => prev.map(student => 
         student.id === studentRecord.id 
@@ -120,10 +153,7 @@ export default function ScannerPage() {
             : student
     ));
 
-    setTimeout(() => {
-        setScanResult("idle");
-        setScannedStudent(null);
-    }, 3000);
+    triggerReset(); 
   };
 
   const handleManualSubmit = (e: React.FormEvent) => {
@@ -201,7 +231,8 @@ export default function ScannerPage() {
                                 <div className="absolute inset-0 z-0">
                                     <Scanner 
                                         onScan={handleQrScan}
-                                        scanDelay={3000} // Pauses for 3s after a scan
+                                        scanDelay={3000} 
+                                        // REMOVED 'components={{ audio: false }}' TO FIX TYPE ERROR
                                         constraints={{ facingMode: 'environment' }}
                                         styles={{ container: { width: '100%', height: '100%' }, video: { objectFit: 'cover' } }}
                                     />
