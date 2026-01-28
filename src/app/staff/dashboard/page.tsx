@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { 
   Users, 
-  FileText, 
   User, 
   ScanLine, 
   Search, 
@@ -12,10 +11,16 @@ import {
   CheckCircle2, 
   Save, 
   Clock, 
-  MoreHorizontal,
   LogOut,
   StickyNote,
-  Plus
+  Plus,
+  MapPin,
+  Phone,
+  Mail,
+  GraduationCap,
+  Home,
+  BookOpen,
+  Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,10 +28,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea"; 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; 
 
 // --- MOCK DATA ---
 const STAFF_USER = {
@@ -39,27 +43,66 @@ const STAFF_USER = {
 const MOCK_GRADUATES = [
   { 
     id: "2020-00123", 
-    name: "Juan Dela Cruz", 
-    course: "BS Computer Science", 
+    // Personal
+    lname: "Dela Cruz",
+    fname: "Juan",
+    mname: "Santos",
+    suffix: "",
+    nickname: "\"Juanny\"",
+    birthdate: "2002-05-15",
+    
+    // Address
+    province: "Davao del Norte",
+    city: "Tagum City",
+    barangay: "Visayan Village",
+
+    // Academic
+    course: "BACHELOR OF SCIENCE IN COMPUTER SCIENCE", 
     major: "Data Science", 
-    quote: "It always seems impossible until it's done.", 
+    thesis: "AI-Driven Traffic Management System for Tagum City",
+    
+    // Contact
+    contactNum: "09123456789",
+    personalEmail: "juan.delacruz@gmail.com",
+    umEmail: "202000123.tc@umindanao.edu.ph",
+
+    // Family
+    father: "Pedro Dela Cruz",
+    mother: "Maria Dela Cruz",
+    guardian: "", 
+    
     photo: "https://github.com/shadcn.png",
-    status: "pending", // pending, verified
+    
+    // System Status
+    status: "pending", 
     last_edited_by: null,
     last_edited_at: null
   },
   { 
     id: "2020-00456", 
-    name: "Maria Clara", 
-    course: "BS Business Admin", 
-    major: "Marketing", 
-    quote: "Keep your face always toward the sunshine.", 
+    lname: "Clara",
+    fname: "Maria",
+    mname: "Reyes",
+    suffix: "",
+    nickname: "\"Mar\"",
+    birthdate: "2001-11-20",
+    province: "Davao de Oro",
+    city: "Nabunturan",
+    barangay: "Poblacion",
+    course: "BACHELOR OF SCIENCE IN BUSINESS ADMINISTRATION", 
+    major: "Marketing Management", 
+    thesis: "Impact of Social Media Marketing on Local Coffee Shops",
+    contactNum: "09987654321",
+    personalEmail: "maria.clara@yahoo.com",
+    umEmail: "202000456.tc@umindanao.edu.ph",
+    father: "Jose Clara",
+    mother: "Teresa Clara",
+    guardian: "",
     photo: "https://github.com/shadcn.png",
     status: "verified",
     last_edited_by: "Ms. Sarah Jenkins",
     last_edited_at: "2026-03-15 09:30 AM"
   },
-  // Add more mock data if needed
 ];
 
 const INITIAL_NOTES = [
@@ -79,63 +122,71 @@ export default function StaffDashboard() {
   // --- ACTIONS ---
 
   // Handle Edit Save
-  const handleSaveEdit = (e: any) => {
+  const handleSaveEdit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const updatedName = formData.get("name") as string;
-    const updatedQuote = formData.get("quote") as string;
-    const updatedCourse = formData.get("course") as string;
-
+    const formData = new FormData(e.currentTarget);
     const timestamp = new Date().toLocaleString();
 
+    // LOGIC FIX:
+    // We only extract fields that actually exist in the form.
+    // If a field is missing from the form (like 'quote' which we removed), 
+    // we should NOT try to update it, otherwise it might overwrite existing data with null/undefined.
+    
+    // However, since we removed 'quote' from the UI completely, we don't need to save it.
+    // We explicitly map the form fields to the state keys.
+    
+    const updates = {
+        fname: (formData.get("fname") as string) || selectedStudent.fname,
+        lname: (formData.get("lname") as string) || selectedStudent.lname,
+        mname: (formData.get("mname") as string) || selectedStudent.mname,
+        suffix: (formData.get("suffix") as string) || "", // Suffix can be empty
+        nickname: (formData.get("nickname") as string) || "",
+        
+        course: (formData.get("course") as string) || selectedStudent.course,
+        major: (formData.get("major") as string) || selectedStudent.major,
+        thesis: (formData.get("thesis") as string) || selectedStudent.thesis,
+        
+        province: (formData.get("province") as string) || selectedStudent.province,
+        city: (formData.get("city") as string) || selectedStudent.city,
+        barangay: (formData.get("barangay") as string) || selectedStudent.barangay,
+        
+        contactNum: (formData.get("contactNum") as string) || selectedStudent.contactNum,
+        personalEmail: (formData.get("personalEmail") as string) || selectedStudent.personalEmail,
+        umEmail: (formData.get("umEmail") as string) || selectedStudent.umEmail,
+        
+        father: (formData.get("father") as string) || selectedStudent.father,
+        mother: (formData.get("mother") as string) || selectedStudent.mother,
+        guardian: (formData.get("guardian") as string) || "",
+
+        status: "verified",
+        last_edited_by: STAFF_USER.name,
+        last_edited_at: timestamp
+    };
+
+    // Update Main State
     setGraduates(prev => prev.map(g => 
-      g.id === selectedStudent.id 
-        ? { 
-            ...g, 
-            name: updatedName, 
-            quote: updatedQuote, 
-            course: updatedCourse,
-            status: "verified", // Auto-verify on edit? Or keep verify separate? Let's verify.
-            last_edited_by: STAFF_USER.name,
-            last_edited_at: timestamp
-          } 
-        : g
+      g.id === selectedStudent.id ? { ...g, ...updates } : g
     ));
 
-    // Update the currently selected view
-    setSelectedStudent((prev: any) => ({
-      ...prev,
-      name: updatedName,
-      quote: updatedQuote,
-      course: updatedCourse,
-      status: "verified",
-      last_edited_by: STAFF_USER.name,
-      last_edited_at: timestamp
-    }));
-
+    // Update Selected View
+    setSelectedStudent((prev: any) => ({ ...prev, ...updates }));
     setIsEditing(false);
   };
 
   // Handle "Final Verify" click
   const handleFinalize = () => {
     const timestamp = new Date().toLocaleString();
-    setGraduates(prev => prev.map(g => 
-        g.id === selectedStudent.id 
-          ? { 
-              ...g, 
-              status: "verified", 
-              last_edited_by: STAFF_USER.name,
-              last_edited_at: timestamp 
-            } 
-          : g
-      ));
-      
-      setSelectedStudent((prev: any) => ({
-        ...prev,
-        status: "verified",
+    const update = {
+        status: "verified", 
         last_edited_by: STAFF_USER.name,
-        last_edited_at: timestamp
-      }));
+        last_edited_at: timestamp 
+    };
+
+    setGraduates(prev => prev.map(g => 
+        g.id === selectedStudent.id ? { ...g, ...update } : g
+    ));
+      
+    setSelectedStudent((prev: any) => ({ ...prev, ...update }));
   };
 
   // Handle Notes
@@ -151,7 +202,8 @@ export default function StaffDashboard() {
 
   // Filter List
   const filteredGraduates = graduates.filter(g => 
-    g.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    g.lname.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    g.fname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     g.id.includes(searchTerm)
   );
 
@@ -224,17 +276,17 @@ export default function StaffDashboard() {
         
         {/* === VIEW 1: VERIFICATION === */}
         {activeTab === "verification" && (
-          <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
+          <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
             
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h1 className="text-3xl font-serif font-bold text-stone-900">Graduate Verification</h1>
-                <p className="text-stone-500 text-sm">Review, edit, and finalize graduate yearbook entries during pictorial.</p>
+                <p className="text-stone-500 text-sm">Review, edit, and finalize graduate yearbook entries.</p>
               </div>
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
                 <Input 
-                  placeholder="Search by name or ID..." 
+                  placeholder="Search by Name or ID..." 
                   className="pl-10 bg-white border-stone-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -242,19 +294,19 @@ export default function StaffDashboard() {
               </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">
               
-              {/* LIST COLUMN */}
-              <Card className="col-span-1 lg:col-span-1 border-stone-200 shadow-sm flex flex-col overflow-hidden h-full">
+              {/* LEFT: LIST (3 Cols) */}
+              <Card className="lg:col-span-3 border-stone-200 shadow-sm flex flex-col overflow-hidden h-full">
                 <CardHeader className="pb-3 border-b border-stone-100 bg-stone-50/50">
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-stone-700">Graduate Queue</CardTitle>
+                  <CardTitle className="text-xs font-bold uppercase tracking-wider text-stone-500">Graduate Queue</CardTitle>
                 </CardHeader>
                 <ScrollArea className="flex-1 p-2">
                   <div className="space-y-1">
                     {filteredGraduates.map((grad) => (
                       <button 
                         key={grad.id}
-                        onClick={() => setSelectedStudent(grad)}
+                        onClick={() => { setSelectedStudent(grad); setIsEditing(false); }}
                         className={`w-full text-left p-3 rounded-lg flex items-center gap-3 transition-colors border
                           ${selectedStudent?.id === grad.id 
                             ? "bg-amber-50 border-amber-200 ring-1 ring-amber-200" 
@@ -263,14 +315,14 @@ export default function StaffDashboard() {
                       >
                         <Avatar className="h-10 w-10 border border-stone-200">
                           <AvatarImage src={grad.photo} />
-                          <AvatarFallback>{grad.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback>{grad.fname.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-center mb-0.5">
-                            <p className="font-bold text-sm text-stone-900 truncate">{grad.name}</p>
+                            <p className="font-bold text-sm text-stone-900 truncate">{grad.fname} {grad.lname}</p>
                             {grad.status === "verified" && <CheckCircle2 size={14} className="text-green-600" />}
                           </div>
-                          <p className="text-xs text-stone-500 truncate">{grad.course}</p>
+                          <p className="text-xs text-stone-500 font-mono truncate">{grad.id}</p>
                         </div>
                       </button>
                     ))}
@@ -281,8 +333,8 @@ export default function StaffDashboard() {
                 </ScrollArea>
               </Card>
 
-              {/* PREVIEW/EDIT COLUMN */}
-              <div className="col-span-1 lg:col-span-2 h-full">
+              {/* RIGHT: DETAILS (9 Cols) */}
+              <div className="lg:col-span-9 h-full">
                 {selectedStudent ? (
                   <div className="h-full flex flex-col">
                     {/* AUDIT TRAIL HEADER */}
@@ -300,76 +352,184 @@ export default function StaffDashboard() {
                       )}
                     </div>
 
-                    {/* YEARBOOK PREVIEW CARD */}
-                    <Card className="rounded-t-none border-t-0 shadow-lg flex-1 flex flex-col justify-center bg-white relative overflow-hidden">
-                      {/* Background Decoration to mimic Yearbook page */}
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full blur-3xl -z-0"></div>
-                      <div className="absolute bottom-0 left-0 w-40 h-40 bg-stone-50 rounded-full blur-3xl -z-0"></div>
-
-                      <CardContent className="z-10 p-8 md:p-12 flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12 overflow-y-auto">
+                    {/* MAIN CARD */}
+                    <Card className="rounded-t-none border-t-0 shadow-lg flex-1 flex flex-col bg-white relative overflow-hidden">
                         
-                        {/* Student Photo */}
-                        <div className="shrink-0 relative">
-                          <div className="w-48 h-60 md:w-56 md:h-72 bg-stone-200 rounded-sm shadow-xl overflow-hidden border-4 border-white transform rotate-1">
-                            <img src={selectedStudent.photo} alt={selectedStudent.name} className="w-full h-full object-cover" />
-                          </div>
-                          {/* University Logo Watermark Mockup */}
-                          <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-amber-900 rounded-full flex items-center justify-center text-white text-xs font-serif shadow-lg border-4 border-white">
-                            LOGO
-                          </div>
-                        </div>
+                        {/* EDIT MODE */}
+                        {isEditing ? (
+                            <div className="flex-1 overflow-y-auto p-6 bg-stone-50">
+                                <form id="edit-form" onSubmit={handleSaveEdit}>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h2 className="text-xl font-bold text-stone-800 flex items-center gap-2">
+                                            <Edit3 size={20} className="text-amber-600"/> Edit Graduate Information
+                                        </h2>
+                                        <div className="flex gap-2">
+                                            <Button type="button" variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
+                                            <Button type="submit" size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">Save Changes</Button>
+                                        </div>
+                                    </div>
 
-                        {/* Student Details (Yearbook Style) */}
-                        <div className="flex-1 text-center md:text-left space-y-6">
-                          
-                          {isEditing ? (
-                            <form id="edit-form" onSubmit={handleSaveEdit} className="space-y-4 bg-stone-50 p-4 rounded-lg border border-stone-200 text-left">
-                              <div className="space-y-2">
-                                <Label>Full Name</Label>
-                                <Input name="name" defaultValue={selectedStudent.name} className="bg-white" required />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Course & Major</Label>
-                                <Input name="course" defaultValue={selectedStudent.course} className="bg-white" required />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Yearbook Quote</Label>
-                                <Textarea name="quote" defaultValue={selectedStudent.quote} className="bg-white h-24 italic" required />
-                              </div>
-                              <div className="flex justify-end gap-2 pt-2">
-                                <Button type="button" variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
-                                <Button type="submit" size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">Save Changes</Button>
-                              </div>
-                            </form>
-                          ) : (
-                            <>
-                              <div>
-                                <h2 className="text-3xl md:text-4xl font-serif font-bold text-stone-900 uppercase tracking-tight leading-none">
-                                  {selectedStudent.name}
-                                </h2>
-                                <div className="h-1 w-20 bg-amber-500 mt-4 mx-auto md:mx-0"></div>
-                              </div>
+                                    <Tabs defaultValue="personal" className="w-full">
+                                        <TabsList className="grid w-full grid-cols-4 mb-6">
+                                            <TabsTrigger value="personal">Personal</TabsTrigger>
+                                            <TabsTrigger value="academic">Academic</TabsTrigger>
+                                            <TabsTrigger value="contact">Contact & Address</TabsTrigger>
+                                            <TabsTrigger value="family">Family</TabsTrigger>
+                                        </TabsList>
 
-                              <div className="space-y-1">
-                                <p className="text-sm font-bold tracking-widest uppercase text-amber-700">Program</p>
-                                <p className="text-lg font-medium text-stone-700">{selectedStudent.course}</p>
-                                {selectedStudent.major && <p className="text-stone-500 text-sm">Major in {selectedStudent.major}</p>}
-                              </div>
+                                        {/* TAB 1: PERSONAL */}
+                                        <TabsContent value="personal" className="space-y-4 bg-white p-6 rounded-lg border border-stone-200">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2"><Label>First Name</Label><Input name="fname" defaultValue={selectedStudent.fname} /></div>
+                                                <div className="space-y-2"><Label>Last Name</Label><Input name="lname" defaultValue={selectedStudent.lname} /></div>
+                                                <div className="space-y-2"><Label>Middle Name</Label><Input name="mname" defaultValue={selectedStudent.mname} /></div>
+                                                <div className="space-y-2"><Label>Suffix</Label><Input name="suffix" defaultValue={selectedStudent.suffix} /></div>
+                                            </div>
+                                            <div className="space-y-2"><Label>Nickname (with quotes)</Label><Input name="nickname" defaultValue={selectedStudent.nickname} /></div>
+                                        </TabsContent>
 
-                              <div className="pt-4">
-                                <div className="relative p-6 bg-stone-50 rounded-xl border border-stone-100">
-                                  <span className="absolute top-2 left-3 text-4xl text-amber-200 font-serif leading-none">“</span>
-                                  <p className="font-serif italic text-stone-600 text-lg relative z-10 leading-relaxed">
-                                    {selectedStudent.quote}
-                                  </p>
-                                  <span className="absolute bottom-[-10px] right-4 text-4xl text-amber-200 font-serif leading-none">”</span>
+                                        {/* TAB 2: ACADEMIC */}
+                                        <TabsContent value="academic" className="space-y-4 bg-white p-6 rounded-lg border border-stone-200">
+                                            <div className="space-y-2"><Label>Course</Label><Input name="course" defaultValue={selectedStudent.course} /></div>
+                                            <div className="space-y-2"><Label>Major</Label><Input name="major" defaultValue={selectedStudent.major} /></div>
+                                            <div className="space-y-2"><Label>Thesis Title</Label><Input name="thesis" defaultValue={selectedStudent.thesis} /></div>
+                                        </TabsContent>
+
+                                        {/* TAB 3: CONTACT & ADDRESS */}
+                                        <TabsContent value="contact" className="space-y-4 bg-white p-6 rounded-lg border border-stone-200">
+                                            <h4 className="font-bold text-stone-700 text-sm uppercase">Address</h4>
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <div className="space-y-2"><Label>Province</Label><Input name="province" defaultValue={selectedStudent.province} /></div>
+                                                <div className="space-y-2"><Label>City</Label><Input name="city" defaultValue={selectedStudent.city} /></div>
+                                                <div className="space-y-2"><Label>Barangay</Label><Input name="barangay" defaultValue={selectedStudent.barangay} /></div>
+                                            </div>
+                                            <h4 className="font-bold text-stone-700 text-sm uppercase mt-4">Contact Info</h4>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2"><Label>Mobile No.</Label><Input name="contactNum" defaultValue={selectedStudent.contactNum} /></div>
+                                                <div className="space-y-2"><Label>Personal Email</Label><Input name="personalEmail" defaultValue={selectedStudent.personalEmail} /></div>
+                                                <div className="space-y-2 col-span-2"><Label>UM Email</Label><Input name="umEmail" defaultValue={selectedStudent.umEmail} /></div>
+                                            </div>
+                                        </TabsContent>
+
+                                        {/* TAB 4: FAMILY */}
+                                        <TabsContent value="family" className="space-y-4 bg-white p-6 rounded-lg border border-stone-200">
+                                            <div className="space-y-2"><Label>Father's Name</Label><Input name="father" defaultValue={selectedStudent.father} /></div>
+                                            <div className="space-y-2"><Label>Mother's Name</Label><Input name="mother" defaultValue={selectedStudent.mother} /></div>
+                                            <div className="space-y-2"><Label>Guardian (If applicable)</Label><Input name="guardian" defaultValue={selectedStudent.guardian} /></div>
+                                        </TabsContent>
+                                    </Tabs>
+                                </form>
+                            </div>
+                        ) : (
+                            /* VIEW MODE (PREVIEW) */
+                            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                                
+                                {/* LEFT: YEARBOOK VISUAL */}
+                                <div className="w-full md:w-2/5 bg-stone-100 p-8 flex flex-col items-center justify-center border-r border-stone-100 relative">
+                                    <div className="relative mb-8">
+                                        {/* Main Photo */}
+                                        <div className="w-full max-w-[240px] aspect-[4/5] bg-white p-2 shadow-xl rotate-1 border-4 border-white relative z-10">
+                                            <img src={selectedStudent.photo} className="w-full h-full object-cover bg-stone-200" alt="Student" />
+                                        </div>
+
+                                        {/* Theme Photo (Layag) - Small box overlay */}
+                                        <div className="absolute -bottom-4 -right-6 w-24 h-32 bg-white p-1 shadow-lg -rotate-3 border-4 border-white z-20">
+                                            <div className="w-full h-full bg-amber-50 border border-amber-100 flex flex-col items-center justify-center text-center">
+                                                <ImageIcon className="text-amber-300 w-6 h-6 mb-1" />
+                                                <span className="text-[8px] font-bold text-amber-800 uppercase tracking-widest">Theme</span>
+                                                <span className="text-[10px] font-serif text-amber-900 font-bold">Layag</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-center space-y-4 max-w-xs relative z-10 mt-2">
+                                        <div>
+                                            <h2 className="text-2xl font-serif font-bold text-stone-900 leading-tight uppercase">
+                                                {selectedStudent.fname} {selectedStudent.mname?.charAt(0)}. {selectedStudent.lname} {selectedStudent.suffix}
+                                            </h2>
+                                            <p className="text-amber-600 font-serif italic mt-1">{selectedStudent.nickname}</p>
+                                        </div>
+                                    </div>
+                                    {/* Decor */}
+                                    <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-amber-600 to-amber-800"></div>
                                 </div>
-                              </div>
-                            </>
-                          )}
 
-                        </div>
-                      </CardContent>
+                                {/* RIGHT: DETAILED DATA */}
+                                <div className="flex-1 p-8 overflow-y-auto bg-white">
+                                    <div className="space-y-8">
+                                        
+                                        {/* SECTION: ACADEMIC */}
+                                        <div>
+                                            <h3 className="flex items-center gap-2 text-sm font-bold text-amber-700 uppercase tracking-wider mb-3">
+                                                <GraduationCap size={16}/> Academic Information
+                                            </h3>
+                                            <div className="grid grid-cols-1 gap-4 p-4 bg-stone-50 rounded-lg border border-stone-100">
+                                                <div>
+                                                    <span className="text-[10px] uppercase text-stone-400 font-bold block">Course</span>
+                                                    <span className="font-bold text-stone-800">{selectedStudent.course}</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <span className="text-[10px] uppercase text-stone-400 font-bold block">Major</span>
+                                                        <span className="text-sm text-stone-700">{selectedStudent.major || "N/A"}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[10px] uppercase text-stone-400 font-bold block">ID Number</span>
+                                                        <span className="text-sm font-mono text-stone-700">{selectedStudent.id}</span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] uppercase text-stone-400 font-bold block">Thesis Title</span>
+                                                    <span className="text-sm italic text-stone-700">"{selectedStudent.thesis}"</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* SECTION: PERSONAL & FAMILY */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <h3 className="flex items-center gap-2 text-sm font-bold text-amber-700 uppercase tracking-wider mb-3">
+                                                    <User size={16}/> Personal & Family
+                                                </h3>
+                                                <div className="space-y-2 text-sm text-stone-600">
+                                                    <p><span className="font-bold text-stone-400 text-xs w-20 inline-block">DOB:</span> {selectedStudent.birthdate}</p>
+                                                    <div className="h-px bg-stone-100 my-2"></div>
+                                                    <p><span className="font-bold text-stone-400 text-xs w-20 inline-block">Father:</span> {selectedStudent.father || "-"}</p>
+                                                    <p><span className="font-bold text-stone-400 text-xs w-20 inline-block">Mother:</span> {selectedStudent.mother || "-"}</p>
+                                                    <p><span className="font-bold text-stone-400 text-xs w-20 inline-block">Guardian:</span> {selectedStudent.guardian || "-"}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* SECTION: CONTACT */}
+                                            <div>
+                                                <h3 className="flex items-center gap-2 text-sm font-bold text-amber-700 uppercase tracking-wider mb-3">
+                                                    <MapPin size={16}/> Contact & Address
+                                                </h3>
+                                                <div className="space-y-2 text-sm text-stone-600">
+                                                    <p className="flex items-start gap-2">
+                                                        <Home size={14} className="mt-0.5 text-stone-400 shrink-0"/>
+                                                        {selectedStudent.barangay}, {selectedStudent.city}, {selectedStudent.province}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <Phone size={14} className="text-stone-400 shrink-0"/>
+                                                        {selectedStudent.contactNum}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <Mail size={14} className="text-stone-400 shrink-0"/>
+                                                        {selectedStudent.personalEmail}
+                                                    </p>
+                                                    <p className="flex items-center gap-2 text-blue-600">
+                                                        <BookOpen size={14} className="text-blue-400 shrink-0"/>
+                                                        {selectedStudent.umEmail}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                       {/* ACTION FOOTER */}
                       <CardFooter className="border-t border-stone-100 bg-stone-50 p-4 flex justify-between items-center z-20">
