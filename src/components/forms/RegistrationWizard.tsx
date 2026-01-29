@@ -68,7 +68,7 @@ export default function RegistrationWizard() {
   const [fname, setFname] = useState("");
   const [mname, setMname] = useState("");
   const [suffix, setSuffix] = useState("");
-  const [nickname, setNickname] = useState(""); // Stores RAW nickname without quotes for better UX
+  const [nickname, setNickname] = useState(""); // Stores RAW nickname
   const [bdate, setBdate] = useState("");
   
   const formattedBirthdate = useMemo(() => {
@@ -78,16 +78,9 @@ export default function RegistrationWizard() {
   }, [bdate]);
 
   // --- NICKNAME HANDLER (UX FIX) ---
-  // We only apply Title Case here. We DO NOT add quotes while typing to avoid breaking backspace.
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Just sanitize double quotes if user types them manually, otherwise just Title Case
     const val = e.target.value.replace(/"/g, ''); 
     setNickname(toTitleCase(val));
-  };
-
-  // Helper to format nickname with quotes for Display/Submission
-  const getFormattedNickname = () => {
-    return nickname.trim() ? `"${nickname.trim()}"` : "";
   };
 
   // --- STATE: Address (Dynamic API Data Only) ---
@@ -338,6 +331,7 @@ export default function RegistrationWizard() {
       relation.guardian = {
         first_name: guardianFname,
         last_name: guardianLname,
+        relationship: guardianRel, // Added relationship
       }; 
     } else {
       relation.parent = {
@@ -363,7 +357,7 @@ export default function RegistrationWizard() {
       first_name: fname,
       middle_name: mname,
       suffix: suffix,
-      nickname: nickname,
+      nickname: nickname, // raw nickname
       birthdate: bdate,
       academics: {
         course: selectedCourse,
@@ -373,7 +367,7 @@ export default function RegistrationWizard() {
       ...relation, 
       province: provinceName,
       city: cityName,
-      barangary: barangayName 
+      barangay: barangayName // Typo fix
     };
 
     try {
@@ -554,11 +548,6 @@ export default function RegistrationWizard() {
                                 placeholder="Juanny" 
                                 className="h-11" 
                             />
-                            {nickname && (
-                                <p className="text-xs text-stone-500 mt-1">
-                                    Preview: <span className="font-bold text-amber-800">"{nickname}"</span>
-                                </p>
-                            )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="bdate">Birthdate <span className="text-red-500">*</span></Label>
@@ -734,11 +723,11 @@ export default function RegistrationWizard() {
                                     <div className="space-y-2">
                                         <Label>First Name <span className="text-red-500">*</span></Label>
                                         <div className="flex gap-2">
-                                        <Select value={fatherTitle} onValueChange={setFatherTitle}>
-                                            <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
-                                            <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <Input value={fatherFname} onChange={e => setFatherFname(toTitleCase(e.target.value))} placeholder="Juan" className="flex-1 h-10"/>
+                                            <Select value={fatherTitle} onValueChange={setFatherTitle}>
+                                                <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
+                                                <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <Input value={fatherFname} onChange={e => setFatherFname(toTitleCase(e.target.value))} placeholder="Juan" className="flex-1 h-10"/>
                                         </div>
                                     </div>
                                 </div>
@@ -761,11 +750,11 @@ export default function RegistrationWizard() {
                                     <div className="space-y-2">
                                         <Label>First Name <span className="text-red-500">*</span></Label>
                                         <div className="flex gap-2">
-                                        <Select value={motherTitle} onValueChange={setMotherTitle}>
-                                            <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
-                                            <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <Input value={motherFname} onChange={e => setMotherFname(toTitleCase(e.target.value))} placeholder="Maria" className="flex-1 h-10"/>
+                                            <Select value={motherTitle} onValueChange={setMotherTitle}>
+                                                <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
+                                                <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <Input value={motherFname} onChange={e => setMotherFname(toTitleCase(e.target.value))} placeholder="Maria" className="flex-1 h-10"/>
                                         </div>
                                     </div>
                                 </div>
@@ -787,11 +776,11 @@ export default function RegistrationWizard() {
                                     <div className="space-y-2">
                                     <Label>First Name <span className="text-red-500">*</span></Label>
                                     <div className="flex gap-2">
-                                        <Select value={guardianTitle} onValueChange={setGuardianTitle}>
-                                        <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
-                                        <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                                        </Select>
-                                        <Input value={guardianFname} onChange={e => setGuardianFname(toTitleCase(e.target.value))} placeholder="First Name" className="flex-1 h-10"/>
+                                            <Select value={guardianTitle} onValueChange={setGuardianTitle}>
+                                            <SelectTrigger className="w-[80px] shrink-0 h-10"><SelectValue /></SelectTrigger>
+                                            <SelectContent>{titleOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                                            </Select>
+                                            <Input value={guardianFname} onChange={e => setGuardianFname(toTitleCase(e.target.value))} placeholder="First Name" className="flex-1 h-10"/>
                                     </div>
                                     </div>
                                 </div>
@@ -892,8 +881,8 @@ export default function RegistrationWizard() {
                                 </div>
                                 <div>
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Nickname</span>
-                                    {/* FIX: Use the helper to show the quotes on review page */}
-                                    <span className="text-stone-900 font-medium">{getFormattedNickname() || "-"}</span>
+                                    {/* FIX: Add Quotes here in Step 6 Review */}
+                                    <span className="text-stone-900 font-medium">{nickname ? `"${nickname}"` : "-"}</span>
                                 </div>
                                 <div>
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Birthdate</span>
@@ -924,12 +913,6 @@ export default function RegistrationWizard() {
                                     <span className="text-stone-900 font-bold block">{selectedCourse}</span>
                                     {selectedMajor !== "N/A" && <span className="text-amber-700 text-sm font-medium block mt-1">{selectedMajor}</span>}
                                 </div>
-                                {/* --- ADDED THESIS REVIEW --- */}
-                                <div className="pt-2 border-t border-stone-100 mt-2">
-                                    <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Thesis / Capstone Title</span>
-                                    <span className="text-stone-900 font-medium italic">"{thesisTitle}"</span>
-                                </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-stone-100">
                                     <div>
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">UM Student Email</span>
