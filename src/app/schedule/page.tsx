@@ -12,31 +12,24 @@ import {
   AlertCircle, 
   CheckCircle2, 
   Camera,
-  Shirt
+  Shirt,
+  Filter,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
-// --- MOCK DATA ---
-const courses = [
-  "ALL COURSES",
-  "Bachelor of Science in Accountancy",
-  "Bachelor of Science in Business Administration",
-  "Bachelor of Science in Criminology",
-  "Bachelor of Elementary Education",
-  "Bachelor of Science in Computer Science",
-  "Bachelor of Science in Civil Engineering"
-];
-
+// --- MOCK DATA (Updated to be Open Booking) ---
 const schedules = [
   {
     id: 1,
     date: "Oct 25, 2025",
     day: "Saturday",
     time: "8:00 AM - 12:00 PM",
-    course: "Bachelor of Science in Accountancy",
+    title: "Morning Session A",
+    description: "Open to all departments",
     slots: 5,
     status: "Available",
     type: "Toga & Creative"
@@ -46,7 +39,8 @@ const schedules = [
     date: "Oct 25, 2025",
     day: "Saturday",
     time: "1:00 PM - 5:00 PM",
-    course: "Bachelor of Science in Accountancy",
+    title: "Afternoon Session A",
+    description: "Open to all departments",
     slots: 0,
     status: "Full",
     type: "Toga & Creative"
@@ -56,7 +50,8 @@ const schedules = [
     date: "Oct 26, 2025",
     day: "Sunday",
     time: "8:00 AM - 5:00 PM",
-    course: "Bachelor of Science in Criminology",
+    title: "Whole Day Special",
+    description: "Priority for large groups",
     slots: 20,
     status: "Available",
     type: "Toga Only"
@@ -66,7 +61,8 @@ const schedules = [
     date: "Oct 27, 2025",
     day: "Monday",
     time: "8:00 AM - 12:00 PM",
-    course: "Bachelor of Elementary Education",
+    title: "Morning Session B",
+    description: "Open to all departments",
     slots: 12,
     status: "Available",
     type: "Creative Only"
@@ -76,7 +72,8 @@ const schedules = [
     date: "Oct 28, 2025",
     day: "Tuesday",
     time: "8:00 AM - 5:00 PM",
-    course: "Bachelor of Science in Computer Science",
+    title: "Whole Day Session",
+    description: "Open to all departments",
     slots: 8,
     status: "Selling Out",
     type: "Toga & Creative"
@@ -84,12 +81,14 @@ const schedules = [
 ];
 
 export default function SchedulePage() {
-  const [selectedCourse, setSelectedCourse] = useState("ALL COURSES");
+  // Logic Update: Filter by Availability instead of Course
+  const [filterType, setFilterType] = useState("ALL");
 
-  // Filter Logic
-  const filteredSchedules = schedules.filter(item => 
-    selectedCourse === "ALL COURSES" ? true : item.course === selectedCourse
-  );
+  const filteredSchedules = schedules.filter(item => {
+    if (filterType === "ALL") return true;
+    if (filterType === "AVAILABLE") return item.status !== "Full";
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-stone-50 font-sans text-stone-800">
@@ -130,7 +129,7 @@ export default function SchedulePage() {
         <div className="container mx-auto px-4 relative z-10 text-center">
           <h1 className="text-3xl md:text-5xl font-serif font-bold mb-4">Pictorial Schedule</h1>
           <p className="text-amber-100 max-w-xl mx-auto text-lg">
-            Find your department's designated schedule and secure your slot for the official AURIUM 2025 photoshoot.
+            Booking is open to all departments. Secure your slot based on your preferred date and time availability.
           </p>
         </div>
       </header>
@@ -145,20 +144,19 @@ export default function SchedulePage() {
             <Card className="border-t-4 border-amber-600 shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Search className="text-amber-600" size={20}/> 
-                  Filter Schedules
+                  <Filter className="text-amber-600" size={20}/> 
+                  Find a Slot
                 </CardTitle>
-                <CardDescription>Select your course to see assigned dates.</CardDescription>
+                <CardDescription>Filter schedules by availability.</CardDescription>
               </CardHeader>
               <CardContent>
-                <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                <Select value={filterType} onValueChange={setFilterType}>
                   <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Select your course" />
+                    <SelectValue placeholder="Filter by..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {courses.map((course, index) => (
-                      <SelectItem key={index} value={course}>{course}</SelectItem>
-                    ))}
+                    <SelectItem value="ALL">Show All Dates</SelectItem>
+                    <SelectItem value="AVAILABLE">Show Available Slots Only</SelectItem>
                   </SelectContent>
                 </Select>
               </CardContent>
@@ -167,7 +165,7 @@ export default function SchedulePage() {
             {/* Results List */}
             <div className="space-y-4">
               <h3 className="font-bold text-amber-950 text-lg flex items-center gap-2">
-                <Calendar size={20}/> Available Slots
+                <Calendar size={20}/> Session Schedules
               </h3>
               
               {filteredSchedules.length > 0 ? (
@@ -190,27 +188,44 @@ export default function SchedulePage() {
                         {/* Details */}
                         <div className="p-6 flex-1">
                            <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
-                              <Badge variant="outline" className="text-amber-900 border-amber-200 bg-amber-50">
-                                {item.type}
-                              </Badge>
+                              <div className="flex gap-2">
+                                <Badge variant="outline" className="text-amber-900 border-amber-200 bg-amber-50">
+                                    {item.type}
+                                </Badge>
+                                <Badge variant="secondary" className="text-stone-600 bg-stone-100">
+                                    Open Booking
+                                </Badge>
+                              </div>
                               <StatusBadge status={item.status} />
                            </div>
-                           <h4 className="font-bold text-lg text-stone-800 mb-1">{item.course}</h4>
-                           <div className="flex items-center gap-4 text-sm text-stone-500 mb-4">
-                              <span className="flex items-center gap-1"><Clock size={14}/> {item.time}</span>
-                              <span className="flex items-center gap-1"><MapPin size={14}/> UMTC Auditorium</span>
+                           
+                           <h4 className="font-bold text-lg text-stone-800 mb-0.5">{item.title}</h4>
+                           <p className="text-sm text-stone-500 mb-4 flex items-center gap-1">
+                                <Users size={12} /> {item.description}
+                           </p>
+
+                           <div className="flex items-center gap-4 text-sm text-stone-600 mb-4 bg-stone-50 p-3 rounded-lg border border-stone-100">
+                              <span className="flex items-center gap-2 font-medium"><Clock size={16} className="text-amber-600"/> {item.time}</span>
+                              <span className="flex items-center gap-2"><MapPin size={16} className="text-amber-600"/> UMTC Auditorium</span>
                            </div>
                            
                            <div className="flex items-center justify-between mt-auto">
                               <span className="text-xs font-medium text-stone-400">
                                 {item.status === "Full" ? "No slots left" : `${item.slots} slots remaining`}
                               </span>
-                              <Button 
-                                disabled={item.status === "Full"}
-                                className={`h-9 ${item.status === "Full" ? "bg-stone-200 text-stone-400" : "bg-amber-900 hover:bg-amber-800"}`}
-                              >
-                                {item.status === "Full" ? "Closed" : "Book Slot"}
-                              </Button>
+                              
+                              {/* FIX: WRAPPED BUTTON IN LINK/CONDITIONAL LOGIC */}
+                              {item.status === "Full" ? (
+                                <Button disabled className="h-9 bg-stone-200 text-stone-400">
+                                    Closed
+                                </Button>
+                              ) : (
+                                <Link href="/login">
+                                    <Button className="h-9 bg-amber-900 hover:bg-amber-800">
+                                        Book Slot
+                                    </Button>
+                                </Link>
+                              )}
                            </div>
                         </div>
                       </div>
@@ -219,7 +234,7 @@ export default function SchedulePage() {
                 ))
               ) : (
                 <div className="text-center py-12 bg-white rounded-xl border border-dashed border-stone-300">
-                  <p className="text-stone-500">No schedules found for this course yet.</p>
+                  <p className="text-stone-500">No schedules available matching your filter.</p>
                 </div>
               )}
             </div>
@@ -270,9 +285,9 @@ export default function SchedulePage() {
             {/* Need Help? */}
             <Card className="bg-stone-900 text-white">
               <CardContent className="p-6 text-center">
-                <h4 className="font-serif font-bold text-lg mb-2">Can't find your schedule?</h4>
+                <h4 className="font-serif font-bold text-lg mb-2">Can't find a schedule?</h4>
                 <p className="text-stone-400 text-sm mb-4">
-                  If your department is not listed or if you missed your slot, please contact the yearbook committee immediately.
+                  If no slots are available, new schedules may be added soon. Contact the yearbook committee for assistance.
                 </p>
                 <Button variant="outline" className="border-stone-600 text-amber-500 hover:bg-stone-800 w-full">
                   Contact Support

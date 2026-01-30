@@ -21,7 +21,8 @@ import {
   Users,
   Menu, 
   X,
-  Camera
+  Camera,
+  Sparkles // Added Sparkles for the new UI
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -256,25 +257,33 @@ export default function AuriumLandingPage() {
         </div>
       </section>
 
-      {/* --- MISSION STATEMENT --- */}
-      <section id="about" className="py-16 md:py-24 bg-white border-b border-amber-100">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-center">
+      {/* --- VISION STATEMENT (IMPROVED COOL UI) --- */}
+      <section id="about" className="py-24 bg-white relative overflow-hidden">
+        {/* Subtle Background Accent */}
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-amber-50/50 -skew-x-12 z-0 pointer-events-none" />
+
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
+          <div className="flex flex-col md:flex-row gap-16 items-center">
             
+            {/* Left Column: Text */}
             <motion.div 
-              initial={{ opacity: 0, x: -50 }}
+              initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
               className="w-full md:w-1/2"
             >
-              <div className="inline-block mb-4 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                 <ScrollText size={32} className="text-amber-700"/>
+              <div className="inline-flex items-center gap-2 mb-6">
+                 <div className="h-px w-8 bg-amber-600"></div>
+                 <span className="text-amber-800 text-xs font-bold uppercase tracking-widest">Our Mandate</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-serif font-bold text-amber-950 mb-6">
-                The AURIUM Vision
+              
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-amber-950 mb-8 leading-tight">
+                Defining the <br/>
+                <span className="text-stone-400 italic">Aurium Vision</span>
               </h2>
-              <div className="text-base md:text-lg text-stone-600 leading-relaxed space-y-4 md:space-y-6 text-justify">
+
+              <div className="text-base md:text-lg text-stone-600 leading-relaxed space-y-6 text-justify border-l-2 border-stone-200 pl-6">
                 <p>
                   <strong className="text-amber-900">AURIUM</strong> stands for the <em>Ambitious United Responsive Individuals of the University of Mindanao</em>. 
                 </p>
@@ -288,20 +297,55 @@ export default function AuriumLandingPage() {
               </div>
             </motion.div>
 
+            {/* Right Column: The "Cool" Card */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
               className="w-full md:w-1/2 relative"
             >
-               <div className="absolute inset-0 bg-gradient-to-r from-amber-200 to-yellow-100 rounded-2xl transform rotate-3 blur-sm opacity-50"></div>
-               <div className="relative bg-stone-900 p-8 md:p-12 rounded-2xl text-center text-white shadow-2xl border border-stone-700">
-                  <div className="mb-6 flex justify-center"><Trophy size={64} className="text-yellow-400 drop-shadow-glow" /></div>
-                  <h3 className="text-2xl md:text-3xl font-serif font-bold mb-4">Standard of Excellence</h3>
-                  <p className="text-stone-300 text-base md:text-lg italic leading-relaxed">
-                    "Producing a yearbook edition that serves as a timeless work of art."
-                  </p>
+                {/* Floating Elements for "Cool" factor */}
+                <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -top-6 -right-6 z-20 bg-white p-3 rounded-xl shadow-xl border border-amber-100 hidden md:block"
+                >
+                    <Star className="text-yellow-400 fill-yellow-400 w-8 h-8" />
+                </motion.div>
+
+               {/* The Main Prestige Card */}
+               <div className="relative bg-stone-950 rounded-3xl p-10 md:p-12 overflow-hidden shadow-2xl border border-stone-800 group">
+                  {/* Glowing Background Effect */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/30 transition-colors duration-1000"></div>
+                  <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-900/20 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4"></div>
+                  
+                  {/* Texture */}
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
+
+                  <div className="relative z-10 flex flex-col items-center text-center">
+                      <div className="mb-6 relative">
+                          <div className="absolute inset-0 bg-amber-500 blur-xl opacity-20"></div>
+                          <Trophy size={72} className="text-gradient bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-600 relative z-10 drop-shadow-lg" color="#fbbf24" />
+                      </div>
+
+                      <h3 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-wide">
+                        Standard of <br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600">Excellence</span>
+                      </h3>
+                      
+                      <div className="h-1 w-16 bg-amber-600 rounded-full my-6"></div>
+
+                      <p className="text-stone-300 text-lg font-light italic leading-relaxed">
+                        "Producing a yearbook edition that serves as a timeless work of art."
+                      </p>
+                      
+                      <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-stone-500">
+                          <Sparkles size={14} className="text-amber-500"/>
+                          <span>Vision 2026</span>
+                          <Sparkles size={14} className="text-amber-500"/>
+                      </div>
+                  </div>
                </div>
             </motion.div>
 
