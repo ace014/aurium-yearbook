@@ -10,34 +10,99 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox"; 
-import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar, Wifi, WifiOff, Loader2, CreditCard } from "lucide-react";
+import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar, Wifi, WifiOff, Loader2, CreditCard, Building2 } from "lucide-react";
 
 // --- 2. CONFIGURATION DATA ---
 const titleOptions = ["Mr.", "Mrs.", "Ms.", "Dr.", "Atty.", "Engr.", "Arch.", "Prof.", "Rev."];
 
-const courseOptions = [
-  { course: "BACHELOR OF SCIENCE IN BUSINESS ADMINISTRATION", majors: ["FINANCIAL MANAGEMENT", "HUMAN RESOURCE MANAGEMENT", "MARKETING MANAGEMENT"] },
-  { course: "BACHELOR OF SCIENCE IN COMMERCE", majors: ["MANAGEMENT"] },
-  { course: "BACHELOR OF SCIENCE IN ACCOUNTANCY", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN ACCOUNTING TECHNOLOGY", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN MANAGEMENT ACCOUNTING", majors: [] },
-  { course: "BACHELOR OF ELEMENTARY EDUCATION (GENERALIST)", majors: [] },
-  { course: "BACHELOR OF PHYSICAL EDUCATION", majors: [] },
-  { course: "BACHELOR OF SECONDARY EDUCATION", majors: ["ENGLISH", "FILIPINO", "MATHEMATICS", "SCIENCE", "SOCIAL STUDIES"] },
-  { course: "BACHELOR OF ARTS IN ENGLISH", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN COMPUTER SCIENCE", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN PSYCHOLOGY", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN HOSPITALITY MANAGEMENT", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN HOTEL AND RESTAURANT MANAGEMENT", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN TOURISM MANAGEMENT", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN COMPUTER ENGINEERING", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN ELECTRICAL ENGINEERING", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN ELECTRONICS ENGINEERING", majors: [] },
-  { course: "BACHELOR OF SCIENCE IN CRIMINOLOGY", majors: [] },
-  { course: "MAED", majors: ["EDUCATIONAL MANAGEMENT", "GUIDANCE & COUNSELING", "PHYSICAL EDUCATION", "TEACHING ENGLISH", "TEACHING MATHEMATICS", "TEACHING SCIENCE"] },
-  { course: "MASTER IN BUSINESS ADMINISTRATION", majors: [] },
-  { course: "MASTER IN MANAGEMENT", majors: [] }
+// NEW DATA STRUCTURE: Department -> Course -> Major
+const departmentOptions = [
+  {
+    name: "GRADUATE SCHOOL",
+    courses: [
+      { 
+        name: "MASTER OF ARTS IN EDUCATION (MAED)", 
+        majors: ["EDUCATIONAL MANAGEMENT", "GUIDANCE & COUNSELING", "PHYSICAL EDUCATION", "TEACHING ENGLISH", "TEACHING MATHEMATICS", "TEACHING SCIENCE"] 
+      },
+      { name: "MASTER IN BUSINESS ADMINISTRATION", majors: [] },
+      { name: "MASTER IN MANAGEMENT", majors: [] }
+    ]
+  },
+  {
+    name: "DEPARTMENT OF ENGINEERING EDUCATION",
+    courses: [
+      { name: "BACHELOR OF SCIENCE IN COMPUTER ENGINEERING", majors: [] },
+      { name: "BACHELOR OF SCIENCE IN ELECTRICAL ENGINEERING", majors: [] },
+      { name: "BACHELOR OF SCIENCE IN ELECTRONICS ENGINEERING", majors: [] }
+    ]
+  },
+  {
+    name: "DEPARTMENT OF ART AND SCIENCES EDUCATION",
+    courses: [
+      { name: "BACHELOR OF ARTS IN ENGLISH", majors: [] },
+      { name: "BACHELOR OF SCIENCE IN PSYCHOLOGY", majors: [] }
+    ]
+  },
+  {
+    name: "DEPARTMENT OF ACCOUNTING EDUCATION",
+    courses: [
+      { name: "BACHELOR OF SCIENCE IN ACCOUNTANCY", majors: [] },
+      { name: "BACHELOR OF SCIENCE IN ACCOUNTING TECHNOLOGY", majors: [] },
+      { name: "BACHELOR OF SCIENCE IN MANAGEMENT ACCOUNTING", majors: [] }
+    ]
+  },
+  {
+    name: "DEPARTMENT OF TEACHER EDUCATION",
+    courses: [
+      { name: "BACHELOR OF ELEMENTARY EDUCATION (GENERALIST)", majors: [] },
+      { name: "BACHELOR OF PHYSICAL EDUCATION", majors: [] },
+      { 
+        name: "BACHELOR OF SECONDARY EDUCATION", 
+        majors: ["ENGLISH", "FILIPINO", "MATHEMATICS", "SCIENCE", "SOCIAL STUDIES"] 
+      }
+    ]
+  },
+  {
+    name: "DEPARTMENT OF BUSINESS ADMINISTRATION EDUCATION",
+    courses: [
+      { 
+        name: "BACHELOR OF SCIENCE IN BUSINESS ADMINISTRATION", 
+        majors: ["FINANCIAL MANAGEMENT", "HUMAN RESOURCE MANAGEMENT", "MARKETING MANAGEMENT"] 
+      },
+      { 
+        name: "BACHELOR OF SCIENCE IN COMMERCE", 
+        majors: ["MANAGEMENT"] 
+      }
+    ]
+  },
+  {
+    name: "HOSPITALITY AND TOURISM MANAGEMENT EDUCATION",
+    courses: [
+      { name: "BACHELOR OF SCIENCE IN HOSPITALITY MANAGEMENT", majors: [] },
+      { name: "BACHELOR OF SCIENCE IN HOTEL AND RESTAURANT MANAGEMENT", majors: [] },
+      { name: "BACHELOR OF SCIENCE IN TOURISM MANAGEMENT", majors: [] },
+      { name: "BACHELOR OF ARTS IN ECONOMICS", majors: [] }
+    ]
+  },
+  {
+    name: "DEPARTMENT OF CRIMINAL JUSTICE EDUCATION",
+    courses: [
+      { name: "BACHELOR OF SCIENCE IN CRIMINOLOGY", majors: [] }
+    ]
+  },
+  {
+    name: "DEPARTMENT OF COMPUTING EDUCATION",
+    courses: [
+      { name: "BACHELOR OF SCIENCE IN COMPUTER SCIENCE", majors: [] },
+      { name: "BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY", majors: [] }
+    ]
+  },
+  {
+    name: "DEPARTMENT OF NURSING EDUCATION",
+    courses: [
+      { name: "BACHELOR OF SCIENCE IN NURSING", majors: [] }
+    ]
+  }
 ];
 
 const steps = [
@@ -68,7 +133,7 @@ export default function RegistrationWizard() {
   const [fname, setFname] = useState("");
   const [mname, setMname] = useState("");
   const [suffix, setSuffix] = useState("");
-  const [nickname, setNickname] = useState(""); // Stores RAW nickname
+  const [nickname, setNickname] = useState(""); 
   const [bdate, setBdate] = useState("");
   
   const formattedBirthdate = useMemo(() => {
@@ -76,12 +141,6 @@ export default function RegistrationWizard() {
     const date = new Date(bdate);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   }, [bdate]);
-
-  // --- NICKNAME HANDLER (UX FIX) ---
-  const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/"/g, ''); 
-    setNickname(toTitleCase(val));
-  };
 
   // --- STATE: Address (Dynamic API Data Only) ---
   const [provinceList, setProvinceList] = useState<any[]>([]);
@@ -212,6 +271,7 @@ export default function RegistrationWizard() {
   };
 
   // --- STATE: Academic & Other ---
+  const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedMajor, setSelectedMajor] = useState("");
   const [thesisTitle, setThesisTitle] = useState(""); 
@@ -247,13 +307,25 @@ export default function RegistrationWizard() {
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
 
+  // --- DERIVED ACADEMIC OPTIONS ---
+  const currentCourses = useMemo(() => {
+    return departmentOptions.find(d => d.name === selectedDepartment)?.courses || [];
+  }, [selectedDepartment]);
+
   const currentMajors = useMemo(() => {
-    return courseOptions.find(c => c.course === selectedCourse)?.majors || [];
-  }, [selectedCourse]);
+    return currentCourses.find(c => c.name === selectedCourse)?.majors || [];
+  }, [selectedCourse, currentCourses]);
+
+  // --- HANDLERS ---
+  const handleDepartmentChange = (value: string) => {
+    setSelectedDepartment(value);
+    setSelectedCourse(""); // Reset course
+    setSelectedMajor("");  // Reset major
+  };
 
   const handleCourseChange = (value: string) => {
     setSelectedCourse(value);
-    const courseData = courseOptions.find(c => c.course === value);
+    const courseData = currentCourses.find(c => c.name === value);
     if (courseData && courseData.majors.length === 0) {
       setSelectedMajor("N/A");
     } else {
@@ -284,7 +356,8 @@ export default function RegistrationWizard() {
       case 2: 
         return selectedProvinceCode !== "" && selectedCityCode !== "" && selectedBarangayCode !== "";
       case 3: 
-        return selectedCourse !== "" && selectedMajor !== "" && thesisTitle.trim() !== "" && contactNum.trim() !== "" && email.trim() !== "" && umEmail.trim() !== "";
+        // Added validation for selectedDepartment
+        return selectedDepartment !== "" && selectedCourse !== "" && selectedMajor !== "" && thesisTitle.trim() !== "" && contactNum.trim() !== "" && email.trim() !== "" && umEmail.trim() !== "";
       case 4: 
         if (useGuardian) {
            return guardianLname.trim() !== "" && guardianFname.trim() !== "" && guardianRel.trim() !== "";
@@ -326,12 +399,11 @@ export default function RegistrationWizard() {
   const onSubmit = async () => {
     const relation: any = {};
     
-    //post condition if using guardian or parent
     if (useGuardian) {
       relation.guardian = {
         first_name: guardianFname,
         last_name: guardianLname,
-        relationship: guardianRel, // Added relationship
+        relationship: guardianRel,
       }; 
     } else {
       relation.parent = {
@@ -357,9 +429,10 @@ export default function RegistrationWizard() {
       first_name: fname,
       middle_name: mname,
       suffix: suffix,
-      nickname: nickname, // raw nickname
+      nickname: nickname,
       birthdate: bdate,
       academics: {
+        department: selectedDepartment, // Added Department
         course: selectedCourse,
         major: selectedMajor,
         thesis: thesisTitle,
@@ -367,11 +440,10 @@ export default function RegistrationWizard() {
       ...relation, 
       province: provinceName,
       city: cityName,
-      barangay: barangayName // Typo fix
+      barangay: barangayName 
     };
 
     try {
-      //local testing for now
       const res = await fetch("http://localhost:4000/api/submit", {
         method: "POST",
         headers: {
@@ -540,11 +612,10 @@ export default function RegistrationWizard() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="nickname">Nickname (for Yearbook)</Label>
-                            {/* FIX: Input is raw value to allow easy editing */}
                             <Input 
                                 id="nickname" 
                                 value={nickname} 
-                                onChange={handleNicknameChange} 
+                                onChange={(e) => setNickname(e.target.value)} 
                                 placeholder="Juanny" 
                                 className="h-11" 
                             />
@@ -618,28 +689,58 @@ export default function RegistrationWizard() {
                     {/* --- STEP 3: ACADEMIC --- */}
                     {currentStep === 3 && (
                         <div className="space-y-5">
+                        
+                        {/* 1. Department Selection */}
                         <div className="space-y-2">
-                            <Label>Program / Course <span className="text-red-500">*</span></Label>
-                            <Select onValueChange={handleCourseChange} value={selectedCourse}>
+                            <Label>Department / School <span className="text-red-500">*</span></Label>
+                            <Select onValueChange={handleDepartmentChange} value={selectedDepartment}>
                             <SelectTrigger className="w-full h-auto min-h-[50px] py-3 text-left flex items-center">
                                 <span className="whitespace-normal leading-tight block text-left w-full">
-                                <SelectValue placeholder="Select Course" />
+                                <SelectValue placeholder="Select Department" />
                                 </span>
                             </SelectTrigger>
                             <SelectContent className="max-h-[300px] max-w-[90vw] md:max-w-[500px]">
-                                {courseOptions.map((opt) => (
+                                {departmentOptions.map((dept) => (
                                 <SelectItem 
-                                    key={opt.course} 
-                                    value={opt.course}
-                                    className="py-3 border-b last:border-0 whitespace-normal text-left"
+                                    key={dept.name} 
+                                    value={dept.name}
+                                    className="py-3 border-b last:border-0 whitespace-normal text-left font-semibold"
                                 >
-                                    {opt.course}
+                                    {dept.name}
                                 </SelectItem>
                                 ))}
                             </SelectContent>
                             </Select>
                         </div>
 
+                        {/* 2. Course Selection (Filtered by Department) */}
+                        <div className="space-y-2">
+                            <Label>Program / Course <span className="text-red-500">*</span></Label>
+                            <Select 
+                                onValueChange={handleCourseChange} 
+                                value={selectedCourse}
+                                disabled={!selectedDepartment} // Disable if no department selected
+                            >
+                            <SelectTrigger className={`w-full h-auto min-h-[50px] py-3 text-left flex items-center ${!selectedDepartment ? "bg-gray-100 text-gray-500" : ""}`}>
+                                <span className="whitespace-normal leading-tight block text-left w-full">
+                                <SelectValue placeholder={!selectedDepartment ? "Select Department First" : "Select Course"} />
+                                </span>
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px] max-w-[90vw] md:max-w-[500px]">
+                                {currentCourses.map((opt) => (
+                                <SelectItem 
+                                    key={opt.name} 
+                                    value={opt.name}
+                                    className="py-3 border-b last:border-0 whitespace-normal text-left"
+                                >
+                                    {opt.name}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* 3. Major Selection (Filtered by Course) */}
                         <div className="space-y-2">
                             <Label>Major / Specialization <span className="text-red-500">*</span></Label>
                             <Select 
@@ -909,9 +1010,17 @@ export default function RegistrationWizard() {
                                 </h4>
                                 <div className="bg-white p-4 rounded-lg border border-stone-100 shadow-sm space-y-4">
                                 <div>
+                                    {/* ADDED DEPARTMENT REVIEW */}
+                                    <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Department</span>
+                                    <span className="text-stone-900 font-bold block mb-2">{selectedDepartment}</span>
+
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Course & Major</span>
                                     <span className="text-stone-900 font-bold block">{selectedCourse}</span>
                                     {selectedMajor !== "N/A" && <span className="text-amber-700 text-sm font-medium block mt-1">{selectedMajor}</span>}
+                                </div>
+                                <div className="pt-2 border-t border-stone-100 mt-2">
+                                    <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Thesis / Capstone Title</span>
+                                    <span className="text-stone-900 font-medium italic">"{thesisTitle}"</span>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-stone-100">
                                     <div>
