@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   Users, 
   Calendar, 
@@ -31,13 +31,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// --- MOCK DATA: PENDING STUDENTS ---
-const MOCK_PENDING_STUDENTS = [
-  { id: "101", idNumber: "2020-00123", name: "Juan Dela Cruz", program: "BSCS", personalEmail: "juan@gmail.com", umEmail: "202000123@umindanao.edu.ph", status: "pending" },
-  { id: "102", idNumber: "2020-00456", name: "Maria Clara", program: "BSBA", personalEmail: "maria@yahoo.com", umEmail: "202000456@umindanao.edu.ph", status: "pending" },
-  { id: "103", idNumber: "2021-00789", name: "Pedro Penduko", program: "BSED", personalEmail: "pedro@gmail.com", umEmail: "202100789@umindanao.edu.ph", status: "pending" },
-];
 
 const MOCK_SCHEDULES = [
   { date: "2026-03-15", amSlots: 50, amBooked: 48, pmSlots: 50, pmBooked: 12 },
@@ -128,7 +121,6 @@ const STATUS_STEPS = [
 // --- MAIN COMPONENT ---
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("verification"); // 'verification', 'slots', 'masterlist'
-  const [pendingStudents, setPendingStudents] = useState(MOCK_PENDING_STUDENTS);
   const [verifiedStudents, setVerifiedStudents] = useState<any[]>([]);
   const [schedules, setSchedules] = useState(MOCK_SCHEDULES);
   
@@ -140,15 +132,66 @@ export default function AdminDashboard() {
   // States for Masterlist Modal
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
-  // --- ACTIONS: VERIFICATION ---
-  const handleVerify = (studentId: string) => {
-    const student = pendingStudents.find(s => s.id === studentId);
-    if (!student) return;
+  //fetching actual data from database, veri simple implementation 
+  //PS: Do not modify, it's a pain to track and iterate :D
+  const [pendingStudents, setPendingStudents] = useState([]);
 
-    setPendingStudents(prev => prev.filter(s => s.id !== studentId));
-    setVerifiedStudents(prev => [...prev, { ...student, status: "verified" }]);
+  useEffect(() => {
+  //asynchronous.. so you can add loading states or whatevs while fetching
+    const fetchStudents = async () => {
+      try {
+        //local testing for now but db is live in cloud..
+        const res = await fetch('http://localhost:4000/fetch/verify'); 
+
+        if (!res.ok) {
+          throw new Error("Something went wrong");
+        }
+
+        const data = await res.json();
+        console.log(data);
+
+        setPendingStudents(data);
+      } catch (err) {
+        console.error("Something went wrong: ", err);
+      }
+    }
+    fetchStudents(); 
+  }, []);
+
+  // --- ACTIONS: VERIFICATION --- 
+  //now asynchronous.. so you can add loading states or whatevs when posting
+  const handleVerify = async (studentId: number) => {
+    const student = pendingStudents.find(s => s.studentNumber.student_number === studentId);
+    if (!student) return;
     
-    alert(`Verified ${student.name}! Credentials sent to emails.`);
+    const body = {
+      id: studentId
+    };
+    
+    //PS: Do not modify, it's a pain to track and iterate :D
+    try {
+      const res = await fetch("http://localhost:4000/post/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }, 
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      const response = await res.json();
+      console.log(response);
+
+      setPendingStudents(prev => prev.filter(s => s.studentNumber.student_number !== studentId));
+      setVerifiedStudents(prev => [...prev, { ...student, status: "verified" }]);
+    } catch (err) {
+      console.error("Something went wrong..", err);
+    }
+    
+    alert(`Succesfully verified ${student.name}! Credentials has been sent to the respective email.`);
   };
 
   const handleBulkVerify = () => {
@@ -347,20 +390,20 @@ export default function AdminDashboard() {
                                         <div key={student.id} className="flex flex-col md:flex-row items-center justify-between p-4 border border-stone-100 rounded-lg bg-white hover:border-amber-200 transition-all shadow-sm">
                                             <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
                                                 <div className="h-10 w-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-800 font-bold text-xs">
-                                                    {student.program.substring(0,2)}
+                                                    {student.course.substring(0,2)}
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-stone-800">{student.name}</h4>
+                                                    <h4 className="font-bold text-stone-800">{`${student.first_name} ${student.last_name}`}</h4>
                                                     <div className="flex items-center gap-2 text-xs text-stone-500 mt-1">
-                                                        <span className="bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded text-stone-700 font-mono font-medium">{student.idNumber}</span>
+                                                        <span className="bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded text-stone-700 font-mono font-medium">{student.studentNumber.student_number}</span>
                                                         <span>•</span>
-                                                        <span>{student.program}</span>
+                                                        <span>{student.course}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                             
                                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto shadow-sm" onClick={() => handleVerify(student.id)}>
+                                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto shadow-sm" onClick={() => handleVerify(student.studentNumber.student_number)}>
                                                     <Mail className="mr-2 h-3 w-3" /> Approve & Send
                                                 </Button>
                                             </div>
