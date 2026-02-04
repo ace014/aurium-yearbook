@@ -134,7 +134,8 @@ export default function AdminDashboard() {
 
   //fetching actual data from database, veri simple implementation 
   //PS: Do not modify, it's a pain to track and iterate :D
-  const [pendingStudents, setPendingStudents] = useState([]);
+  // FIX 1: Initialize as empty array to be safe
+  const [pendingStudents, setPendingStudents] = useState<any[]>([]);
 
   useEffect(() => {
   //asynchronous.. so you can add loading states or whatevs while fetching
@@ -150,9 +151,15 @@ export default function AdminDashboard() {
         const data = await res.json();
         console.log(data);
 
-        setPendingStudents(data);
+        // FIX 2: Ensure data is an array before setting
+        if (Array.isArray(data)) {
+          setPendingStudents(data);
+        } else {
+          setPendingStudents([]); // Default to empty if API returns weird object
+        }
       } catch (err) {
         console.error("Something went wrong: ", err);
+        setPendingStudents([]); // Default to empty on error
       }
     }
     fetchStudents(); 
@@ -161,7 +168,8 @@ export default function AdminDashboard() {
   // --- ACTIONS: VERIFICATION --- 
   //now asynchronous.. so you can add loading states or whatevs when posting
   const handleVerify = async (studentId: number) => {
-    const student = pendingStudents.find(s => s.studentNumber.student_number === studentId);
+    // FIX 3: Optional chaining in case pendingStudents is empty
+    const student = pendingStudents?.find(s => s.studentNumber?.student_number === studentId);
     if (!student) return;
     
     const body = {
@@ -191,7 +199,9 @@ export default function AdminDashboard() {
       console.error("Something went wrong..", err);
     }
     
-    alert(`Succesfully verified ${student.name}! Credentials has been sent to the respective email.`);
+    // FIX 4: Ensure student.name exists (API usually returns first_name/last_name)
+    const name = student.name || `${student.first_name} ${student.last_name}`;
+    alert(`Succesfully verified ${name}! Credentials has been sent to the respective email.`);
   };
 
   const handleBulkVerify = () => {
@@ -380,22 +390,25 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
+                                {/* FIX 5: Safer mapping logic */}
                                 {pendingStudents.length === 0 ? (
                                     <div className="text-center py-12 bg-stone-50 rounded-lg border border-dashed border-stone-200">
                                         <CheckCircle className="mx-auto h-10 w-10 text-stone-300 mb-3"/>
                                         <p className="text-stone-400 font-medium">All caught up! No pending students.</p>
                                     </div>
                                 ) : (
-                                    pendingStudents.map((student) => (
-                                        <div key={student.id} className="flex flex-col md:flex-row items-center justify-between p-4 border border-stone-100 rounded-lg bg-white hover:border-amber-200 transition-all shadow-sm">
+                                    Array.isArray(pendingStudents) && pendingStudents.map((student) => (
+                                        <div key={student.id || Math.random()} className="flex flex-col md:flex-row items-center justify-between p-4 border border-stone-100 rounded-lg bg-white hover:border-amber-200 transition-all shadow-sm">
                                             <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
                                                 <div className="h-10 w-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-800 font-bold text-xs">
-                                                    {student.course.substring(0,2)}
+                                                    {student.course ? student.course.substring(0,2) : "UN"}
                                                 </div>
                                                 <div>
                                                     <h4 className="font-bold text-stone-800">{`${student.first_name} ${student.last_name}`}</h4>
                                                     <div className="flex items-center gap-2 text-xs text-stone-500 mt-1">
-                                                        <span className="bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded text-stone-700 font-mono font-medium">{student.studentNumber.student_number}</span>
+                                                        <span className="bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded text-stone-700 font-mono font-medium">
+                                                            {student.studentNumber ? student.studentNumber.student_number : "No ID"}
+                                                        </span>
                                                         <span>•</span>
                                                         <span>{student.course}</span>
                                                     </div>
@@ -403,7 +416,7 @@ export default function AdminDashboard() {
                                             </div>
                                             
                                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto shadow-sm" onClick={() => handleVerify(student.studentNumber.student_number)}>
+                                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto shadow-sm" onClick={() => handleVerify(student.studentNumber?.student_number)}>
                                                     <Mail className="mr-2 h-3 w-3" /> Approve & Send
                                                 </Button>
                                             </div>
@@ -544,78 +557,78 @@ export default function AdminDashboard() {
                                 </CardHeader>
                                 <CardContent className="pt-6 bg-white">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* MORNING */}
-                                        <div className="space-y-4 p-4 rounded-lg border border-stone-100 bg-amber-50/30">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <h4 className="font-bold text-stone-700 flex items-center gap-2">
-                                                    🌤️ Morning <span className="text-xs font-normal text-stone-400 bg-white px-2 py-0.5 rounded border border-stone-200">8AM - 12PM</span>
-                                                </h4>
+                                            {/* MORNING */}
+                                            <div className="space-y-4 p-4 rounded-lg border border-stone-100 bg-amber-50/30">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2">
+                                                        🌤️ Morning <span className="text-xs font-normal text-stone-400 bg-white px-2 py-0.5 rounded border border-stone-200">8AM - 12PM</span>
+                                                    </h4>
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700 hover:bg-amber-100 rounded-full"><Edit3 className="h-3.5 w-3.5" /></Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent>
+                                                            <DialogHeader><DialogTitle>Modify Morning Capacity</DialogTitle></DialogHeader>
+                                                            <Input type="number" defaultValue={day.amSlots} onChange={(e) => handleUpdateCapacity(day.date, 'am', parseInt(e.target.value))} />
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-xs font-medium">
+                                                        <span className={day.amBooked >= day.amSlots ? "text-red-600 font-bold" : "text-amber-700"}>{day.amBooked} Booked</span>
+                                                        <span className="text-stone-400">Limit: {day.amSlots}</span>
+                                                    </div>
+                                                    <div className="h-2.5 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
+                                                        <div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.amBooked >= day.amSlots ? "bg-red-500" : "bg-amber-500"}`} style={{ width: `${(day.amBooked / day.amSlots) * 100}%` }}></div>
+                                                    </div>
+                                                </div>
                                                 <Dialog>
                                                     <DialogTrigger asChild>
-                                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700 hover:bg-amber-100 rounded-full"><Edit3 className="h-3.5 w-3.5" /></Button>
+                                                        <Button variant="outline" size="sm" className="w-full text-xs border-dashed border-stone-300 text-stone-500 hover:text-amber-800 hover:border-amber-300 hover:bg-amber-50"><Plus className="mr-1 h-3 w-3" /> Manually Add Student</Button>
                                                     </DialogTrigger>
                                                     <DialogContent>
-                                                        <DialogHeader><DialogTitle>Modify Morning Capacity</DialogTitle></DialogHeader>
-                                                        <Input type="number" defaultValue={day.amSlots} onChange={(e) => handleUpdateCapacity(day.date, 'am', parseInt(e.target.value))} />
+                                                        <DialogHeader><DialogTitle>Add to Morning Slot</DialogTitle></DialogHeader>
+                                                        <Input placeholder="e.g., Juan Dela Cruz" value={manualStudentName} onChange={(e) => setManualStudentName(e.target.value)} />
+                                                        <DialogFooter><Button onClick={() => handleManualAdd(day.date, 'am')}>Confirm Add (+1)</Button></DialogFooter>
                                                     </DialogContent>
                                                 </Dialog>
                                             </div>
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-xs font-medium">
-                                                    <span className={day.amBooked >= day.amSlots ? "text-red-600 font-bold" : "text-amber-700"}>{day.amBooked} Booked</span>
-                                                    <span className="text-stone-400">Limit: {day.amSlots}</span>
+                                            {/* AFTERNOON */}
+                                            <div className="space-y-4 p-4 rounded-lg border border-stone-100 bg-blue-50/30">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2">
+                                                        ☀️ Afternoon <span className="text-xs font-normal text-stone-400 bg-white px-2 py-0.5 rounded border border-stone-200">1PM - 5PM</span>
+                                                    </h4>
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700 hover:bg-amber-100 rounded-full"><Edit3 className="h-3.5 w-3.5" /></Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent>
+                                                            <DialogHeader><DialogTitle>Modify Afternoon Capacity</DialogTitle></DialogHeader>
+                                                            <Input type="number" defaultValue={day.pmSlots} onChange={(e) => handleUpdateCapacity(day.date, 'pm', parseInt(e.target.value))} />
+                                                        </DialogContent>
+                                                    </Dialog>
                                                 </div>
-                                                <div className="h-2.5 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
-                                                    <div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.amBooked >= day.amSlots ? "bg-red-500" : "bg-amber-500"}`} style={{ width: `${(day.amBooked / day.amSlots) * 100}%` }}></div>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-xs font-medium">
+                                                        <span className={day.pmBooked >= day.pmSlots ? "text-red-600 font-bold" : "text-blue-700"}>{day.pmBooked} Booked</span>
+                                                        <span className="text-stone-400">Limit: {day.pmSlots}</span>
+                                                    </div>
+                                                    <div className="h-2.5 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
+                                                        <div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.pmBooked >= day.pmSlots ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${(day.pmBooked / day.pmSlots) * 100}%` }}></div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="w-full text-xs border-dashed border-stone-300 text-stone-500 hover:text-amber-800 hover:border-amber-300 hover:bg-amber-50"><Plus className="mr-1 h-3 w-3" /> Manually Add Student</Button>
-                                                </DialogTrigger>
-                                                <DialogContent>
-                                                    <DialogHeader><DialogTitle>Add to Morning Slot</DialogTitle></DialogHeader>
-                                                    <Input placeholder="e.g., Juan Dela Cruz" value={manualStudentName} onChange={(e) => setManualStudentName(e.target.value)} />
-                                                    <DialogFooter><Button onClick={() => handleManualAdd(day.date, 'am')}>Confirm Add (+1)</Button></DialogFooter>
-                                                </DialogContent>
-                                            </Dialog>
-                                        </div>
-                                        {/* AFTERNOON */}
-                                        <div className="space-y-4 p-4 rounded-lg border border-stone-100 bg-blue-50/30">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <h4 className="font-bold text-stone-700 flex items-center gap-2">
-                                                    ☀️ Afternoon <span className="text-xs font-normal text-stone-400 bg-white px-2 py-0.5 rounded border border-stone-200">1PM - 5PM</span>
-                                                </h4>
                                                 <Dialog>
                                                     <DialogTrigger asChild>
-                                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700 hover:bg-amber-100 rounded-full"><Edit3 className="h-3.5 w-3.5" /></Button>
+                                                        <Button variant="outline" size="sm" className="w-full text-xs border-dashed border-stone-300 text-stone-500 hover:text-blue-800 hover:border-blue-300 hover:bg-blue-50"><Plus className="mr-1 h-3 w-3" /> Manually Add Student</Button>
                                                     </DialogTrigger>
                                                     <DialogContent>
-                                                        <DialogHeader><DialogTitle>Modify Afternoon Capacity</DialogTitle></DialogHeader>
-                                                        <Input type="number" defaultValue={day.pmSlots} onChange={(e) => handleUpdateCapacity(day.date, 'pm', parseInt(e.target.value))} />
+                                                        <DialogHeader><DialogTitle>Add to Afternoon Slot</DialogTitle></DialogHeader>
+                                                        <Input placeholder="e.g., Maria Clara" value={manualStudentName} onChange={(e) => setManualStudentName(e.target.value)} />
+                                                        <DialogFooter><Button onClick={() => handleManualAdd(day.date, 'pm')}>Confirm Add (+1)</Button></DialogFooter>
                                                     </DialogContent>
                                                 </Dialog>
                                             </div>
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-xs font-medium">
-                                                    <span className={day.pmBooked >= day.pmSlots ? "text-red-600 font-bold" : "text-blue-700"}>{day.pmBooked} Booked</span>
-                                                    <span className="text-stone-400">Limit: {day.pmSlots}</span>
-                                                </div>
-                                                <div className="h-2.5 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
-                                                    <div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.pmBooked >= day.pmSlots ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${(day.pmBooked / day.pmSlots) * 100}%` }}></div>
-                                                </div>
-                                            </div>
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="w-full text-xs border-dashed border-stone-300 text-stone-500 hover:text-blue-800 hover:border-blue-300 hover:bg-blue-50"><Plus className="mr-1 h-3 w-3" /> Manually Add Student</Button>
-                                                </DialogTrigger>
-                                                <DialogContent>
-                                                    <DialogHeader><DialogTitle>Add to Afternoon Slot</DialogTitle></DialogHeader>
-                                                    <Input placeholder="e.g., Maria Clara" value={manualStudentName} onChange={(e) => setManualStudentName(e.target.value)} />
-                                                    <DialogFooter><Button onClick={() => handleManualAdd(day.date, 'pm')}>Confirm Add (+1)</Button></DialogFooter>
-                                                </DialogContent>
-                                            </Dialog>
-                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

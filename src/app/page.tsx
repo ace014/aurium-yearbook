@@ -22,7 +22,9 @@ import {
   Menu, 
   X,
   Camera,
-  Sparkles // Added Sparkles for the new UI
+  Sparkles, // Added Sparkles for the new UI
+  ChevronLeft, // Added
+  ChevronRight // Added
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -32,9 +34,21 @@ export default function AuriumLandingPage() {
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const carouselRef = useRef(null);
+  
+  // --- REF FOR EDITIONS CAROUSEL ---
+  const editionsRef = useRef<HTMLDivElement>(null);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // --- SCROLL HANDLER FOR EDITIONS ---
+  const scrollEditions = (direction: 'left' | 'right') => {
+    if (editionsRef.current) {
+      const { current } = editionsRef;
+      const scrollAmount = direction === 'left' ? -350 : 350;
+      current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
   };
 
   const fadeInUp = {
@@ -69,35 +83,40 @@ export default function AuriumLandingPage() {
       theme: "Timeless White",
       desc: "Embodying purity, elegance, and the enduring nature of memories. Like a blank canvas, it reflects the clarity and simplicity of the moments that define our journey.",
       image: "/images/batch-2025.jpg", 
-      overlay: "from-stone-900/10 to-stone-900/60"
+      overlay: "from-stone-900/10 to-stone-900/80",
+      accent: "text-stone-800" // Changed to dark text for white background
     },
     {
       year: "2024",
       theme: "Vintage",
       desc: "Celebrating the enduring nature of memories. Just as vintage items become more meaningful over time, our triumphs and challenges deepen in significance as we look back.",
       image: "/images/batch-2024.jpg",
-      overlay: "from-amber-900/20 to-amber-950/80"
+      overlay: "from-amber-900/20 to-amber-950/80",
+      accent: "text-amber-900"
     },
     {
       year: "2023",
       theme: "Oscars",
       desc: "Symbolizing enduring excellence. Celebrating stories that connect across generations. Teaching us that true greatness lies not only in the present but in the legacy we create.",
       image: "/images/batch-2023.jpg",
-      overlay: "from-blue-900/20 to-blue-950/80"
+      overlay: "from-blue-900/20 to-blue-950/80",
+      accent: "text-blue-900"
     },
     {
       year: "2022",
-      theme: "Oscars",
+      theme: "Cinematic",
       desc: "Embracing the sparkling charm of the Oscars. Beyond the glitz, reflecting hard work and the constant pursuit of excellence—our journey filled with unforgettable cinematic moments.",
       image: "/images/batch-2022.jpg",
-      overlay: "from-red-900/20 to-red-950/80"
+      overlay: "from-red-900/20 to-red-950/80",
+      accent: "text-red-900"
     },
     {
       year: "2021",
       theme: "Sablay",
       desc: "Honoring the Filipino academic identity. The Sablay represents our nationalism and the triumph of our journey, woven with colors of honor, marking our transition to servant-leaders.",
       image: "/images/batch-2021.jpg", 
-      overlay: "from-red-900/20 to-stone-900/80" 
+      overlay: "from-red-900/20 to-stone-900/80",
+      accent: "text-stone-900" 
     }
   ];
 
@@ -353,61 +372,99 @@ export default function AuriumLandingPage() {
         </div>
       </section>
 
-      {/* --- EDITIONS GALLERY --- */}
-      <section id="editions" className="py-16 md:py-24 bg-stone-50 overflow-hidden">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-12 md:mb-20">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-amber-950 mb-4">Our Heritage Editions</h2>
-            <p className="text-stone-500 text-lg">A journey through the themes that defined our history.</p>
+      {/* --- EDITIONS GALLERY (UPDATED CAROUSEL WITH BOTTOM DEFINITION) --- */}
+      <section id="editions" className="py-20 md:py-28 bg-stone-50 overflow-hidden relative">
+        {/* Background Decors */}
+        <div className="absolute top-0 left-0 w-full h-full z-0 pointer-events-none opacity-40">
+           <div className="absolute top-20 right-[-100px] w-96 h-96 bg-amber-100/50 rounded-full blur-3xl"></div>
+           <div className="absolute bottom-20 left-[-100px] w-96 h-96 bg-stone-200/50 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
+          
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div className="max-w-xl">
+               <span className="text-amber-700 font-bold uppercase tracking-widest text-xs mb-2 block">The Archives</span>
+               <h2 className="text-4xl md:text-5xl font-serif font-bold text-amber-950 mb-4">Heritage Editions</h2>
+               <p className="text-stone-500 text-lg">A curated journey through the themes and stories that defined our history.</p>
+            </div>
+            
+            {/* Desktop Navigation Buttons */}
+            <div className="hidden md:flex gap-3">
+               <Button onClick={() => scrollEditions('left')} variant="outline" className="rounded-full w-12 h-12 p-0 border-stone-300 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-300 transition-all">
+                  <ChevronLeft size={24} />
+               </Button>
+               <Button onClick={() => scrollEditions('right')} variant="default" className="rounded-full w-12 h-12 p-0 bg-amber-900 hover:bg-amber-800 text-white shadow-lg transition-all">
+                  <ChevronRight size={24} />
+               </Button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {/* Carousel Container */}
+          <div 
+            ref={editionsRef}
+            className="flex gap-6 overflow-x-auto pb-12 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
+            style={{ scrollBehavior: 'smooth' }}
+          >
             {editions.map((edition, index) => (
               <motion.div 
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -10 }}
-                className="group relative flex flex-col h-full rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow bg-white"
+                className="relative snap-center shrink-0 w-[85vw] md:w-[350px] flex flex-col h-full rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 bg-white"
               >
-                {/* Image / Cover Area */}
-                <div className="relative h-56 md:h-64 w-full overflow-hidden bg-stone-200">
+                {/* Image / Cover Area (Top) */}
+                <div className="relative h-[280px] w-full overflow-hidden bg-stone-900">
                    <Image 
                      src={edition.image} 
                      alt={`${edition.theme} ${edition.year}`}
                      fill
-                     className="object-cover transition-transform duration-700 group-hover:scale-110"
+                     className="object-cover transition-transform duration-700 hover:scale-105"
                    />
-                   {/* Gradient Overlay */}
+                   
+                   {/* Gradient Overlay for Text Readability */}
                    <div className={`absolute inset-0 bg-gradient-to-t ${edition.overlay}`}></div>
                    
-                   {/* Text on top of Image */}
-                   <div className="absolute bottom-0 left-0 p-6 text-white w-full">
-                     <h3 className="text-3xl md:text-4xl font-serif font-bold tracking-widest mb-1 shadow-black/50 drop-shadow-md">{edition.year}</h3>
-                     <div className="flex items-center gap-2">
-                       {edition.theme.includes("Oscars") && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
-                       {edition.theme.includes("Vintage") && <Clock size={16} className="text-amber-200" />}
-                       {edition.theme.includes("Sablay") && <Ribbon size={16} className="text-red-300" />}
-                       <p className="text-xs font-sans uppercase tracking-[0.3em] font-bold opacity-90">{edition.theme}</p>
-                     </div>
-                   </div>
+                   {/* REMOVED: Text on top of Image (Year & Theme) - Now moved to bottom card */}
                 </div>
-                
-                {/* Description */}
-                <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
+
+                {/* Definition/Description Area (Bottom Side - White Box) */}
+                <div className="p-6 flex-1 flex flex-col justify-between bg-white border-t border-stone-100">
+                   {/* MOVED: Year and Theme here */}
+                   <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-1">
+                          {edition.theme.includes("Oscars") && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
+                          {edition.theme.includes("Vintage") && <Clock size={14} className="text-amber-600" />}
+                          {edition.theme.includes("Sablay") && <Ribbon size={14} className="text-red-600" />}
+                          <span className="text-xs font-bold uppercase tracking-widest text-stone-500">{edition.theme}</span>
+                      </div>
+                      <h3 className={`text-3xl font-serif font-bold ${edition.accent} leading-none`}>
+                         {edition.year}
+                      </h3>
+                   </div>
+
                    <p className="text-stone-600 text-sm leading-relaxed mb-6">
                      {edition.desc}
                    </p>
                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-stone-100">
-                     <span className="text-xs text-stone-400 font-bold uppercase tracking-wider">Explore Batch</span>
-                     <ArrowRight size={16} className="text-amber-800 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                     <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Explore Batch</span>
+                     <ArrowRight size={16} className="text-amber-800 transition-transform group-hover:translate-x-1" />
                    </div>
                 </div>
               </motion.div>
             ))}
           </div>
+          
+          {/* Mobile Swipe Indicator */}
+          <div className="md:hidden flex justify-center gap-1 mt-2">
+             {editions.map((_, i) => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full bg-stone-300"></div>
+             ))}
+          </div>
+
         </div>
       </section>
 
