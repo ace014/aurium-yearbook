@@ -314,7 +314,7 @@ export default function StaffDashboard() {
   const BrandLogo = ({ dark = false }: { dark?: boolean }) => (
     <div className="flex items-center gap-3">
         <div className="relative w-8 h-8 overflow-hidden hover:scale-105 transition-transform duration-300">
-           <Image src="/images/umtc_logo.png" alt="UMTC" fill className="object-contain" />
+           <Image src="/images/umtc-logo.png" alt="UMTC" fill className="object-contain" />
         </div>
         <div className={`h-8 w-[1px] ${dark ? 'bg-stone-300' : 'bg-stone-700/50'}`}></div>
         <div className="relative w-8 h-8 overflow-hidden hover:scale-105 transition-transform duration-300">

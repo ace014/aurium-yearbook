@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link"; // Added Link for redirection
+import Link from "next/link"; 
+import Image from "next/image";
 import { 
   Users, 
   Calendar, 
@@ -12,19 +13,20 @@ import {
   Edit3, 
   Bell,
   LogOut,
-  BookOpen,      // New Icon for Masterlist
-  GraduationCap, // New Icon for Course
-  MapPin,        // New Icon for Address
-  Phone,         // New Icon for Contact
-  UserCheck,     // New Icon for Guardian
-  Circle,        // New Icon for Timeline
-  FileText,      // New Icon for Thesis
-  ChevronRight,  // New Icon for UI
-  CheckCircle2,  // New Icon for Timeline
-  Clock,         // New Icon for Status
-  Menu,          // Added for Mobile
-  X,             // Added for Mobile
-  Home           // Added for Home Button
+  BookOpen,      
+  GraduationCap, 
+  MapPin,        
+  Phone,         
+  UserCheck,     
+  Circle,        
+  FileText,      
+  ChevronRight,  
+  CheckCircle2,  
+  Clock,         
+  Menu,          
+  X,             
+  Home,
+  ArrowLeft          
 } from "lucide-react";
 
 // UI Components
@@ -127,12 +129,12 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("verification"); // 'verification', 'slots', 'masterlist'
   const [verifiedStudents, setVerifiedStudents] = useState<any[]>([]);
   const [schedules, setSchedules] = useState(MOCK_SCHEDULES);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // NEW: Mobile Menu State
   
   // States for Inputs
   const [searchQuery, setSearchQuery] = useState("");
   const [newDateInput, setNewDateInput] = useState("");
   const [manualStudentName, setManualStudentName] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // States for Masterlist Modal
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -292,71 +294,91 @@ export default function AdminDashboard() {
     setSearchQuery("");
   }
 
+  // LOGO COMPONENT REUSABLE
+  const BrandLogo = ({ dark = false }: { dark?: boolean }) => (
+    <div className="flex items-center gap-3">
+        <div className="relative w-8 h-8 overflow-hidden hover:scale-105 transition-transform duration-300">
+           <Image src="/images/umtc-logo.png" alt="UMTC" fill className="object-contain" />
+        </div>
+        <div className={`h-8 w-[1px] ${dark ? 'bg-stone-300' : 'bg-stone-700/50'}`}></div>
+        <div className="relative w-8 h-8 overflow-hidden hover:scale-105 transition-transform duration-300">
+           <Image src="/images/aurium-logo.png" alt="Aurium" fill className="object-contain" />
+        </div>
+        <div className="flex flex-col justify-center">
+           <span className={`text-lg font-serif font-bold ${dark ? 'text-stone-800' : 'text-white'} leading-none tracking-tight`}>AURIUM</span>
+           <span className="text-[8px] text-amber-600 uppercase tracking-widest font-bold">Admin Portal</span>
+        </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-stone-50 flex font-sans relative">
+    <div className="min-h-screen bg-stone-50 flex font-sans relative selection:bg-amber-100 selection:text-amber-900">
       
-      {/* --- MOBILE SIDEBAR OVERLAY (NEW) --- */}
+      {/* --- MOBILE SIDEBAR OVERLAY --- */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-            {/* Backdrop with click to close */}
-            <div className="absolute inset-0 bg-stone-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
+            <div className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
             
-            {/* Sidebar Content */}
-            <aside className="relative w-64 bg-amber-950 text-amber-50 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300 h-full">
-                <div className="p-6 border-b border-amber-900/50 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center font-serif font-bold text-xl text-white shadow-inner">A</div>
-                        <div>
-                            <h2 className="font-bold tracking-wider text-amber-50">AURIUM</h2>
-                            <p className="text-[10px] text-amber-400 uppercase tracking-widest font-semibold">Moderator Panel</p>
-                        </div>
-                    </div>
-                    {/* CLOSE BUTTON (BACK BUTTON for Mobile) */}
-                    <Button variant="ghost" size="icon" className="text-amber-400 hover:text-white hover:bg-amber-900/50" onClick={() => setIsMobileMenuOpen(false)}>
-                        <X className="h-6 w-6" />
+            <aside className="relative w-72 bg-stone-950 text-stone-300 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300 h-full border-r border-stone-800">
+                <div className="p-6 border-b border-stone-800/50 flex items-center justify-between">
+                    <BrandLogo />
+                    <Button variant="ghost" size="icon" className="text-stone-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
+                        <X className="h-5 w-5" />
                     </Button>
                 </div>
                 
-                <nav className="flex-1 p-4 space-y-2">
-                    {/* Added Home Button */}
+                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-stone-600 mb-2 px-3">Menu</p>
                     <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Button variant="ghost" className="w-full justify-start text-amber-200 hover:text-white hover:bg-amber-900/30">
-                            <Home className="mr-3 h-5 w-5" /> Return to Website
+                        <Button variant="ghost" className="w-full justify-start gap-3 h-12 text-stone-400 hover:text-white hover:bg-stone-900">
+                            <Home size={18} /> Return to Website
                         </Button>
                     </Link>
 
-                    <div className="my-2 border-t border-amber-900/30"></div>
+                    <div className="my-2 border-t border-stone-800/50"></div>
 
-                    <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'verification' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => { handleTabChange("verification"); setIsMobileMenuOpen(false); }}>
-                        <Users className="mr-3 h-5 w-5" /> Student Verification
+                    <Button 
+                        variant="ghost" 
+                        className={`w-full justify-start gap-3 h-12 ${activeTab === "verification" ? "bg-amber-900/40 text-amber-100 border-r-2 border-amber-500" : "hover:text-white hover:bg-stone-900"}`}
+                        onClick={() => { handleTabChange("verification"); setIsMobileMenuOpen(false); }}
+                    >
+                        <Users size={18} className={activeTab === "verification" ? "text-amber-400" : "text-stone-500"} /> Student Verification
                     </Button>
-                    <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'masterlist' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => { handleTabChange("masterlist"); setIsMobileMenuOpen(false); }}>
-                        <BookOpen className="mr-3 h-5 w-5" /> RAC Masterlist
+                    <Button 
+                        variant="ghost" 
+                        className={`w-full justify-start gap-3 h-12 ${activeTab === "masterlist" ? "bg-amber-900/40 text-amber-100 border-r-2 border-amber-500" : "hover:text-white hover:bg-stone-900"}`}
+                        onClick={() => { handleTabChange("masterlist"); setIsMobileMenuOpen(false); }}
+                    >
+                        <BookOpen size={18} className={activeTab === "masterlist" ? "text-amber-400" : "text-stone-500"} /> RAC Masterlist
                     </Button>
-                    <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'slots' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => { handleTabChange("slots"); setIsMobileMenuOpen(false); }}>
-                        <Calendar className="mr-3 h-5 w-5" /> Pictorial Schedules
+                    <Button 
+                        variant="ghost" 
+                        className={`w-full justify-start gap-3 h-12 ${activeTab === "slots" ? "bg-amber-900/40 text-amber-100 border-r-2 border-amber-500" : "hover:text-white hover:bg-stone-900"}`}
+                        onClick={() => { handleTabChange("slots"); setIsMobileMenuOpen(false); }}
+                    >
+                        <Calendar size={18} className={activeTab === "slots" ? "text-amber-400" : "text-stone-500"} /> Pictorial Schedules
                     </Button>
                 </nav>
 
-                <div className="p-4 border-t border-amber-900/50 bg-amber-950">
-                    <div className="flex items-center gap-3 mb-4 px-2">
-                        <Avatar className="h-9 w-9 border border-amber-700">
+                <div className="p-4 border-t border-stone-800/50 bg-stone-950">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Avatar className="border-2 border-stone-700">
                             <AvatarImage src="https://github.com/shadcn.png" />
                             <AvatarFallback>AD</AvatarFallback>
                         </Avatar>
-                        <div>
-                            <p className="text-sm font-medium text-white">Admin User</p>
-                            <p className="text-[10px] text-amber-400">Head Moderator</p>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-white truncate">Admin User</p>
+                            <p className="text-[10px] text-stone-500 truncate uppercase tracking-wider">Head Moderator</p>
                         </div>
                     </div>
                     {/* Logout Confirmation Dialog for Mobile */}
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full border-amber-800 bg-transparent hover:bg-amber-900 text-amber-100 text-xs">
-                                <LogOut className="mr-2 h-3 w-3" /> Log Out
+                            <Button variant="outline" className="w-full justify-center gap-2 text-red-400 border-red-900/30 bg-red-900/10 hover:bg-red-900/20 hover:text-red-300">
+                                <LogOut size={16} /> Log Out
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-[90%] rounded-xl">
                             <DialogHeader>
                                 <DialogTitle>Confirm Logout</DialogTitle>
                                 <DialogDescription>
@@ -364,8 +386,8 @@ export default function AdminDashboard() {
                                 </DialogDescription>
                             </DialogHeader>
                             <DialogFooter className="gap-2 sm:gap-0">
-                                <Link href="/" className="w-full sm:w-auto">
-                                    <Button variant="destructive" className="w-full sm:w-auto">Yes, Log Out</Button>
+                                <Link href="/" className="w-full">
+                                    <Button variant="destructive" className="w-full">Yes, Log Out</Button>
                                 </Link>
                             </DialogFooter>
                         </DialogContent>
@@ -376,64 +398,61 @@ export default function AdminDashboard() {
       )}
 
       {/* --- DESKTOP SIDEBAR --- */}
-      <aside className="w-64 bg-amber-950 text-amber-50 hidden md:flex flex-col shadow-xl">
-        <div className="p-6 border-b border-amber-900/50 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center font-serif font-bold text-xl text-white shadow-inner">A</div>
-            <div>
-                <h2 className="font-bold tracking-wider text-amber-50">AURIUM</h2>
-                <p className="text-[10px] text-amber-400 uppercase tracking-widest font-semibold">Moderator Panel</p>
-            </div>
+      <aside className="w-72 bg-stone-950 text-stone-300 hidden md:flex flex-col h-screen fixed left-0 top-0 z-20 border-r border-stone-800 shadow-2xl">
+        <div className="p-8 border-b border-stone-800/50 flex items-center justify-center">
+             <BrandLogo />
         </div>
         
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-6 space-y-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-stone-600 mb-2 px-3">Menu</p>
             {/* Added Home Button */}
             <Link href="/">
-                <Button variant="ghost" className="w-full justify-start text-amber-200 hover:text-white hover:bg-amber-900/30">
-                    <Home className="mr-3 h-5 w-5" /> Return to Website
+                <Button variant="ghost" className="w-full justify-start gap-4 h-12 text-sm font-medium hover:text-white hover:bg-stone-900 text-stone-500">
+                    <Home size={18} /> Return to Website
                 </Button>
             </Link>
-            
-            <div className="my-2 border-t border-amber-900/30"></div>
 
-            <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'verification' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => handleTabChange("verification")}>
-                <Users className="mr-3 h-5 w-5" /> Student Verification
+            <div className="my-2 border-t border-stone-800/50"></div>
+
+            <Button variant="ghost" className={`w-full justify-start gap-4 h-12 text-sm font-medium transition-all ${activeTab === 'verification' ? 'bg-amber-900/30 text-amber-100 border-r-2 border-amber-500' : 'hover:text-white hover:bg-stone-900'}`} onClick={() => handleTabChange("verification")}>
+                <Users size={18} className={activeTab === "verification" ? "text-amber-500" : "text-stone-500"} /> Student Verification
             </Button>
-            <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'masterlist' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => handleTabChange("masterlist")}>
-                <BookOpen className="mr-3 h-5 w-5" /> RAC Masterlist
+            <Button variant="ghost" className={`w-full justify-start gap-4 h-12 text-sm font-medium transition-all ${activeTab === 'masterlist' ? 'bg-amber-900/30 text-amber-100 border-r-2 border-amber-500' : 'hover:text-white hover:bg-stone-900'}`} onClick={() => handleTabChange("masterlist")}>
+                <BookOpen size={18} className={activeTab === "masterlist" ? "text-amber-500" : "text-stone-500"} /> RAC Masterlist
             </Button>
-            <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'slots' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => handleTabChange("slots")}>
-                <Calendar className="mr-3 h-5 w-5" /> Pictorial Schedules
+            <Button variant="ghost" className={`w-full justify-start gap-4 h-12 text-sm font-medium transition-all ${activeTab === 'slots' ? 'bg-amber-900/30 text-amber-100 border-r-2 border-amber-500' : 'hover:text-white hover:bg-stone-900'}`} onClick={() => handleTabChange("slots")}>
+                <Calendar size={18} className={activeTab === "slots" ? "text-amber-500" : "text-stone-500"} /> Pictorial Schedules
             </Button>
         </nav>
 
-        <div className="p-4 border-t border-amber-900/50 bg-amber-950">
-            <div className="flex items-center gap-3 mb-4 px-2">
-                <Avatar className="h-9 w-9 border border-amber-700">
+        <div className="p-6 border-t border-stone-800/50 bg-stone-950">
+            <div className="flex items-center gap-3 mb-6 bg-stone-900/50 p-3 rounded-xl border border-stone-800">
+                <Avatar className="border-2 border-stone-600 h-10 w-10">
                     <AvatarImage src="https://github.com/shadcn.png" />
                     <AvatarFallback>AD</AvatarFallback>
                 </Avatar>
-                <div>
-                    <p className="text-sm font-medium text-white">Admin User</p>
-                    <p className="text-[10px] text-amber-400">Head Moderator</p>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-white truncate">Admin User</p>
+                    <p className="text-[10px] text-stone-500 truncate uppercase tracking-wider">Head Moderator</p>
                 </div>
             </div>
             {/* Logout Confirmation Dialog for Desktop */}
             <Dialog>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full border-amber-800 bg-transparent hover:bg-amber-900 text-amber-100 text-xs">
-                        <LogOut className="mr-2 h-3 w-3" /> Log Out
+                    <Button variant="ghost" className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-900/20">
+                        <LogOut size={18} /> Log Out
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md rounded-2xl">
                     <DialogHeader>
-                        <DialogTitle>Confirm Logout</DialogTitle>
+                        <DialogTitle className="font-serif text-2xl text-stone-800">Confirm Logout</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to end your session? You will be redirected to the landing page.
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter>
-                        <Link href="/">
-                            <Button variant="destructive">Yes, Log Out</Button>
+                    <DialogFooter className="gap-2">
+                        <Link href="/" className="w-full sm:w-auto">
+                            <Button variant="destructive" className="w-full">Yes, Log Out</Button>
                         </Link>
                     </DialogFooter>
                 </DialogContent>
@@ -442,45 +461,60 @@ export default function AdminDashboard() {
       </aside>
 
       {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 overflow-y-auto bg-stone-50/50">
+      <main className="flex-1 md:ml-72 p-4 md:p-8 overflow-y-auto h-screen bg-[#FDFBF7]">
         {/* Updated Header with Burger Button */}
-        <header className="bg-white border-b border-stone-200 h-16 px-4 md:px-8 flex items-center justify-between sticky top-0 z-20 shadow-sm/50">
-            <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between mb-8 py-4 border-b border-stone-200/50">
+            <div className="flex items-center gap-4">
                 {/* Mobile Menu Button */}
                 <Button variant="ghost" size="icon" className="md:hidden text-stone-500 hover:text-amber-900" onClick={() => setIsMobileMenuOpen(true)}>
                     <Menu className="h-6 w-6" />
                 </Button>
 
-                <h1 className="text-lg md:text-xl font-serif font-bold text-stone-800 flex items-center gap-2">
-                    {activeTab === 'verification' && <Users className="h-5 w-5 text-amber-700"/>}
-                    {activeTab === 'slots' && <Calendar className="h-5 w-5 text-amber-700"/>}
-                    {activeTab === 'masterlist' && <BookOpen className="h-5 w-5 text-amber-700"/>}
-                    
-                    <span className="hidden md:inline">
-                        {activeTab === 'verification' && 'Verification Queue'}
-                        {activeTab === 'slots' && 'Schedule Manager'}
-                        {activeTab === 'masterlist' && 'Verified Masterlist'}
-                    </span>
-                    <span className="md:hidden">
-                        {activeTab === 'verification' && 'Verification'}
-                        {activeTab === 'slots' && 'Schedules'}
-                        {activeTab === 'masterlist' && 'Masterlist'}
-                    </span>
-                </h1>
+                {/* LOGIC FIX: Back Button only appears when a student is selected */}
+                {selectedStudent ? (
+                     <Button 
+                       variant="ghost" 
+                       size="icon" 
+                       className="rounded-full hover:bg-stone-200 text-stone-600"
+                       onClick={() => setSelectedStudent(null)} // Go back to list
+                     >
+                        <ArrowLeft className="h-5 w-5" />
+                     </Button>
+                ) : null}
+
+                {/* HEADER TITLE / LOGO */}
+                <div className="flex items-center gap-3">
+                    {/* On Mobile: Show Logo. On Desktop: Show Title */}
+                    <div className="md:hidden">
+                        <BrandLogo dark />
+                    </div>
+                    <div className="hidden md:block">
+                        <h1 className="text-2xl font-serif font-bold text-stone-800">
+                            {activeTab === 'verification' && "Verification Queue"}
+                            {activeTab === 'slots' && "Schedule Manager"}
+                            {activeTab === 'masterlist' && "Verified Masterlist"}
+                        </h1>
+                    </div>
+                </div>
             </div>
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" className="text-stone-400 hover:text-amber-800 relative">
+
+            <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white border border-stone-200 rounded-full shadow-sm text-xs font-medium text-stone-500">
+                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                   System Online
+                </div>
+                <Button variant="ghost" size="icon" className="text-stone-400 hover:text-amber-800 relative rounded-full hover:bg-amber-50">
                     <Bell className="h-5 w-5" />
-                    <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border border-white"></span>
+                    <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
                 </Button>
             </div>
         </header>
 
-        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
+        <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             
             {/* --- TAB 1: STUDENT VERIFICATION --- */}
             {activeTab === 'verification' && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Card className="bg-white border-amber-200 border-l-4 border-l-amber-600 shadow-sm">
                             <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-amber-900 uppercase tracking-wide">Pending Approval</CardTitle></CardHeader>
@@ -510,33 +544,35 @@ export default function AdminDashboard() {
                         </Button>
                     </div>
 
-                    <Card className="border-stone-200 shadow-sm">
-                        <CardHeader>
+                    <Card className="border-stone-200 shadow-sm rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-stone-50/50 border-b border-stone-100">
                             <CardTitle className="text-lg font-serif text-stone-800">Pre-Registered Students</CardTitle>
                             <CardDescription>Verify these students against the RAC Graduation List.</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
+                        <CardContent className="p-0">
+                            <div className="space-y-0 divide-y divide-stone-100">
                                 {/* FIX 5: Safer mapping logic */}
                                 {pendingStudents.length === 0 ? (
-                                    <div className="text-center py-12 bg-stone-50 rounded-lg border border-dashed border-stone-200">
-                                        <CheckCircle className="mx-auto h-10 w-10 text-stone-300 mb-3"/>
-                                        <p className="text-stone-400 font-medium">All caught up! No pending students.</p>
+                                    <div className="text-center py-16 bg-white">
+                                        <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <CheckCircle className="h-8 w-8 text-stone-300"/>
+                                        </div>
+                                        <p className="text-stone-500 font-medium">All caught up! No pending students.</p>
                                     </div>
                                 ) : (
                                     Array.isArray(pendingStudents) && pendingStudents.map((student) => (
-                                        <div key={student.id || Math.random()} className="flex flex-col md:flex-row items-center justify-between p-4 border border-stone-100 rounded-lg bg-white hover:border-amber-200 transition-all shadow-sm">
+                                        <div key={student.id || Math.random()} className="flex flex-col md:flex-row items-center justify-between p-4 bg-white hover:bg-stone-50 transition-colors">
                                             <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
                                                 <div className="h-10 w-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-800 font-bold text-xs">
                                                     {student.course ? student.course.substring(0,2) : "UN"}
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-stone-800">{`${student.first_name} ${student.last_name}`}</h4>
-                                                    <div className="flex items-center gap-2 text-xs text-stone-500 mt-1">
-                                                        <span className="bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded text-stone-700 font-mono font-medium">
+                                                    <h4 className="font-bold text-stone-800 text-sm">{`${student.first_name} ${student.last_name}`}</h4>
+                                                    <div className="flex items-center gap-2 text-xs text-stone-500 mt-0.5">
+                                                        <span className="font-mono bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200">
                                                             {student.studentNumber ? student.studentNumber.student_number : "No ID"}
                                                         </span>
-                                                        <span>•</span>
+                                                        <span className="text-stone-300">•</span>
                                                         <span>{student.course}</span>
                                                     </div>
                                                 </div>
@@ -590,8 +626,8 @@ export default function AdminDashboard() {
                         {Object.keys(groupedMasterlist).sort().map((dept) => (
                             <div key={dept} className="space-y-4">
                                 {/* Department Header */}
-                                <div className="sticky top-16 z-10 bg-stone-50/95 backdrop-blur py-2 border-b border-amber-200/50">
-                                    <h3 className="text-xl font-serif font-bold text-amber-900 flex items-center gap-2">
+                                <div className="sticky top-0 z-10 bg-[#FDFBF7]/95 backdrop-blur py-2 border-b border-amber-200/50">
+                                    <h3 className="text-lg font-serif font-bold text-amber-900 flex items-center gap-2">
                                         <BookOpen className="h-5 w-5" /> {dept}
                                     </h3>
                                 </div>
@@ -599,7 +635,7 @@ export default function AdminDashboard() {
                                 {Object.keys(groupedMasterlist[dept]).sort().map((program) => (
                                     <div key={program} className="pl-4 border-l-2 border-stone-200 space-y-3">
                                         {/* Course Header */}
-                                        <h4 className="text-sm font-bold text-stone-500 uppercase tracking-wider flex items-center gap-2">
+                                        <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-2 mt-4 mb-2">
                                             <GraduationCap className="h-4 w-4" /> {program}
                                         </h4>
 
@@ -609,16 +645,16 @@ export default function AdminDashboard() {
                                                 <div 
                                                     key={student.id} 
                                                     onClick={() => setSelectedStudent(student)}
-                                                    className="group bg-white p-4 rounded-lg border border-stone-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
+                                                    className="group bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
                                                 >
                                                     <div>
-                                                        <p className="font-bold text-stone-800 group-hover:text-amber-800 transition-colors">
+                                                        <p className="font-bold text-stone-800 group-hover:text-amber-800 transition-colors text-sm">
                                                             {student.lname}, {student.fname} {student.mname}
                                                         </p>
-                                                        <p className="text-xs font-mono text-stone-500">{student.idNumber}</p>
+                                                        <p className="text-xs font-mono text-stone-500 mt-1 bg-stone-50 inline-block px-1 rounded">{student.idNumber}</p>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <Badge className={`text-[10px] ${student.statusStep >= 6 ? 'bg-green-100 text-green-700 hover:bg-green-100' : 'bg-stone-100 text-stone-600 hover:bg-stone-100'}`}>
+                                                        <Badge className={`text-[10px] ${student.statusStep >= 6 ? 'bg-green-100 text-green-700 hover:bg-green-100 border-green-200' : 'bg-stone-100 text-stone-600 hover:bg-stone-100 border-stone-200'}`}>
                                                             {student.statusStep >= 6 ? 'Done' : 'Active'}
                                                         </Badge>
                                                         <ChevronRight className="h-4 w-4 text-stone-300 group-hover:text-amber-500" />
@@ -637,7 +673,7 @@ export default function AdminDashboard() {
             {/* --- TAB 3: SLOT MANAGEMENT --- */}
             {activeTab === 'slots' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
                         <div>
                             <h2 className="text-2xl font-serif font-bold text-stone-800">Pictorial Availability</h2>
                             <p className="text-stone-500 text-sm">Manage capacity for morning and afternoon sessions.</p>
@@ -668,11 +704,11 @@ export default function AdminDashboard() {
 
                     <div className="grid gap-6">
                         {schedules.map((day, idx) => (
-                            <Card key={idx} className="overflow-hidden border-t-4 border-t-amber-600 shadow-md">
+                            <Card key={idx} className="overflow-hidden border-t-4 border-t-amber-600 shadow-md rounded-2xl border-stone-200">
                                 <CardHeader className="bg-stone-50/80 pb-4 border-b border-stone-100">
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <CardTitle className="text-lg flex items-center gap-2 font-serif">
+                                            <CardTitle className="text-lg flex items-center gap-2 font-serif text-stone-800">
                                                 <Calendar className="text-amber-600 h-5 w-5" /> 
                                                 {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                                             </CardTitle>
@@ -685,10 +721,10 @@ export default function AdminDashboard() {
                                 <CardContent className="pt-6 bg-white">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             {/* MORNING */}
-                                            <div className="space-y-4 p-4 rounded-lg border border-stone-100 bg-amber-50/30">
+                                            <div className="space-y-4 p-4 rounded-xl border border-stone-100 bg-amber-50/30">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2">
-                                                        🌤️ Morning <span className="text-xs font-normal text-stone-400 bg-white px-2 py-0.5 rounded border border-stone-200">8AM - 12PM</span>
+                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">
+                                                        🌤️ Morning <span className="text-[10px] font-normal text-stone-500 bg-white px-2 py-0.5 rounded border border-stone-200">8AM - 12PM</span>
                                                     </h4>
                                                     <Dialog>
                                                         <DialogTrigger asChild>
@@ -705,7 +741,7 @@ export default function AdminDashboard() {
                                                         <span className={day.amBooked >= day.amSlots ? "text-red-600 font-bold" : "text-amber-700"}>{day.amBooked} Booked</span>
                                                         <span className="text-stone-400">Limit: {day.amSlots}</span>
                                                     </div>
-                                                    <div className="h-2.5 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
+                                                    <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
                                                         <div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.amBooked >= day.amSlots ? "bg-red-500" : "bg-amber-500"}`} style={{ width: `${(day.amBooked / day.amSlots) * 100}%` }}></div>
                                                     </div>
                                                 </div>
@@ -721,10 +757,10 @@ export default function AdminDashboard() {
                                                 </Dialog>
                                             </div>
                                             {/* AFTERNOON */}
-                                            <div className="space-y-4 p-4 rounded-lg border border-stone-100 bg-blue-50/30">
+                                            <div className="space-y-4 p-4 rounded-xl border border-stone-100 bg-blue-50/30">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2">
-                                                        ☀️ Afternoon <span className="text-xs font-normal text-stone-400 bg-white px-2 py-0.5 rounded border border-stone-200">1PM - 5PM</span>
+                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">
+                                                        ☀️ Afternoon <span className="text-[10px] font-normal text-stone-500 bg-white px-2 py-0.5 rounded border border-stone-200">1PM - 5PM</span>
                                                     </h4>
                                                     <Dialog>
                                                         <DialogTrigger asChild>
@@ -741,7 +777,7 @@ export default function AdminDashboard() {
                                                         <span className={day.pmBooked >= day.pmSlots ? "text-red-600 font-bold" : "text-blue-700"}>{day.pmBooked} Booked</span>
                                                         <span className="text-stone-400">Limit: {day.pmSlots}</span>
                                                     </div>
-                                                    <div className="h-2.5 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
+                                                    <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
                                                         <div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.pmBooked >= day.pmSlots ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${(day.pmBooked / day.pmSlots) * 100}%` }}></div>
                                                     </div>
                                                 </div>
