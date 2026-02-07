@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const [pendingStudents, setPendingStudents] = useState<any[]>([]);
   const [staffUser, setStaffUser] = useState({ name: "Admin User", role: "Head Moderator", email: "admin@aurium.edu.ph", avatar: "https://github.com/shadcn.png" });
 
-  // --- 1.  API LOGIC ---
+  // --- 1. KOII'S API LOGIC ---
   const fetchStudents = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:4000/api/admin/student/fetch'); 
