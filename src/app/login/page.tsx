@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, LogIn, User, Lock, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff, LogIn, User, Lock, ArrowRight, KeyRound, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,17 +14,51 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // --- NEW STATES FOR PASSWORD UPDATE FLOW ---
+  const [isPasswordUpdateRequired, setIsPasswordUpdateRequired] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
-  // Mock Login Function
+  // Step 1: Initial Login
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate network request
+    // Simulate server checking credentials
     setTimeout(() => {
       setIsLoading(false);
-      alert("Login functionality will be connected to the backend later!");
-      // router.push('/dashboard'); // Future redirect
+      
+      // MOCK LOGIC: 
+      // In a real app, the backend would return a flag like { requirePasswordChange: true }
+      // For this demo, we assume EVERY login triggers it.
+      setIsPasswordUpdateRequired(true); 
+    }, 1500);
+  };
+
+  // Step 2: Update Password
+  const handleUpdatePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+
+    if (newPassword.length < 8) {
+        setPasswordError("Password must be at least 8 characters.");
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        setPasswordError("Passwords do not match.");
+        return;
+    }
+
+    setIsLoading(true);
+
+    // Simulate API call to update password
+    setTimeout(() => {
+        setIsLoading(false);
+        alert("Password successfully updated! Redirecting to dashboard...");
+        // router.push('/dashboard'); 
     }, 2000);
   };
 
@@ -67,100 +101,197 @@ export default function LoginPage() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md relative z-10"
         >
-          <Card className="shadow-2xl border-t-4 border-amber-900 bg-white/90 backdrop-blur-sm">
-            <CardHeader className="space-y-1 text-center pb-8">
-              <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center border border-amber-100">
-                  <UserCircleIcon />
-                </div>
-              </div>
-              <CardTitle className="text-2xl font-serif font-bold text-amber-950">Welcome Back</CardTitle>
-              <CardDescription className="text-stone-500">
-                Please enter your credentials to access the yearbook system.
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4">
+          <Card className="shadow-2xl border-t-4 border-amber-900 bg-white/90 backdrop-blur-sm overflow-hidden">
+            <AnimatePresence mode="wait">
                 
-                {/* Student ID / Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Student ID or Email</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
-                    <Input 
-                      id="email" 
-                      placeholder="Enter your ID or email" 
-                      className="pl-10 h-11 bg-stone-50 border-stone-200 focus:border-amber-500 focus:ring-amber-500" 
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link href="#" className="text-xs text-amber-700 hover:underline">
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
-                    <Input 
-                      id="password" 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      className="pl-10 h-11 bg-stone-50 border-stone-200 focus:border-amber-500 focus:ring-amber-500"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-stone-400 hover:text-stone-600"
+                {/* === STATE 1: LOGIN FORM === */}
+                {!isPasswordUpdateRequired ? (
+                    <motion.div
+                        key="login-form"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
+                        <CardHeader className="space-y-1 text-center pb-8">
+                        <div className="flex justify-center mb-4">
+                            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center border border-amber-100">
+                                <UserCircleIcon />
+                            </div>
+                        </div>
+                        <CardTitle className="text-2xl font-serif font-bold text-amber-950">Welcome Back</CardTitle>
+                        <CardDescription className="text-stone-500">
+                            Please enter your credentials to access the yearbook system.
+                        </CardDescription>
+                        </CardHeader>
+                        
+                        <CardContent>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            
+                            {/* Student ID / Email */}
+                            <div className="space-y-2">
+                            <Label htmlFor="email">Student ID or Email</Label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
+                                <Input 
+                                id="email" 
+                                placeholder="Enter your ID or email" 
+                                className="pl-10 h-11 bg-stone-50 border-stone-200 focus:border-amber-500 focus:ring-amber-500" 
+                                required
+                                />
+                            </div>
+                            </div>
 
-                {/* Remember Me */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" />
-                  <Label htmlFor="remember" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
-                    Remember me for 30 days
-                  </Label>
-                </div>
+                            {/* Password */}
+                            <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                <Link href="#" className="text-xs text-amber-700 hover:underline">
+                                Forgot password?
+                                </Link>
+                            </div>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
+                                <Input 
+                                id="password" 
+                                type={showPassword ? "text" : "password"} 
+                                placeholder="••••••••" 
+                                className="pl-10 h-11 bg-stone-50 border-stone-200 focus:border-amber-500 focus:ring-amber-500"
+                                required
+                                />
+                                <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-3 text-stone-400 hover:text-stone-600"
+                                >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
+                            </div>
 
-                {/* Submit Button */}
-                <Button 
-                  type="submit" 
-                  className="w-full h-11 bg-amber-900 hover:bg-amber-800 text-white font-medium shadow-lg shadow-amber-900/20 transition-all"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      Authenticating...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      Sign In <ArrowRight size={16} />
-                    </span>
-                  )}
-                </Button>
+                            {/* Remember Me */}
+                            <div className="flex items-center space-x-2">
+                            <Checkbox id="remember" />
+                            <Label htmlFor="remember" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                                Remember me for 30 days
+                            </Label>
+                            </div>
 
-              </form>
-            </CardContent>
-            
-            <CardFooter className="flex flex-col space-y-4 border-t border-stone-100 p-6 bg-stone-50/50">
-              <div className="text-center text-sm text-stone-500">
-                Don't have an account yet?{" "}
-                <Link href="/register" className="font-bold text-amber-800 hover:underline">
-                  Pre-Register Here
-                </Link>
-              </div>
-            </CardFooter>
+                            {/* Submit Button */}
+                            <Button 
+                            type="submit" 
+                            className="w-full h-11 bg-amber-900 hover:bg-amber-800 text-white font-medium shadow-lg shadow-amber-900/20 transition-all"
+                            disabled={isLoading}
+                            >
+                            {isLoading ? (
+                                <span className="flex items-center gap-2">
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                Authenticating...
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                Sign In <ArrowRight size={16} />
+                                </span>
+                            )}
+                            </Button>
+
+                        </form>
+                        </CardContent>
+                        
+                        <CardFooter className="flex flex-col space-y-4 border-t border-stone-100 p-6 bg-stone-50/50">
+                        <div className="text-center text-sm text-stone-500">
+                            Don't have an account yet?{" "}
+                            <Link href="/register" className="font-bold text-amber-800 hover:underline">
+                            Pre-Register Here
+                            </Link>
+                        </div>
+                        </CardFooter>
+                    </motion.div>
+                ) : (
+                    /* === STATE 2: UPDATE PASSWORD FORM === */
+                    <motion.div
+                        key="update-password-form"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <CardHeader className="space-y-1 text-center pb-6">
+                            <div className="flex justify-center mb-4">
+                                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center border border-red-100 animate-pulse">
+                                    <KeyRound className="h-8 w-8 text-red-500" />
+                                </div>
+                            </div>
+                            <CardTitle className="text-xl font-serif font-bold text-stone-900">Update Your Password</CardTitle>
+                            <CardDescription className="text-stone-500">
+                                For security reasons, you must update your temporary password before continuing.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent>
+                            <form onSubmit={handleUpdatePassword} className="space-y-4">
+                                
+                                {passwordError && (
+                                    <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2 text-sm text-red-600">
+                                        <AlertCircle size={16} /> {passwordError}
+                                    </div>
+                                )}
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="newPassword">New Password</Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
+                                        <Input 
+                                            id="newPassword" 
+                                            type="password" 
+                                            placeholder="Enter new password" 
+                                            className="pl-10 h-11 bg-stone-50 border-stone-200 focus:border-amber-500 focus:ring-amber-500"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
+                                        <Input 
+                                            id="confirmPassword" 
+                                            type="password" 
+                                            placeholder="Re-enter new password" 
+                                            className="pl-10 h-11 bg-stone-50 border-stone-200 focus:border-amber-500 focus:ring-amber-500"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <Button 
+                                    type="submit" 
+                                    className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-medium shadow-lg shadow-green-900/20 transition-all mt-2"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <span className="flex items-center gap-2">
+                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                            Updating...
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-2">
+                                            <CheckCircle size={16} /> Save & Continue
+                                        </span>
+                                    )}
+                                </Button>
+                            </form>
+                        </CardContent>
+                        <CardFooter className="flex justify-center pb-6">
+                             <p className="text-xs text-stone-400">Only you will know this password.</p>
+                        </CardFooter>
+                    </motion.div>
+                )}
+            </AnimatePresence>
           </Card>
           
           <p className="text-center text-xs text-stone-400 mt-8">

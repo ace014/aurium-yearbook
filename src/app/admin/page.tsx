@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Link from "next/link"; // Added Link for redirection
 import { 
   Users, 
   Calendar, 
@@ -20,7 +21,10 @@ import {
   FileText,      // New Icon for Thesis
   ChevronRight,  // New Icon for UI
   CheckCircle2,  // New Icon for Timeline
-  Clock          // New Icon for Status
+  Clock,         // New Icon for Status
+  Menu,          // Added for Mobile
+  X,             // Added for Mobile
+  Home           // Added for Home Button
 } from "lucide-react";
 
 // UI Components
@@ -123,6 +127,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("verification"); // 'verification', 'slots', 'masterlist'
   const [verifiedStudents, setVerifiedStudents] = useState<any[]>([]);
   const [schedules, setSchedules] = useState(MOCK_SCHEDULES);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // NEW: Mobile Menu State
   
   // States for Inputs
   const [searchQuery, setSearchQuery] = useState("");
@@ -288,9 +293,89 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex font-sans">
+    <div className="min-h-screen bg-stone-50 flex font-sans relative">
       
-      {/* --- SIDEBAR --- */}
+      {/* --- MOBILE SIDEBAR OVERLAY (NEW) --- */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+            {/* Backdrop with click to close */}
+            <div className="absolute inset-0 bg-stone-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
+            
+            {/* Sidebar Content */}
+            <aside className="relative w-64 bg-amber-950 text-amber-50 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300 h-full">
+                <div className="p-6 border-b border-amber-900/50 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center font-serif font-bold text-xl text-white shadow-inner">A</div>
+                        <div>
+                            <h2 className="font-bold tracking-wider text-amber-50">AURIUM</h2>
+                            <p className="text-[10px] text-amber-400 uppercase tracking-widest font-semibold">Moderator Panel</p>
+                        </div>
+                    </div>
+                    {/* CLOSE BUTTON (BACK BUTTON for Mobile) */}
+                    <Button variant="ghost" size="icon" className="text-amber-400 hover:text-white hover:bg-amber-900/50" onClick={() => setIsMobileMenuOpen(false)}>
+                        <X className="h-6 w-6" />
+                    </Button>
+                </div>
+                
+                <nav className="flex-1 p-4 space-y-2">
+                    {/* Added Home Button */}
+                    <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start text-amber-200 hover:text-white hover:bg-amber-900/30">
+                            <Home className="mr-3 h-5 w-5" /> Return to Website
+                        </Button>
+                    </Link>
+
+                    <div className="my-2 border-t border-amber-900/30"></div>
+
+                    <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'verification' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => { handleTabChange("verification"); setIsMobileMenuOpen(false); }}>
+                        <Users className="mr-3 h-5 w-5" /> Student Verification
+                    </Button>
+                    <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'masterlist' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => { handleTabChange("masterlist"); setIsMobileMenuOpen(false); }}>
+                        <BookOpen className="mr-3 h-5 w-5" /> RAC Masterlist
+                    </Button>
+                    <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'slots' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => { handleTabChange("slots"); setIsMobileMenuOpen(false); }}>
+                        <Calendar className="mr-3 h-5 w-5" /> Pictorial Schedules
+                    </Button>
+                </nav>
+
+                <div className="p-4 border-t border-amber-900/50 bg-amber-950">
+                    <div className="flex items-center gap-3 mb-4 px-2">
+                        <Avatar className="h-9 w-9 border border-amber-700">
+                            <AvatarImage src="https://github.com/shadcn.png" />
+                            <AvatarFallback>AD</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="text-sm font-medium text-white">Admin User</p>
+                            <p className="text-[10px] text-amber-400">Head Moderator</p>
+                        </div>
+                    </div>
+                    {/* Logout Confirmation Dialog for Mobile */}
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full border-amber-800 bg-transparent hover:bg-amber-900 text-amber-100 text-xs">
+                                <LogOut className="mr-2 h-3 w-3" /> Log Out
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Confirm Logout</DialogTitle>
+                                <DialogDescription>
+                                    Are you sure you want to end your session? You will be redirected to the landing page.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Link href="/" className="w-full sm:w-auto">
+                                    <Button variant="destructive" className="w-full sm:w-auto">Yes, Log Out</Button>
+                                </Link>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            </aside>
+        </div>
+      )}
+
+      {/* --- DESKTOP SIDEBAR --- */}
       <aside className="w-64 bg-amber-950 text-amber-50 hidden md:flex flex-col shadow-xl">
         <div className="p-6 border-b border-amber-900/50 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center font-serif font-bold text-xl text-white shadow-inner">A</div>
@@ -301,6 +386,15 @@ export default function AdminDashboard() {
         </div>
         
         <nav className="flex-1 p-4 space-y-2">
+            {/* Added Home Button */}
+            <Link href="/">
+                <Button variant="ghost" className="w-full justify-start text-amber-200 hover:text-white hover:bg-amber-900/30">
+                    <Home className="mr-3 h-5 w-5" /> Return to Website
+                </Button>
+            </Link>
+            
+            <div className="my-2 border-t border-amber-900/30"></div>
+
             <Button variant="ghost" className={`w-full justify-start transition-all duration-200 ${activeTab === 'verification' ? 'bg-amber-900/50 text-white shadow-sm' : 'text-amber-200 hover:text-white hover:bg-amber-900/30'}`} onClick={() => handleTabChange("verification")}>
                 <Users className="mr-3 h-5 w-5" /> Student Verification
             </Button>
@@ -323,24 +417,57 @@ export default function AdminDashboard() {
                     <p className="text-[10px] text-amber-400">Head Moderator</p>
                 </div>
             </div>
-            <Button variant="outline" className="w-full border-amber-800 bg-transparent hover:bg-amber-900 text-amber-100 text-xs">
-                <LogOut className="mr-2 h-3 w-3" /> Log Out
-            </Button>
+            {/* Logout Confirmation Dialog for Desktop */}
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full border-amber-800 bg-transparent hover:bg-amber-900 text-amber-100 text-xs">
+                        <LogOut className="mr-2 h-3 w-3" /> Log Out
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Logout</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to end your session? You will be redirected to the landing page.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Link href="/">
+                            <Button variant="destructive">Yes, Log Out</Button>
+                        </Link>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
       </aside>
 
       {/* --- MAIN CONTENT AREA --- */}
       <main className="flex-1 overflow-y-auto bg-stone-50/50">
-        <header className="bg-white border-b border-stone-200 h-16 px-8 flex items-center justify-between sticky top-0 z-20 shadow-sm/50">
-            <h1 className="text-xl font-serif font-bold text-stone-800 flex items-center gap-2">
-                {activeTab === 'verification' && <Users className="h-5 w-5 text-amber-700"/>}
-                {activeTab === 'slots' && <Calendar className="h-5 w-5 text-amber-700"/>}
-                {activeTab === 'masterlist' && <BookOpen className="h-5 w-5 text-amber-700"/>}
-                
-                {activeTab === 'verification' && 'Verification Queue'}
-                {activeTab === 'slots' && 'Schedule Manager'}
-                {activeTab === 'masterlist' && 'Verified Masterlist'}
-            </h1>
+        {/* Updated Header with Burger Button */}
+        <header className="bg-white border-b border-stone-200 h-16 px-4 md:px-8 flex items-center justify-between sticky top-0 z-20 shadow-sm/50">
+            <div className="flex items-center gap-3">
+                {/* Mobile Menu Button */}
+                <Button variant="ghost" size="icon" className="md:hidden text-stone-500 hover:text-amber-900" onClick={() => setIsMobileMenuOpen(true)}>
+                    <Menu className="h-6 w-6" />
+                </Button>
+
+                <h1 className="text-lg md:text-xl font-serif font-bold text-stone-800 flex items-center gap-2">
+                    {activeTab === 'verification' && <Users className="h-5 w-5 text-amber-700"/>}
+                    {activeTab === 'slots' && <Calendar className="h-5 w-5 text-amber-700"/>}
+                    {activeTab === 'masterlist' && <BookOpen className="h-5 w-5 text-amber-700"/>}
+                    
+                    <span className="hidden md:inline">
+                        {activeTab === 'verification' && 'Verification Queue'}
+                        {activeTab === 'slots' && 'Schedule Manager'}
+                        {activeTab === 'masterlist' && 'Verified Masterlist'}
+                    </span>
+                    <span className="md:hidden">
+                        {activeTab === 'verification' && 'Verification'}
+                        {activeTab === 'slots' && 'Schedules'}
+                        {activeTab === 'masterlist' && 'Masterlist'}
+                    </span>
+                </h1>
+            </div>
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" className="text-stone-400 hover:text-amber-800 relative">
                     <Bell className="h-5 w-5" />
@@ -349,7 +476,7 @@ export default function AdminDashboard() {
             </div>
         </header>
 
-        <div className="p-8 max-w-6xl mx-auto space-y-8">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
             
             {/* --- TAB 1: STUDENT VERIFICATION --- */}
             {activeTab === 'verification' && (
@@ -378,7 +505,7 @@ export default function AdminDashboard() {
                                 />
                             </div>
                         </div>
-                        <Button className="h-11 px-6 bg-amber-900 hover:bg-amber-800 text-white shadow-md shadow-amber-900/10" onClick={handleBulkVerify}>
+                        <Button className="h-11 px-6 bg-amber-900 hover:bg-amber-800 text-white shadow-md shadow-amber-900/10 w-full md:w-auto" onClick={handleBulkVerify}>
                             <CheckCircle className="mr-2 h-4 w-4" /> Verify Student
                         </Button>
                     </div>
