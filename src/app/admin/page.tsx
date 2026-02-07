@@ -29,7 +29,8 @@ import {
   ArrowLeft,
   User,
   Save,
-  Camera // Added Camera
+  Camera,
+  ExternalLink // Added icon to indicate opening in new tab
 } from "lucide-react";
 
 // UI Components
@@ -40,15 +41,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Added Tabs
-import { ScrollArea } from "@/components/ui/scroll-area"; // Added ScrollArea
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; 
+import { ScrollArea } from "@/components/ui/scroll-area"; 
 
 const MOCK_SCHEDULES = [
   { date: "2026-03-15", amSlots: 50, amBooked: 48, pmSlots: 50, pmBooked: 12 },
   { date: "2026-03-16", amSlots: 50, amBooked: 50, pmSlots: 50, pmBooked: 50 },
 ];
 
-// --- NEW: RAC MASTERLIST MOCK DATA ---
 const MOCK_MASTER_LIST = [
   {
     id: "rac-1",
@@ -58,7 +58,7 @@ const MOCK_MASTER_LIST = [
     mname: "J.",
     department: "College of Computing & Information Sciences",
     program: "BS Computer Science",
-    statusStep: 6, // 6 = Completed/Pictorial Done
+    statusStep: 6, 
     details: {
       address: "Prk. 1, Apokon, Tagum City",
       contact: "09123456789",
@@ -75,7 +75,7 @@ const MOCK_MASTER_LIST = [
     mname: "L.",
     department: "College of Computing & Information Sciences",
     program: "BS Information Technology",
-    statusStep: 3, // 3 = Scheduled
+    statusStep: 3, 
     details: {
       address: "Visayan Village, Tagum City",
       contact: "09987654321",
@@ -92,7 +92,7 @@ const MOCK_MASTER_LIST = [
     mname: "M.",
     department: "College of Business Administration",
     program: "BS Accountancy",
-    statusStep: 2, // 2 = Verified Only
+    statusStep: 2, 
     details: {
       address: "Mankilam, Tagum City",
       contact: "09123456789",
@@ -109,7 +109,7 @@ const MOCK_MASTER_LIST = [
     mname: "O.",
     department: "College of Business Administration",
     program: "BS Accountancy",
-    statusStep: 4, // 4 = Attendance
+    statusStep: 4, 
     details: {
       address: "Magugpo East, Tagum City",
       contact: "09123456789",
@@ -120,8 +120,6 @@ const MOCK_MASTER_LIST = [
   }
 ];
 
-// --- MOCK GRADUATES FOR VERIFICATION ---
-// Using a slightly richer structure to match the Staff Dashboard logic
 const MOCK_GRADUATES_VERIFICATION = [
   { 
     id: "2020-00123", 
@@ -168,7 +166,7 @@ const MOCK_GRADUATES_VERIFICATION = [
     guardian: "",
     photo: "https://github.com/shadcn.png",
     status: "verified",
-    last_edited_by: "Ms. Sarah Jenkins", // Staff member example
+    last_edited_by: "Ms. Sarah Jenkins", 
     last_edited_at: "2026-03-15 09:30 AM"
   },
 ];
@@ -184,7 +182,7 @@ const STATUS_STEPS = [
 
 // --- MAIN COMPONENT ---
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("verification"); // 'verification', 'slots', 'masterlist'
+  const [activeTab, setActiveTab] = useState("verification"); 
   const [schedules, setSchedules] = useState(MOCK_SCHEDULES);
   
   // States for Inputs
@@ -196,11 +194,44 @@ export default function AdminDashboard() {
   // States for Masterlist Modal
   const [selectedMasterlistStudent, setSelectedMasterlistStudent] = useState<any>(null);
 
-  // --- VERIFICATION STATES (From Staff Dashboard Logic) ---
+  // --- VERIFICATION STATES ---
   const [graduates, setGraduates] = useState(MOCK_GRADUATES_VERIFICATION);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null); // For Verification Tab
+  const [selectedStudent, setSelectedStudent] = useState<any>(null); 
   const [isEditing, setIsEditing] = useState(false);
   const studentPhotoInputRef = useRef<HTMLInputElement>(null);
+
+  // --- FETCH PENDING STUDENTS ---
+  const [pendingStudents, setPendingStudents] = useState<any[]>([]);
+
+  // 1. SESSION PERSISTENCE SIMULATION
+  // When dashboard loads, we set a flag. Real app would use cookies/tokens.
+  useEffect(() => {
+    localStorage.setItem("aurium_admin_session", "true");
+  }, []);
+
+  // Logout Handler: Clears the session
+  const handleLogout = () => {
+    localStorage.removeItem("aurium_admin_session");
+  };
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const res = await fetch('http://localhost:4000/fetch/verify'); 
+        if (!res.ok) throw new Error("Something went wrong");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setPendingStudents(data);
+        } else {
+          setPendingStudents([]); 
+        }
+      } catch (err) {
+        console.error("Something went wrong: ", err);
+        setPendingStudents([]); 
+      }
+    }
+    fetchStudents(); 
+  }, []);
 
   // --- ACTIONS: VERIFICATION --- 
   const handleSaveEdit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -247,6 +278,36 @@ export default function AdminDashboard() {
         setSelectedStudent((prev: any) => ({ ...prev, photo: reader.result as string }));
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleVerify = async (studentId: number) => {
+    const student = pendingStudents?.find(s => s.studentNumber?.student_number === studentId);
+    if (!student) return;
+    const body = { id: studentId };
+    try {
+      const res = await fetch("http://localhost:4000/post/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      setPendingStudents(prev => prev.filter(s => s.studentNumber.student_number !== studentId));
+      setVerifiedStudents(prev => [...prev, { ...student, status: "verified" }]);
+    } catch (err) {
+      console.error("Something went wrong..", err);
+    }
+    const name = student.name || `${student.first_name} ${student.last_name}`;
+    alert(`Succesfully verified ${name}! Credentials has been sent to the respective email.`);
+  };
+
+  const handleBulkVerify = () => {
+    const match = pendingStudents.find(s => s.idNumber.includes(searchQuery));
+    if (match) {
+        handleVerify(match.id);
+        setSearchQuery(""); 
+    } else {
+        alert("No pending student found with that ID number.");
     }
   };
 
@@ -375,11 +436,14 @@ export default function AdminDashboard() {
                 </div>
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-stone-600 mb-2 px-3">Menu</p>
-                    <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                    
+                    {/* KEY UPDATE: "Return to Website" opens in NEW TAB to preserve session */}
+                    <Link href="/" target="_blank" rel="noopener noreferrer" onClick={() => setIsMobileMenuOpen(false)}>
                         <Button variant="ghost" className="w-full justify-start gap-3 h-12 text-stone-400 hover:text-white hover:bg-stone-900">
-                            <Home size={18} /> Return to Website
+                            <Home size={18} /> <span className="flex items-center gap-2">Return to Website <ExternalLink size={12} className="opacity-50"/></span>
                         </Button>
                     </Link>
+
                     <div className="my-2 border-t border-stone-800/50"></div>
                     <Button variant="ghost" className={`w-full justify-start gap-3 h-12 ${activeTab === "verification" ? "bg-amber-900/40 text-amber-100 border-r-2 border-amber-500" : "hover:text-white hover:bg-stone-900"}`} onClick={() => { handleTabChange("verification"); setIsMobileMenuOpen(false); }}>
                         <Users size={18} className={activeTab === "verification" ? "text-amber-400" : "text-stone-500"} /> Student Verification
@@ -414,7 +478,8 @@ export default function AdminDashboard() {
                                 <DialogDescription>Are you sure you want to end your session?</DialogDescription>
                             </DialogHeader>
                             <DialogFooter className="gap-2 sm:gap-0">
-                                <Link href="/" className="w-full"><Button variant="destructive" className="w-full">Yes, Log Out</Button></Link>
+                                {/* KEY UPDATE: Clear session on logout */}
+                                <Link href="/" onClick={handleLogout}><Button variant="destructive" className="w-full">Yes, Log Out</Button></Link>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -430,11 +495,14 @@ export default function AdminDashboard() {
         </div>
         <nav className="flex-1 p-6 space-y-3">
           <p className="text-[10px] font-bold uppercase tracking-widest text-stone-600 mb-2 px-3">Menu</p>
-          <Link href="/">
+          
+          {/* KEY UPDATE: "Return to Website" opens in NEW TAB to preserve session */}
+          <Link href="/" target="_blank" rel="noopener noreferrer">
                 <Button variant="ghost" className="w-full justify-start gap-4 h-12 text-sm font-medium hover:text-white hover:bg-stone-900 text-stone-500">
-                    <Home size={18} /> Return to Website
+                    <Home size={18} /> <span className="flex items-center gap-2">Return to Website <ExternalLink size={12} className="opacity-50"/></span>
                 </Button>
             </Link>
+
             <div className="my-2 border-t border-stone-800/50"></div>
             <Button variant="ghost" className={`w-full justify-start gap-4 h-12 text-sm font-medium transition-all ${activeTab === 'verification' ? 'bg-amber-900/30 text-amber-100 border-r-2 border-amber-500' : 'hover:text-white hover:bg-stone-900'}`} onClick={() => handleTabChange("verification")}>
                 <Users size={18} className={activeTab === "verification" ? "text-amber-500" : "text-stone-500"} /> Student Verification
@@ -469,7 +537,8 @@ export default function AdminDashboard() {
                     <DialogDescription>Are you sure you want to end your session?</DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2">
-                    <Link href="/"><Button variant="destructive" className="w-full">Yes, Log Out</Button></Link>
+                    {/* KEY UPDATE: Clear session on logout */}
+                    <Link href="/" onClick={handleLogout}><Button variant="destructive" className="w-full">Yes, Log Out</Button></Link>
                 </DialogFooter>
              </DialogContent>
           </Dialog>
@@ -609,14 +678,13 @@ export default function AdminDashboard() {
                                                         <TabsTrigger value="contact">Contact</TabsTrigger>
                                                         <TabsTrigger value="family">Family</TabsTrigger>
                                                     </TabsList>
-                                                    {/* Tabs Content ... (Simplified for brevity, similar to staff dashboard) */}
+                                                    {/* Tabs Content */}
                                                     <TabsContent value="personal" className="space-y-4 bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
                                                         <div className="grid grid-cols-2 gap-4">
                                                             <div className="space-y-2"><Label>First Name</Label><Input name="fname" defaultValue={selectedStudent.fname} /></div>
                                                             <div className="space-y-2"><Label>Last Name</Label><Input name="lname" defaultValue={selectedStudent.lname} /></div>
                                                         </div>
                                                     </TabsContent>
-                                                    {/* Add other tabs content if needed */}
                                                 </Tabs>
                                             </form>
                                         </div>
@@ -697,10 +765,10 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* --- TAB 2: MASTERLIST (NEW FEATURE) --- */}
+            {/* --- TAB 2: MASTERLIST --- */}
             {activeTab === 'masterlist' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    {/* Search / Filter Header */}
+                    {/* ... Existing Masterlist Code ... */}
                     <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm space-y-4">
                         <div className="flex justify-between items-center">
                             <div>
@@ -713,55 +781,29 @@ export default function AdminDashboard() {
                         </div>
                         <div className="relative">
                             <Search className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
-                            <Input 
-                                placeholder="Search by Name or ID Number..." 
-                                className="pl-10 h-11 bg-stone-50 border-stone-200 focus:border-amber-500"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                            <Input placeholder="Search by Name or ID Number..." className="pl-10 h-11 bg-stone-50 border-stone-200 focus:border-amber-500" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                         </div>
                     </div>
-
-                    {/* Grouped List */}
+                    {/* Grouped List code block... */}
                     <div className="space-y-8">
-                        {Object.keys(groupedMasterlist).length === 0 && (
-                            <div className="text-center py-12 text-stone-400">No students found matching your search.</div>
-                        )}
-
+                        {Object.keys(groupedMasterlist).length === 0 && <div className="text-center py-12 text-stone-400">No students found matching your search.</div>}
                         {Object.keys(groupedMasterlist).sort().map((dept) => (
                             <div key={dept} className="space-y-4">
-                                {/* Department Header */}
                                 <div className="sticky top-0 z-10 bg-[#FDFBF7]/95 backdrop-blur py-2 border-b border-amber-200/50">
-                                    <h3 className="text-lg font-serif font-bold text-amber-900 flex items-center gap-2">
-                                        <BookOpen className="h-5 w-5" /> {dept}
-                                    </h3>
+                                    <h3 className="text-lg font-serif font-bold text-amber-900 flex items-center gap-2"><BookOpen className="h-5 w-5" /> {dept}</h3>
                                 </div>
-
                                 {Object.keys(groupedMasterlist[dept]).sort().map((program) => (
                                     <div key={program} className="pl-4 border-l-2 border-stone-200 space-y-3">
-                                        {/* Course Header */}
-                                        <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-2 mt-4 mb-2">
-                                            <GraduationCap className="h-4 w-4" /> {program}
-                                        </h4>
-
-                                        {/* Student Grid */}
+                                        <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-2 mt-4 mb-2"><GraduationCap className="h-4 w-4" /> {program}</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                             {groupedMasterlist[dept][program].map((student) => (
-                                                <div 
-                                                    key={student.id} 
-                                                    onClick={() => setSelectedMasterlistStudent(student)}
-                                                    className="group bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
-                                                >
+                                                <div key={student.id} onClick={() => setSelectedMasterlistStudent(student)} className="group bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer flex justify-between items-center">
                                                     <div>
-                                                        <p className="font-bold text-stone-800 group-hover:text-amber-800 transition-colors text-sm">
-                                                            {student.lname}, {student.fname} {student.mname}
-                                                        </p>
+                                                        <p className="font-bold text-stone-800 group-hover:text-amber-800 transition-colors text-sm">{student.lname}, {student.fname} {student.mname}</p>
                                                         <p className="text-xs font-mono text-stone-500 mt-1 bg-stone-50 inline-block px-1 rounded">{student.idNumber}</p>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <Badge className={`text-[10px] ${student.statusStep >= 6 ? 'bg-green-100 text-green-700 hover:bg-green-100 border-green-200' : 'bg-stone-100 text-stone-600 hover:bg-stone-100 border-stone-200'}`}>
-                                                            {student.statusStep >= 6 ? 'Done' : 'Active'}
-                                                        </Badge>
+                                                        <Badge className={`text-[10px] ${student.statusStep >= 6 ? 'bg-green-100 text-green-700 hover:bg-green-100 border-green-200' : 'bg-stone-100 text-stone-600 hover:bg-stone-100 border-stone-200'}`}>{student.statusStep >= 6 ? 'Done' : 'Active'}</Badge>
                                                         <ChevronRight className="h-4 w-4 text-stone-300 group-hover:text-amber-500" />
                                                     </div>
                                                 </div>
@@ -778,16 +820,15 @@ export default function AdminDashboard() {
             {/* --- TAB 3: SLOT MANAGEMENT --- */}
             {activeTab === 'slots' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+                     {/* ... Existing Slot Management Code ... */}
+                     <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
                         <div>
                             <h2 className="text-2xl font-serif font-bold text-stone-800">Pictorial Availability</h2>
                             <p className="text-stone-500 text-sm">Manage capacity for morning and afternoon sessions.</p>
                         </div>
                         <Dialog>
                             <DialogTrigger asChild>
-                                <Button className="bg-amber-900 hover:bg-amber-800 shadow-lg shadow-amber-900/20">
-                                    <Plus className="mr-2 h-4 w-4" /> Add New Date
-                                </Button>
+                                <Button className="bg-amber-900 hover:bg-amber-800 shadow-lg shadow-amber-900/20"><Plus className="mr-2 h-4 w-4" /> Add New Date</Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
@@ -806,21 +847,13 @@ export default function AdminDashboard() {
                             </DialogContent>
                         </Dialog>
                     </div>
-
                     <div className="grid gap-6">
                         {schedules.map((day, idx) => (
                             <Card key={idx} className="overflow-hidden border-t-4 border-t-amber-600 shadow-md rounded-2xl border-stone-200">
                                 <CardHeader className="bg-stone-50/80 pb-4 border-b border-stone-100">
                                     <div className="flex justify-between items-center">
-                                        <div>
-                                            <CardTitle className="text-lg flex items-center gap-2 font-serif text-stone-800">
-                                                <Calendar className="text-amber-600 h-5 w-5" /> 
-                                                {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                                            </CardTitle>
-                                        </div>
-                                        <Badge variant="outline" className={day.amBooked + day.pmBooked >= day.amSlots + day.pmSlots ? "text-red-600 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"}>
-                                            {day.amBooked + day.pmBooked >= day.amSlots + day.pmSlots ? "FULLY BOOKED" : "AVAILABLE"}
-                                        </Badge>
+                                        <div><CardTitle className="text-lg flex items-center gap-2 font-serif text-stone-800"><Calendar className="text-amber-600 h-5 w-5" /> {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</CardTitle></div>
+                                        <Badge variant="outline" className={day.amBooked + day.pmBooked >= day.amSlots + day.pmSlots ? "text-red-600 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"}>{day.amBooked + day.pmBooked >= day.amSlots + day.pmSlots ? "FULLY BOOKED" : "AVAILABLE"}</Badge>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="pt-6 bg-white">
@@ -828,13 +861,9 @@ export default function AdminDashboard() {
                                             {/* MORNING */}
                                             <div className="space-y-4 p-4 rounded-xl border border-stone-100 bg-amber-50/30">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">
-                                                        🌤️ Morning <span className="text-[10px] font-normal text-stone-500 bg-white px-2 py-0.5 rounded border border-stone-200">8AM - 12PM</span>
-                                                    </h4>
+                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">🌤️ Morning <span className="text-[10px] font-normal text-stone-500 bg-white px-2 py-0.5 rounded border border-stone-200">8AM - 12PM</span></h4>
                                                     <Dialog>
-                                                        <DialogTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700 hover:bg-amber-100 rounded-full"><Edit3 className="h-3.5 w-3.5" /></Button>
-                                                        </DialogTrigger>
+                                                        <DialogTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700 hover:bg-amber-100 rounded-full"><Edit3 className="h-3.5 w-3.5" /></Button></DialogTrigger>
                                                         <DialogContent>
                                                             <DialogHeader><DialogTitle>Modify Morning Capacity</DialogTitle></DialogHeader>
                                                             <Input type="number" defaultValue={day.amSlots} onChange={(e) => handleUpdateCapacity(day.date, 'am', parseInt(e.target.value))} />
@@ -842,18 +871,11 @@ export default function AdminDashboard() {
                                                     </Dialog>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <div className="flex justify-between text-xs font-medium">
-                                                        <span className={day.amBooked >= day.amSlots ? "text-red-600 font-bold" : "text-amber-700"}>{day.amBooked} Booked</span>
-                                                        <span className="text-stone-400">Limit: {day.amSlots}</span>
-                                                    </div>
-                                                    <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
-                                                        <div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.amBooked >= day.amSlots ? "bg-red-500" : "bg-amber-500"}`} style={{ width: `${(day.amBooked / day.amSlots) * 100}%` }}></div>
-                                                    </div>
+                                                    <div className="flex justify-between text-xs font-medium"><span className={day.amBooked >= day.amSlots ? "text-red-600 font-bold" : "text-amber-700"}>{day.amBooked} Booked</span><span className="text-stone-400">Limit: {day.amSlots}</span></div>
+                                                    <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100"><div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.amBooked >= day.amSlots ? "bg-red-500" : "bg-amber-500"}`} style={{ width: `${(day.amBooked / day.amSlots) * 100}%` }}></div></div>
                                                 </div>
                                                 <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" className="w-full text-xs border-dashed border-stone-300 text-stone-500 hover:text-amber-800 hover:border-amber-300 hover:bg-amber-50"><Plus className="mr-1 h-3 w-3" /> Manually Add Student</Button>
-                                                    </DialogTrigger>
+                                                    <DialogTrigger asChild><Button variant="outline" size="sm" className="w-full text-xs border-dashed border-stone-300 text-stone-500 hover:text-amber-800 hover:border-amber-300 hover:bg-amber-50"><Plus className="mr-1 h-3 w-3" /> Manually Add Student</Button></DialogTrigger>
                                                     <DialogContent>
                                                         <DialogHeader><DialogTitle>Add to Morning Slot</DialogTitle></DialogHeader>
                                                         <Input placeholder="e.g., Juan Dela Cruz" value={manualStudentName} onChange={(e) => setManualStudentName(e.target.value)} />
@@ -864,13 +886,9 @@ export default function AdminDashboard() {
                                             {/* AFTERNOON */}
                                             <div className="space-y-4 p-4 rounded-xl border border-stone-100 bg-blue-50/30">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">
-                                                        ☀️ Afternoon <span className="text-[10px] font-normal text-stone-500 bg-white px-2 py-0.5 rounded border border-stone-200">1PM - 5PM</span>
-                                                    </h4>
+                                                    <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">☀️ Afternoon <span className="text-[10px] font-normal text-stone-500 bg-white px-2 py-0.5 rounded border border-stone-200">1PM - 5PM</span></h4>
                                                     <Dialog>
-                                                        <DialogTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700 hover:bg-amber-100 rounded-full"><Edit3 className="h-3.5 w-3.5" /></Button>
-                                                        </DialogTrigger>
+                                                        <DialogTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700 hover:bg-amber-100 rounded-full"><Edit3 className="h-3.5 w-3.5" /></Button></DialogTrigger>
                                                         <DialogContent>
                                                             <DialogHeader><DialogTitle>Modify Afternoon Capacity</DialogTitle></DialogHeader>
                                                             <Input type="number" defaultValue={day.pmSlots} onChange={(e) => handleUpdateCapacity(day.date, 'pm', parseInt(e.target.value))} />
@@ -878,18 +896,11 @@ export default function AdminDashboard() {
                                                     </Dialog>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <div className="flex justify-between text-xs font-medium">
-                                                        <span className={day.pmBooked >= day.pmSlots ? "text-red-600 font-bold" : "text-blue-700"}>{day.pmBooked} Booked</span>
-                                                        <span className="text-stone-400">Limit: {day.pmSlots}</span>
-                                                    </div>
-                                                    <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100">
-                                                        <div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.pmBooked >= day.pmSlots ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${(day.pmBooked / day.pmSlots) * 100}%` }}></div>
-                                                    </div>
+                                                    <div className="flex justify-between text-xs font-medium"><span className={day.pmBooked >= day.pmSlots ? "text-red-600 font-bold" : "text-blue-700"}>{day.pmBooked} Booked</span><span className="text-stone-400">Limit: {day.pmSlots}</span></div>
+                                                    <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden border border-stone-100"><div className={`h-full rounded-full transition-all duration-500 shadow-sm ${day.pmBooked >= day.pmSlots ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${(day.pmBooked / day.pmSlots) * 100}%` }}></div></div>
                                                 </div>
                                                 <Dialog>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" className="w-full text-xs border-dashed border-stone-300 text-stone-500 hover:text-blue-800 hover:border-blue-300 hover:bg-blue-50"><Plus className="mr-1 h-3 w-3" /> Manually Add Student</Button>
-                                                    </DialogTrigger>
+                                                    <DialogTrigger asChild><Button variant="outline" size="sm" className="w-full text-xs border-dashed border-stone-300 text-stone-500 hover:text-blue-800 hover:border-blue-300 hover:bg-blue-50"><Plus className="mr-1 h-3 w-3" /> Manually Add Student</Button></DialogTrigger>
                                                     <DialogContent>
                                                         <DialogHeader><DialogTitle>Add to Afternoon Slot</DialogTitle></DialogHeader>
                                                         <Input placeholder="e.g., Maria Clara" value={manualStudentName} onChange={(e) => setManualStudentName(e.target.value)} />
