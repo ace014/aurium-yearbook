@@ -22,9 +22,10 @@ import {
   Menu, 
   X,
   Camera,
-  Sparkles, // Added Sparkles for the new UI
-  ChevronLeft, // Added
-  ChevronRight // Added
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  Anchor // Added Anchor icon for "Layag" theme
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -79,12 +80,20 @@ export default function AuriumLandingPage() {
   // --- DATA: EDITIONS ---
   const editions = [
     {
+      year: "2026",
+      theme: "Layag",
+      desc: "Setting sail towards new horizons. Navigating the vast ocean of opportunities with courage, resilience, and the spirit of adventure.",
+      image: "/images/batch-2026.jpg", 
+      overlay: "from-stone-900/10 to-stone-900/80",
+      accent: "text-stone-800" 
+    },
+    {
       year: "2025",
       theme: "Timeless White",
       desc: "Embodying purity, elegance, and the enduring nature of memories. Like a blank canvas, it reflects the clarity and simplicity of the moments that define our journey.",
       image: "/images/batch-2025.jpg", 
       overlay: "from-stone-900/10 to-stone-900/80",
-      accent: "text-stone-800" // Changed to dark text for white background
+      accent: "text-stone-800" 
     },
     {
       year: "2024",
@@ -266,11 +275,21 @@ export default function AuriumLandingPage() {
                   Start Registration
                 </Button>
               </Link>
-              <Link href="#editions" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-amber-200 bg-white/50 backdrop-blur-sm text-amber-900 hover:bg-white px-8 md:px-10 h-14 md:h-16 text-lg rounded-full font-medium">
-                  View Editions
-                </Button>
-              </Link>
+              
+              {/* UPDATED: "View Editions" -> "Portal Login" on Mobile */}
+              <div className="w-full sm:w-auto">
+                <Link href="/login" className="block sm:hidden w-full">
+                    <Button size="lg" variant="outline" className="w-full border-amber-200 bg-white/50 backdrop-blur-sm text-amber-900 hover:bg-white px-8 md:px-10 h-14 md:h-16 text-lg rounded-full font-medium">
+                        <UserCircle className="mr-2 h-5 w-5"/> Portal Login
+                    </Button>
+                </Link>
+                <Link href="#editions" className="hidden sm:block w-full">
+                    <Button size="lg" variant="outline" className="w-full border-amber-200 bg-white/50 backdrop-blur-sm text-amber-900 hover:bg-white px-8 md:px-10 h-14 md:h-16 text-lg rounded-full font-medium">
+                        View Editions
+                    </Button>
+                </Link>
+              </div>
+
             </motion.div>
           </motion.div>
         </div>
@@ -427,22 +446,21 @@ export default function AuriumLandingPage() {
                    
                    {/* Gradient Overlay for Text Readability */}
                    <div className={`absolute inset-0 bg-gradient-to-t ${edition.overlay}`}></div>
-                   
-                   {/* REMOVED: Text on top of Image (Year & Theme) - Now moved to bottom card */}
                 </div>
 
                 {/* Definition/Description Area (Bottom Side - White Box) */}
                 <div className="p-6 flex-1 flex flex-col justify-between bg-white border-t border-stone-100">
-                   {/* MOVED: Year and Theme here */}
+                   {/* Year and Theme */}
                    <div className="mb-4">
                       <div className="flex items-center gap-2 mb-1">
+                          {edition.theme.includes("Layag") && <Anchor size={14} className="text-stone-800" />}
                           {edition.theme.includes("Oscars") && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
                           {edition.theme.includes("Vintage") && <Clock size={14} className="text-amber-600" />}
                           {edition.theme.includes("Sablay") && <Ribbon size={14} className="text-red-600" />}
                           <span className="text-xs font-bold uppercase tracking-widest text-stone-500">{edition.theme}</span>
                       </div>
                       <h3 className={`text-3xl font-serif font-bold ${edition.accent} leading-none`}>
-                         {edition.year}
+                          {edition.year}
                       </h3>
                    </div>
 
@@ -468,7 +486,7 @@ export default function AuriumLandingPage() {
         </div>
       </section>
 
-      {/* --- NEW: MOMENTS OF TRIUMPH (INFINITE GALLERY - OPTIMIZED) --- */}
+      {/* --- MOMENTS OF TRIUMPH (INFINITE GALLERY) --- */}
       <section className="py-0 overflow-hidden bg-stone-900 border-t-4 border-b-4 border-amber-900 relative">
         {/* Cinematic Overlay */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none z-10"></div>
@@ -517,7 +535,7 @@ export default function AuriumLandingPage() {
         </div>
       </section>
 
-      {/* --- STAFF / EDITORIAL BOARD SECTION (ORIGINAL LAYOUT BUT CAROUSEL) --- */}
+      {/* --- STAFF / EDITORIAL BOARD SECTION --- */}
       <section id="staff" className="py-16 md:py-24 bg-amber-900 text-white overflow-hidden relative">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-10"></div>
         <div className="container mx-auto px-4 md:px-6 relative z-10">
@@ -541,7 +559,6 @@ export default function AuriumLandingPage() {
                  initial={{ opacity: 0, scale: 0.95 }}
                  whileInView={{ opacity: 1, scale: 1 }}
                  viewport={{ once: true }}
-                 // min-w-[320px] ensures it doesn't get cut off on small screens
                  className="bg-amber-950/50 p-4 rounded-2xl border border-amber-800/50 backdrop-blur-sm hover:border-amber-500/50 transition-colors snap-center shrink-0 min-w-[320px] md:min-w-[400px]"
                >
                  <div className="relative aspect-video w-full overflow-hidden rounded-xl mb-4 shadow-2xl">

@@ -27,8 +27,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* Removed SmoothScroll wrapper for 100% instant response */}
         {children}
       </body>
     </html>
   );
-}
+} 
