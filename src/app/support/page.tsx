@@ -1,11 +1,33 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, MessageSquare, Phone, MapPin } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  ArrowLeft, 
+  Mail, 
+  MapPin, 
+  CheckCircle, 
+  Loader2, 
+  Send 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SupportPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSent, setIsSent] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Simulate a network request (2 seconds delay)
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSent(true);
+    }, 2000);
+  };
+
   return (
     <div className="min-h-screen bg-stone-50 font-sans selection:bg-amber-200 selection:text-amber-900">
       
@@ -69,43 +91,90 @@ export default function SupportPage() {
             </div>
           </div>
 
-          {/* Contact Form */}
+          {/* Contact Form Area */}
           <div className="lg:col-span-2">
-            <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100 h-full">
-              <form className="space-y-6">
-                 <div className="grid md:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-stone-700">Name</label>
-                        <input type="text" placeholder="John Doe" className="w-full p-3 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none bg-stone-50 focus:bg-white transition-all" />
+            <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl shadow-stone-200/50 border border-stone-100 h-full flex flex-col justify-center min-h-[500px]">
+              <AnimatePresence mode="wait">
+                {!isSent ? (
+                  /* --- FORM VIEW --- */
+                  <motion.form 
+                    key="form"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                    onSubmit={handleSubmit}
+                  >
+                     <div className="grid md:grid-cols-2 gap-6">
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-stone-700">Name</label>
+                            <input required type="text" placeholder="John Doe" className="w-full p-3 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none bg-stone-50 focus:bg-white transition-all" />
+                         </div>
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-stone-700">Email</label>
+                            <input required type="email" placeholder="name@email.com" className="w-full p-3 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none bg-stone-50 focus:bg-white transition-all" />
+                         </div>
                      </div>
+                     
                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-stone-700">Email</label>
-                        <input type="email" placeholder="name@email.com" className="w-full p-3 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none bg-stone-50 focus:bg-white transition-all" />
+                        <label className="text-sm font-bold text-stone-700">Subject</label>
+                        <select className="w-full p-3 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none bg-stone-50 focus:bg-white transition-all text-stone-600">
+                            <option>Select a topic...</option>
+                            <option>Login Issue</option>
+                            <option>Registration Problem</option>
+                            <option>Schedule Inquiry</option>
+                            <option>Other</option>
+                        </select>
                      </div>
-                 </div>
-                 
-                 <div className="space-y-2">
-                    <label className="text-sm font-bold text-stone-700">Subject</label>
-                    <select className="w-full p-3 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none bg-stone-50 focus:bg-white transition-all text-stone-600">
-                        <option>Select a topic...</option>
-                        <option>Login Issue</option>
-                        <option>Registration Problem</option>
-                        <option>Schedule Inquiry</option>
-                        <option>Other</option>
-                    </select>
-                 </div>
 
-                 <div className="space-y-2">
-                    <label className="text-sm font-bold text-stone-700">Message</label>
-                    <textarea rows={6} placeholder="How can we help you?" className="w-full p-3 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none bg-stone-50 focus:bg-white transition-all resize-none"></textarea>
-                 </div>
-                 
-                 <div className="pt-2">
-                     <Button className="bg-amber-900 hover:bg-amber-800 text-white px-8 py-4 h-auto rounded-xl font-bold text-lg w-full md:w-auto shadow-lg shadow-amber-900/20">
-                        Send Message
-                     </Button>
-                 </div>
-              </form>
+                     <div className="space-y-2">
+                        <label className="text-sm font-bold text-stone-700">Message</label>
+                        <textarea required rows={6} placeholder="How can we help you?" className="w-full p-3 rounded-xl border border-stone-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none bg-stone-50 focus:bg-white transition-all resize-none"></textarea>
+                     </div>
+                     
+                     <div className="pt-2">
+                         <Button 
+                           type="submit" 
+                           disabled={isSubmitting}
+                           className="bg-amber-900 hover:bg-amber-800 text-white px-8 py-4 h-auto rounded-xl font-bold text-lg w-full md:w-auto shadow-lg shadow-amber-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                         >
+                            {isSubmitting ? (
+                              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending...</>
+                            ) : (
+                              <><Send className="mr-2 h-5 w-5" /> Send Message</>
+                            )}
+                         </Button>
+                     </div>
+                  </motion.form>
+                ) : (
+                  /* --- SUCCESS CONFIRMATION VIEW --- */
+                  <motion.div 
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, type: "spring" }}
+                    className="flex flex-col items-center justify-center text-center space-y-6 h-full py-12"
+                  >
+                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-2">
+                      <CheckCircle size={48} />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-3xl font-serif font-bold text-stone-800">Message Sent!</h3>
+                      <p className="text-stone-500 max-w-md mx-auto">
+                        Thank you for contacting us. We have received your message and our support team will get back to you shortly via email.
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => setIsSent(false)} 
+                      variant="outline" 
+                      className="mt-6 border-stone-300 text-stone-700 hover:bg-stone-50"
+                    >
+                      Send Another Message
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
