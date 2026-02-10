@@ -352,33 +352,44 @@ export default function AuriumLandingPage() {
                     <Star className="text-yellow-400 fill-yellow-400 w-8 h-8" />
                 </motion.div>
 
-               {/* The Main Prestige Card */}
-               <div className="relative bg-stone-950 rounded-3xl p-10 md:p-12 overflow-hidden shadow-2xl border border-stone-800 group">
-                  {/* Glowing Background Effect */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/30 transition-colors duration-1000"></div>
-                  <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-900/20 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4"></div>
+               {/* The Main Prestige Card (UPDATED WITH IMAGE) */}
+               <div className="relative bg-stone-950 rounded-3xl overflow-hidden shadow-2xl border border-stone-800 group h-[400px] flex flex-col justify-center items-center">
                   
-                  {/* Texture */}
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
+                  {/* Background Image (Replaces Black Box) */}
+                  <div className="absolute inset-0 z-0">
+                     {/* Replace '/images/vision-bg.jpg' with your actual image path */}
+                     <Image 
+                       src="/images/gradpics/DSC_0963.jpg" 
+                       alt="Standard of Excellence" 
+                       fill 
+                       className="object-cover opacity-30 group-hover:scale-105 transition-transform duration-1000"
+                     />
+                     {/* Gradient Overlay for Text Readability */}
+                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30"></div>
+                  </div>
 
-                  <div className="relative z-10 flex flex-col items-center text-center">
-                      <div className="mb-6 relative">
+                  {/* Glowing Background Effect */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/30 transition-colors duration-1000 z-10 pointer-events-none"></div>
+                  
+                  {/* Content */}
+                  <div className="relative z-20 flex flex-col items-center text-center p-8 md:p-12">
+                      <div className="mb-4 relative">
                           <div className="absolute inset-0 bg-amber-500 blur-xl opacity-20"></div>
-                          <Trophy size={72} className="text-gradient bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-600 relative z-10 drop-shadow-lg" color="#fbbf24" />
+                          <Trophy size={64} className="text-gradient bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-600 relative z-10 drop-shadow-lg" color="#fbbf24" />
                       </div>
 
-                      <h3 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-wide">
+                      <h3 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-wide drop-shadow-md">
                         Standard of <br/>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600">Excellence</span>
                       </h3>
                       
-                      <div className="h-1 w-16 bg-amber-600 rounded-full my-6"></div>
+                      <div className="h-1 w-16 bg-amber-600 rounded-full my-6 shadow-sm shadow-amber-500/50"></div>
 
-                      <p className="text-stone-300 text-lg font-light italic leading-relaxed">
+                      <p className="text-stone-200 text-lg font-light italic leading-relaxed max-w-sm drop-shadow-sm">
                         "Producing a yearbook edition that serves as a timeless work of art."
                       </p>
                       
-                      <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-stone-500">
+                      <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-stone-400">
                           <Sparkles size={14} className="text-amber-500"/>
                           <span>Vision 2026</span>
                           <Sparkles size={14} className="text-amber-500"/>
@@ -604,19 +615,7 @@ export default function AuriumLandingPage() {
               </Link>
             </motion.div>
 
-            {/* Card 2: Pictorial Schedule */}
-            <motion.div id="schedule" whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
-                <CalendarDays size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-stone-800 mb-3">Pictorial Schedule</h3>
-              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Book your slot for the official creative and toga photoshoot.</p>
-              <Link href="/schedule" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
-                View Calendar <ArrowRight size={16} />
-              </Link>
-            </motion.div>
-
-            {/* Card 3: FAQ (Replaced Endorsed Graduates) */}
+            {/* Card 2: FAQ */}
             <motion.div id="faq" whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
               <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
                 <HelpCircle size={28} />
@@ -628,35 +627,11 @@ export default function AuriumLandingPage() {
               </Link>
             </motion.div>
 
-            {/* Card 4: Digital Yearbook */}
-            <motion.div id="yearbook" whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
-                <BookOpen size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-stone-800 mb-3">The Yearbook</h3>
-              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Access the digital archives of previous batches and preview the current edition.</p>
-              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
-                Browse Archives <ArrowRight size={16} />
-              </Link>
-            </motion.div>
-
-            {/* Card 5: Other Services */}
-            <motion.div whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
-                <LayoutGrid size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-stone-800 mb-3">Other Services</h3>
-              <p className="text-stone-500 mb-6 text-sm leading-relaxed">Hard copy orders, photo retouching requests, and editorial services.</p>
-              <Link href="#" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
-                View All <ArrowRight size={16} />
-              </Link>
-            </motion.div>
-
-             {/* Card 6: Help & Support */}
+             {/* Card 3: Help & Support */}
              <Link href="/support" className="block h-full"> 
                <motion.div whileHover={{ y: -5 }} className="p-6 md:p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-900/5 transition-all group h-full">
                  <div className="w-12 h-12 md:w-14 md:h-14 bg-amber-100 rounded-xl flex items-center justify-center text-amber-800 mb-6 group-hover:bg-amber-900 group-hover:text-white transition-colors">
-                   <HelpCircle size={28} />
+                   <CheckCircle size={28} />
                  </div>
                  <h3 className="text-xl font-bold text-stone-800 mb-3">Help & Support</h3>
                  <p className="text-stone-500 mb-6 text-sm leading-relaxed">Having trouble with your account? Contact our support team for assistance.</p>
