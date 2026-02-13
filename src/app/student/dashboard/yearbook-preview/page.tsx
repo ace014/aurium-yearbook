@@ -52,10 +52,12 @@ export default function YearbookPreviewPage() {
   return (
     <div className="min-h-screen bg-[#2a1a10] text-amber-50 font-sans selection:bg-amber-500/30">
       
-      {/* FLOATING BACK BUTTON */}
+      {/* FLOATING BACK BUTTON - UPDATED CONTRAST */}
       <div className="fixed top-4 left-4 z-50">
         <Link href="/student/dashboard">
-          <Button variant="outline" className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 hover:text-white rounded-full gap-2">
+          <Button 
+            className="bg-white/90 text-stone-900 hover:bg-white hover:text-black border border-white rounded-full gap-2 shadow-lg transition-all hover:scale-105 font-bold"
+          >
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Button>
         </Link>
@@ -105,9 +107,9 @@ export default function YearbookPreviewPage() {
                      {details.personal.lname},
                    </h1>
                    <div className="flex flex-wrap items-baseline gap-3 text-2xl md:text-4xl text-amber-100/80 font-serif">
-                      <span>{details.personal.fname}</span>
-                      <span>{details.personal.mname.charAt(0)}.</span>
-                      <span className="italic text-amber-500">"{details.personal.nickname}"</span>
+                     <span>{details.personal.fname}</span>
+                     <span>{details.personal.mname.charAt(0)}.</span>
+                     <span className="italic text-amber-500">"{details.personal.nickname}"</span>
                    </div>
                    <div className="mt-6 flex items-center gap-3">
                       <GraduationCap className="w-5 h-5 text-amber-500" />
@@ -122,61 +124,61 @@ export default function YearbookPreviewPage() {
 
                 {/* CONTENT GRID */}
                 <div className="flex flex-col md:flex-row gap-10">
-                   
-                   {/* THEME PHOTO BOX (Placeholder) */}
-                   <div className="hidden md:block w-48 shrink-0">
-                      <div className="aspect-[3/4] bg-white/5 border border-white/10 p-2 relative group cursor-not-allowed">
-                         <div className="w-full h-full bg-[#2a1a10] flex flex-col items-center justify-center text-center p-4">
-                            <span className="text-[10px] uppercase tracking-widest text-amber-500/50">Theme Photo Slot</span>
-                         </div>
-                         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
-                      </div>
-                   </div>
+                    
+                    {/* THEME PHOTO BOX (Placeholder) */}
+                    <div className="hidden md:block w-48 shrink-0">
+                       <div className="aspect-[3/4] bg-white/5 border border-white/10 p-2 relative group cursor-not-allowed">
+                          <div className="w-full h-full bg-[#2a1a10] flex flex-col items-center justify-center text-center p-4">
+                             <span className="text-[10px] uppercase tracking-widest text-amber-500/50">Theme Photo Slot</span>
+                          </div>
+                          <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
+                       </div>
+                    </div>
 
-                   {/* DETAILS TEXT */}
-                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8 text-sm font-light text-amber-100/80">
-                      
-                      <div className="space-y-6">
-                         <div>
-                            <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Birthdate</h4>
-                            <p className="text-base text-white">{details.personal.birthdate}</p>
-                         </div>
-                         <div>
-                            <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Hometown</h4>
-                            <div className="flex items-start gap-2">
-                               <MapPin className="w-3 h-3 mt-1 shrink-0 text-amber-500" />
-                               <p>{details.address.full}</p>
-                            </div>
-                         </div>
-                         <div>
-                            <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Contact</h4>
-                            <div className="space-y-1">
-                               <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> {details.academic.contact}</p>
-                               <p className="flex items-center gap-2"><Mail className="w-3 h-3" /> {details.academic.email}</p>
-                            </div>
-                         </div>
-                      </div>
+                    {/* DETAILS TEXT */}
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8 text-sm font-light text-amber-100/80">
+                       
+                       <div className="space-y-6">
+                          <div>
+                             <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Birthdate</h4>
+                             <p className="text-base text-white">{details.personal.birthdate}</p>
+                          </div>
+                          <div>
+                             <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Hometown</h4>
+                             <div className="flex items-start gap-2">
+                                <MapPin className="w-3 h-3 mt-1 shrink-0 text-amber-500" />
+                                <p>{details.address.full}</p>
+                             </div>
+                          </div>
+                          <div>
+                             <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Contact</h4>
+                             <div className="space-y-1">
+                                <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> {details.academic.contact}</p>
+                                <p className="flex items-center gap-2"><Mail className="w-3 h-3" /> {details.academic.email}</p>
+                             </div>
+                          </div>
+                       </div>
 
-                      <div className="space-y-6">
-                         <div>
-                            <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Parents</h4>
-                            <div className="space-y-1">
-                               <p>{details.family.father}</p>
-                               <p>{details.family.mother}</p>
-                            </div>
-                         </div>
-                         <div>
-                            <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-2">Thesis Title</h4>
-                            <div className="relative pl-4 border-l-2 border-amber-500">
-                               <Quote className="w-3 h-3 text-amber-500 absolute -top-2 -left-[5px] bg-[#3f2e22]" />
-                               <p className="italic text-white leading-relaxed">
-                                  "{details.academic.thesis}"
-                               </p>
-                            </div>
-                         </div>
-                      </div>
+                       <div className="space-y-6">
+                          <div>
+                             <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Parents</h4>
+                             <div className="space-y-1">
+                                <p>{details.family.father}</p>
+                                <p>{details.family.mother}</p>
+                             </div>
+                          </div>
+                          <div>
+                             <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-2">Thesis Title</h4>
+                             <div className="relative pl-4 border-l-2 border-amber-500">
+                                <Quote className="w-3 h-3 text-amber-500 absolute -top-2 -left-[5px] bg-[#3f2e22]" />
+                                <p className="italic text-white leading-relaxed">
+                                   "{details.academic.thesis}"
+                                </p>
+                             </div>
+                          </div>
+                       </div>
 
-                   </div>
+                    </div>
                 </div>
 
             </div>
@@ -185,4 +187,4 @@ export default function YearbookPreviewPage() {
       </div>
     </div>
   );
-}
+}  

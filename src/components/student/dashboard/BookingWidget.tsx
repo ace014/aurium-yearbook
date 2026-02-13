@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, CheckCircle, QrCode, AlertTriangle } from "lucide-react";
+import { Calendar, CheckCircle, AlertTriangle } from "lucide-react"; // Removed QrCode icon
+import QRCode from "react-qr-code"; // Import the real generator
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-// You can move this interface to a types file later
+// ... (Keep your BookingData interface and AVAILABLE_SLOTS array exactly the same) ...
 interface BookingData {
   date: string;
   time: string;
@@ -54,10 +55,12 @@ export function BookingWidget({ booking, idNumber, onBook }: BookingWidgetProps)
       </CardHeader>
       <CardContent className="min-h-[200px] flex items-center justify-center">
         {booking ? (
-          // CONFIRMED TICKET VIEW
+          // --- CONFIRMED TICKET VIEW (UPDATED) ---
           <div className="w-full bg-stone-50 border border-stone-200 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-2 h-full bg-green-500"></div>
-            <div className="space-y-1">
+            
+            {/* Ticket Details */}
+            <div className="space-y-1 flex-1">
               <div className="flex items-center gap-2">
                 <Badge className="bg-green-600 hover:bg-green-600">CONFIRMED</Badge>
                 <p className="text-xs font-bold text-stone-400 uppercase tracking-wider">Pictorial Pass</p>
@@ -68,15 +71,25 @@ export function BookingWidget({ booking, idNumber, onBook }: BookingWidgetProps)
               <p className="text-stone-600 font-medium">
                 {booking.time === 'AM' ? '☀️ Morning Session (8AM - 12PM)' : '🌙 Afternoon Session (1PM - 5PM)'}
               </p>
-              <p className="text-xs text-stone-400 italic mt-2">Show the QR code to the staff upon entry.</p>
+              <p className="text-xs text-stone-400 italic mt-2">Present this QR to the attendance officer.</p>
             </div>
-            <div className="flex flex-col items-center gap-2 bg-white p-3 rounded-lg border border-stone-200 shadow-sm">
-              <QrCode className="w-20 h-20 text-stone-900" />
-              <span className="text-[10px] font-mono text-stone-400">{idNumber}</span>
+
+            {/* REAL QR CODE SECTION */}
+            <div className="flex flex-col items-center gap-2 bg-white p-4 rounded-lg border border-stone-200 shadow-sm">
+              {/* This generates a unique QR for this specific ID number */}
+              <div style={{ height: "auto", margin: "0 auto", maxWidth: 100, width: "100%" }}>
+                <QRCode
+                  size={256}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  value={idNumber} // <--- THIS MAKES IT VALID. Scans as "2022-00123"
+                  viewBox={`0 0 256 256`}
+                />
+              </div>
+              <span className="text-[10px] font-mono text-stone-500 tracking-widest">{idNumber}</span>
             </div>
           </div>
         ) : (
-          // BOOKING UI (Empty State)
+          // ... (BOOKING UI remains exactly the same as before) ...
           <div className="text-center space-y-4 py-6">
              <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Calendar className="w-8 h-8 text-amber-600" />
@@ -101,7 +114,6 @@ export function BookingWidget({ booking, idNumber, onBook }: BookingWidgetProps)
                             <div key={idx} className="border rounded-lg p-4 space-y-3 bg-stone-50/50">
                                 <h4 className="font-bold text-stone-700">{slot.label}</h4>
                                 <div className="grid grid-cols-2 gap-4">
-                                    {/* Slot Buttons Logic */}
                                     {['AM', 'PM'].map((sessionType) => {
                                         const isAM = sessionType === 'AM';
                                         const booked = isAM ? slot.amBooked : slot.pmBooked;
@@ -140,7 +152,6 @@ export function BookingWidget({ booking, idNumber, onBook }: BookingWidgetProps)
                 </DialogContent>
              </Dialog>
 
-             {/* Confirmation Dialog */}
              <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
