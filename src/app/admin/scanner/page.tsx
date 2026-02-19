@@ -1,15 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { 
-  ScanLine, 
-  CheckCircle, 
-  XCircle, 
-  Camera, 
-  CameraOff,
-  Search,
-  ListFilter
-} from "lucide-react";
+import { ScanLine, CheckCircle, XCircle, Camera, CameraOff, Search, ListFilter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,159 +9,31 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// --- NEW LIBRARY IMPORT ---
 import { Scanner } from '@yudiel/react-qr-scanner';
 
-// --- SOUND ASSETS ---
-// Success: A pleasant chime
-const AUDIO_SUCCESS = "https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3?filename=success-1-6297.mp3"; 
-// Error: A harsh buzzer sound ("Eeeeeek!")
-const AUDIO_ERROR = "https://www.myinstants.com/media/sounds/wrong-answer-sound-effect.mp3";
-
-// --- TYPES ---
-interface Student {
-  id: string;
-  name: string;
-  photo: string;
-  status: "present" | "absent";
-  timeIn?: string;
-  schedule: {
-      date: string;
-      session: "AM" | "PM";
-  };
-}
-
-// --- MOCK DATABASE ---
-const GLOBAL_STUDENT_DB: Student[] = [
-    { id: "2020-00123", name: "Juan Dela Cruz", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "AM" } },
-    { id: "2020-00124", name: "Maria Clara", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "AM" } },
-    { id: "2020-00125", name: "Jose Rizal", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "AM" } },
-    { id: "2020-00456", name: "Emilio Aguinaldo", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "PM" } },
-    { id: "2020-00457", name: "Apolinario Mabini", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-15", session: "PM" } },
-    { id: "2020-00789", name: "Lapu Lapu", photo: "https://github.com/shadcn.png", status: "absent", schedule: { date: "2026-03-16", session: "AM" } },
-];
-
-const SESSION_OPTIONS = [
-    { label: "March 15 - Morning (AM)", date: "2026-03-15", session: "AM" },
-    { label: "March 15 - Afternoon (PM)", date: "2026-03-15", session: "PM" },
-    { label: "March 16 - Morning (AM)", date: "2026-03-16", session: "AM" },
-];
+// import ang hook nga gahandle sa tanan logic
+import { useScanner } from "@/hooks/useScanner";
 
 export default function ScannerPage() {
-  const [scanInput, setScanInput] = useState("");
-  const [scanResult, setScanResult] = useState<"idle" | "success" | "error">("idle");
-  const [scannedStudent, setScannedStudent] = useState<Student | null>(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isCameraActive, setIsCameraActive] = useState(true);
   
-  // --- SESSION STATE ---
-  const [currentSessionKey, setCurrentSessionKey] = useState("2026-03-15-AM"); 
-  const [selectedDate, selectedSession] = currentSessionKey.split("-").length === 4 
-      ? [currentSessionKey.substring(0, 10), currentSessionKey.substring(11)] 
-      : ["2026-03-15", "AM"]; 
-
-  // --- LOCAL ATTENDANCE STATE ---
-  const [localStudentDB, setLocalStudentDB] = useState<Student[]>(GLOBAL_STUDENT_DB);
-  const [filter, setFilter] = useState<"all" | "present" | "absent">("all");
-
-  // --- AUDIO PLAYER HELPER ---
-  const playAudio = (type: "success" | "error") => {
-      const audio = new Audio(type === "success" ? AUDIO_SUCCESS : AUDIO_ERROR);
-      audio.volume = 0.5;
-      audio.play().catch(e => console.log("Audio play failed (user interaction needed first)", e));
-  };
-
-  // --- DERIVED LISTS ---
-  const sessionList = useMemo(() => {
-      return localStudentDB.filter(s => 
-          s.schedule.date === selectedDate && s.schedule.session === selectedSession
-      );
-  }, [localStudentDB, selectedDate, selectedSession]);
-
-  const displayedList = useMemo(() => {
-      if (filter === "all") return sessionList;
-      return sessionList.filter(s => s.status === filter);
-  }, [sessionList, filter]);
-
-  const totalStudents = sessionList.length;
-  const presentCount = sessionList.filter(s => s.status === "present").length;
-  const absentCount = totalStudents - presentCount;
-
-  // --- CORE SCAN LOGIC ---
-  const processScan = (idToScan: string) => {
-    if (!idToScan) return;
-
-    // Helper to reset scanner after 3 seconds
-    const triggerReset = () => {
-        setTimeout(() => {
-            setScanResult("idle");
-            setScannedStudent(null);
-            setErrorMessage("");
-        }, 3000);
-    };
-
-    const studentRecord = localStudentDB.find(s => s.id === idToScan);
-
-    // ERROR 1: ID NOT FOUND
-    if (!studentRecord) {
-        setScanResult("error");
-        setErrorMessage("ID not found in database.");
-        setScannedStudent(null);
-        playAudio("error"); // <--- PLAY ERROR SOUND
-        triggerReset(); 
-        return;
-    }
-
-    setScannedStudent(studentRecord);
-
-    // ERROR 2: WRONG SESSION
-    if (studentRecord.schedule.date !== selectedDate || studentRecord.schedule.session !== selectedSession) {
-        setScanResult("error");
-        setErrorMessage(`Wrong Session! Scheduled for: ${studentRecord.schedule.date} (${studentRecord.schedule.session})`);
-        playAudio("error"); // <--- PLAY ERROR SOUND
-        triggerReset();
-        return;
-    }
-
-    // ERROR 3: ALREADY SCANNED
-    if (studentRecord.status === 'present') {
-        setScanResult("error"); 
-        setErrorMessage("Student already scanned!");
-        playAudio("error"); // <--- PLAY ERROR SOUND
-        triggerReset();
-        return;
-    }
-
-    // SUCCESS
-    setScanResult("success");
-    setErrorMessage("");
-    playAudio("success"); // <--- PLAY SUCCESS SOUND
-    
-    setLocalStudentDB(prev => prev.map(student => 
-        student.id === studentRecord.id 
-            ? { ...student, status: "present", timeIn: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) } 
-            : student
-    ));
-
-    triggerReset(); 
-  };
-
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    processScan(scanInput);
-    setScanInput("");
-  };
-
-  // --- NEW HANDLER FOR @yudiel/react-qr-scanner ---
-  const handleQrScan = (detectedCodes: any[]) => {
-    if (detectedCodes && detectedCodes.length > 0) {
-        const rawValue = detectedCodes[0].rawValue;
-        if (rawValue && scanResult === "idle") {
-            processScan(rawValue);
-        }
-    }
-  };
+  // destructure tanan gikan sa hook para dli crowded diri
+  const {
+    scanInput, setScanInput,
+    scanResult,
+    scannedStudent,
+    errorMessage,
+    isCameraActive, setIsCameraActive,
+    currentSessionKey, setCurrentSessionKey,
+    selectedSession,
+    filter, setFilter,
+    displayedList,
+    totalStudents,
+    attendedCount,
+    pendingCount,
+    handleManualSubmit,
+    handleQrScan,
+    SESSION_OPTIONS
+  } = useScanner();
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col lg:flex-row font-sans overflow-hidden">
@@ -187,6 +50,7 @@ export default function ScannerPage() {
                 <p className="text-stone-400 text-xs mt-1">AURIUM Event Management System</p>
             </div>
             
+            {/* Session Selector */}
             <div className="w-full sm:w-64 pointer-events-auto">
                 <Select value={currentSessionKey} onValueChange={setCurrentSessionKey}>
                     <SelectTrigger className="w-full bg-stone-900 border-stone-700 text-amber-400 font-bold">
@@ -206,6 +70,7 @@ export default function ScannerPage() {
         {/* Scanner Content */}
         <div className="flex-1 flex flex-col justify-center items-center p-8 relative pt-24">
             
+            {/* bg color transition based on result */}
             <div className={`absolute inset-0 transition-opacity duration-500 pointer-events-none opacity-20
                 ${scanResult === 'success' ? 'bg-green-500' : scanResult === 'error' ? 'bg-red-500' : 'bg-transparent'}`} 
             />
@@ -219,6 +84,7 @@ export default function ScannerPage() {
                     </div>
                     
                     <Card className={`relative border-0 shadow-2xl overflow-hidden bg-stone-900`}>
+                        {/* Corner markers for aesthetic */}
                         <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-amber-500/50 rounded-tl-lg z-20 animate-pulse"></div>
                         <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-amber-500/50 rounded-tr-lg z-20 animate-pulse"></div>
                         <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-amber-500/50 rounded-bl-lg z-20 animate-pulse"></div>
@@ -232,7 +98,6 @@ export default function ScannerPage() {
                                     <Scanner 
                                         onScan={handleQrScan}
                                         scanDelay={3000} 
-                                        // REMOVED 'components={{ audio: false }}' TO FIX TYPE ERROR
                                         constraints={{ facingMode: 'environment' }}
                                         styles={{ container: { width: '100%', height: '100%' }, video: { objectFit: 'cover' } }}
                                     />
@@ -253,7 +118,7 @@ export default function ScannerPage() {
                                         <AvatarImage src={scannedStudent.photo} />
                                         <AvatarFallback>JD</AvatarFallback>
                                     </Avatar>
-                                    <h2 className="text-3xl font-black text-green-400 tracking-widest drop-shadow-md">PRESENT</h2>
+                                    <h2 className="text-3xl font-black text-green-400 tracking-widest drop-shadow-md">VERIFIED</h2>
                                     <p className="text-xl font-bold text-white mt-2 truncate max-w-full">{scannedStudent.name}</p>
                                     <p className="text-stone-400 font-mono text-lg">{scannedStudent.id}</p>
                                 </div>
@@ -289,6 +154,7 @@ export default function ScannerPage() {
                     </Card>
                 </div>
 
+                {/* Manual entry kung naay guba sa ID */}
                 <form onSubmit={handleManualSubmit} className="relative group">
                     <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                         <Search className="h-5 w-5 text-stone-500 group-focus-within:text-amber-500 transition-colors"/>
@@ -322,23 +188,23 @@ export default function ScannerPage() {
                     <p className="text-[10px] uppercase text-stone-500 font-bold tracking-wider">Total</p>
                 </div>
                 <div className="bg-green-900/20 p-3 rounded-lg border border-green-900/30 text-center">
-                    <p className="text-2xl font-bold text-green-400">{presentCount}</p>
-                    <p className="text-[10px] uppercase text-green-600 font-bold tracking-wider">Present</p>
+                    <p className="text-2xl font-bold text-green-400">{attendedCount}</p>
+                    <p className="text-[10px] uppercase text-green-600 font-bold tracking-wider">Attended</p>
                 </div>
                 <div className="bg-stone-800 p-3 rounded-lg border border-stone-700 text-center opacity-60">
-                    <p className="text-2xl font-bold text-stone-400">{absentCount}</p>
-                    <p className="text-[10px] uppercase text-stone-500 font-bold tracking-wider">Absent</p>
+                    <p className="text-2xl font-bold text-amber-400">{pendingCount}</p>
+                    <p className="text-[10px] uppercase text-amber-600 font-bold tracking-wider">Pending</p>
                 </div>
             </div>
         </div>
 
-        {/* Filter Tabs */}
+        {/* Filter Tabs - Gi update nako ni para match sa status variables */}
         <div className="px-6 pt-4">
             <Tabs defaultValue="all" className="w-full" onValueChange={(val) => setFilter(val as any)}>
                 <TabsList className="w-full bg-stone-800">
-                    <TabsTrigger value="all" className="flex-1 text-xs">All Students</TabsTrigger>
-                    <TabsTrigger value="present" className="flex-1 text-xs text-green-400 data-[state=active]:bg-green-900/20">Present</TabsTrigger>
-                    <TabsTrigger value="absent" className="flex-1 text-xs text-stone-400">Absent</TabsTrigger>
+                    <TabsTrigger value="all" className="flex-1 text-xs">All</TabsTrigger>
+                    <TabsTrigger value="attended" className="flex-1 text-xs text-green-400 data-[state=active]:bg-green-900/20">Attended</TabsTrigger>
+                    <TabsTrigger value="pending" className="flex-1 text-xs text-amber-400 data-[state=active]:bg-amber-900/20">Pending</TabsTrigger>
                 </TabsList>
             </Tabs>
         </div>
@@ -350,31 +216,31 @@ export default function ScannerPage() {
                     <div 
                         key={student.id} 
                         className={`group flex items-center gap-3 p-3 rounded-lg border transition-all duration-300
-                        ${student.status === 'present' 
+                        ${student.status === 'attended' 
                             ? 'bg-green-900/10 border-green-900/30' 
                             : 'bg-stone-900 border-stone-800 opacity-60 hover:opacity-100 hover:bg-stone-800'
                         }`}
                     >
-                        <Avatar className={`h-10 w-10 border-2 ${student.status === 'present' ? 'border-green-500' : 'border-stone-700'}`}>
+                        <Avatar className={`h-10 w-10 border-2 ${student.status === 'attended' ? 'border-green-500' : 'border-stone-700'}`}>
                             <AvatarImage src={student.photo} />
                             <AvatarFallback className="bg-stone-800 text-stone-400">JD</AvatarFallback>
                         </Avatar>
                         
                         <div className="flex-1 min-w-0">
-                            <p className={`font-bold text-sm truncate ${student.status === 'present' ? 'text-white' : 'text-stone-400'}`}>
+                            <p className={`font-bold text-sm truncate ${student.status === 'attended' ? 'text-white' : 'text-stone-400'}`}>
                                 {student.name}
                             </p>
                             <p className="text-xs text-stone-500 font-mono truncate">{student.id}</p>
                         </div>
 
                         <div>
-                            {student.status === 'present' ? (
+                            {student.status === 'attended' ? (
                                 <div className="text-right">
-                                    <Badge className="bg-green-600 hover:bg-green-600 text-[10px] px-2 h-5">Present</Badge>
+                                    <Badge className="bg-green-600 hover:bg-green-600 text-[10px] px-2 h-5">Verified</Badge>
                                     <p className="text-[10px] text-green-400/70 font-mono mt-1">{student.timeIn}</p>
                                 </div>
                             ) : (
-                                <Badge variant="outline" className="border-stone-700 text-stone-600 text-[10px] px-2 h-5">
+                                <Badge variant="outline" className="border-amber-700/50 text-amber-500 text-[10px] px-2 h-5">
                                     Waiting
                                 </Badge>
                             )}
@@ -384,7 +250,7 @@ export default function ScannerPage() {
 
                 {displayedList.length === 0 && (
                     <div className="text-center py-12 text-stone-500 text-sm">
-                        No students found for this session.
+                        No students found for this filter.
                     </div>
                 )}
             </div>

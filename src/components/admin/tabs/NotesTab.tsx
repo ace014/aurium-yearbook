@@ -1,48 +1,28 @@
 "use client";
 
-import { useState, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"; 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
-const INITIAL_NOTES = [
-  { id: 1, content: "Remember to check honor titles for BSCS students.", color: "bg-amber-100" },
-  { id: 2, content: "Pictorial break time is at 12:00 PM.", color: "bg-blue-100" },
-];
+// gi import nako ang hook dre
+import { useNotes } from "@/hooks/useNotes";
 
 export function NotesTab() {
-  const [notes, setNotes] = useState(INITIAL_NOTES);
-  const [newNote, setNewNote] = useState("");
-  const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
-
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-
-  const addNote = () => {
-    if(!newNote.trim()) return;
-    const colors = ["bg-amber-100", "bg-blue-100", "bg-green-100", "bg-rose-100"];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    setNotes(prev => [...prev, { id: Date.now(), content: newNote, color: randomColor }]);
-    setNewNote("");
-  };
-
-  const confirmDeleteNote = () => {
-    if (noteToDelete !== null) {
-        setNotes(prev => prev.filter(n => n.id !== noteToDelete));
-        setNoteToDelete(null);
-    }
-  };
-
-  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.targetTouches[0].clientX; };
-  const onTouchMove = (e: React.TouchEvent) => { touchEndX.current = e.targetTouches[0].clientX; };
-  const onTouchEnd = (id: number) => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    const distance = touchStartX.current - touchEndX.current;
-    if (distance > 50) setNoteToDelete(id);
-    touchStartX.current = null;
-    touchEndX.current = null;
-  };
+  
+  // gi-extract nako tanan gikan sa custom hook
+  const {
+    notes,
+    newNote,
+    setNewNote,
+    noteToDelete,
+    setNoteToDelete,
+    addNote,
+    confirmDeleteNote,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd
+  } = useNotes();
 
   return (
     <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -50,7 +30,8 @@ export function NotesTab() {
       <p className="text-stone-500 mb-8">Private sticky notes for your reminders and tasks.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Add New Note Card */}
+        
+        {/* Card for Adding New Note */}
         <div className="aspect-square rounded-xl border-2 border-dashed border-stone-300 flex flex-col p-4 bg-stone-50 hover:bg-stone-100 transition-colors">
           <Textarea 
             placeholder="Type a new note here..." 
@@ -63,7 +44,7 @@ export function NotesTab() {
           </Button>
         </div>
 
-        {/* Note List */}
+        {/* Display tanang sticky notes gikan sa array */}
         {notes.map((note) => (
           <div 
               key={note.id} 
@@ -72,24 +53,31 @@ export function NotesTab() {
               onTouchMove={onTouchMove}
               onTouchEnd={() => onTouchEnd(note.id)}
           >
+            {/* Delete button (hidden by default, magpakita if i-hover sa desktop) */}
             <button 
               onClick={() => setNoteToDelete(note.id)}
               className="absolute top-2 right-2 p-2 bg-black/5 hover:bg-red-500 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all text-stone-600"
             >
               <Trash2 size={16} />
             </button>
+            
+            {/* Tape effect sa taas sa sticky note for UI details */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-yellow-200/50 blur-sm"></div>
+            
             <p className="text-stone-800 font-medium font-serif leading-relaxed flex-1 overflow-auto text-lg pt-2">
               {note.content}
             </p>
+            
             <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mt-4 opacity-50 border-t border-stone-400/20 pt-2 flex justify-between">
                 <span>Staff Only</span>
+                {/* visible ra ni sa mobile para kabalo sila unsay buhaton */}
                 <span className="md:hidden text-stone-400 text-[9px] italic">Swipe left to delete</span>
             </span>
           </div>
         ))}
       </div>
       
+      {/* Modal Prompt bago i-delete jud aron iwas typo click */}
       <Dialog open={noteToDelete !== null} onOpenChange={(open) => !open && setNoteToDelete(null)}>
           <DialogContent>
               <DialogHeader>

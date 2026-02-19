@@ -4,11 +4,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { 
   Users, Calendar, BookOpen, User, LogOut, 
-  X, Home, ExternalLink, ScanLine 
+  X, Home, ExternalLink, ScanLine, 
+  ClipboardList, FileCheck 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+
+// import nato ang hook nga gihimo para limpyo 
+import { useSidebar } from "@/hooks/useSidebar";
 
 interface SidebarProps {
   activeTab: string;
@@ -21,6 +25,10 @@ interface SidebarProps {
 
 export function AdminSidebar({ activeTab, setActiveTab, isMobile, setIsOpen, user, onLogout }: SidebarProps) {
   
+  // kwaon nato ang check gikan sa hook 
+  const { isAdmin, displayPosition, userInitials } = useSidebar(user);
+
+  // Gamay nga helper para sa mga buttons
   const NavItem = ({ id, label, icon: Icon }: any) => (
     <Button 
       variant="ghost" 
@@ -45,7 +53,7 @@ export function AdminSidebar({ activeTab, setActiveTab, isMobile, setIsOpen, use
         {isMobile && setIsOpen && <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}><X className="h-5 w-5 text-stone-400" /></Button>}
       </div>
 
-      {/* NAV MENU - FIX: Added scrollbar hiding classes here 👇 */}
+      {/* NAV MENU */}
       <nav className="flex-1 p-6 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <p className="text-[10px] font-bold uppercase tracking-widest text-stone-600 mb-2 px-3">Menu</p>
         
@@ -57,11 +65,27 @@ export function AdminSidebar({ activeTab, setActiveTab, isMobile, setIsOpen, use
         
         <div className="my-2 border-t border-stone-800/50"></div>
         
-        <NavItem id="verification" label="Verification Queue" icon={Users} />
-        <NavItem id="masterlist" label="RAC Masterlist" icon={BookOpen} />
-        <NavItem id="slots" label="Schedules" icon={Calendar} />
+        {/* --- TABS NGA ADMIN RA MAKAKITA --- */}
+        {isAdmin && (
+           <>
+             <NavItem id="verification" label="Verification Queue" icon={Users} />
+           </>
+        )}
         
-        {/* LINK TO SCANNER PAGE */}
+        {/* --- TABS NGA MAKITA SA TANAN (Admin ug Staff) --- */}
+        <NavItem id="masterlist" label="Graduate Masterlist" icon={BookOpen} />
+        
+        <div className="my-2 px-3 text-[10px] font-bold uppercase tracking-widest text-stone-600 mt-4">Review & Notes</div>
+        <NavItem id="graduate-review" label="Graduate Verification" icon={FileCheck} />
+        <NavItem id="notes" label="Staff Notes" icon={ClipboardList} />
+
+        <div className="my-2 border-t border-stone-800/50"></div>
+
+        {/* --- TABS NGA ADMIN RA MAKAKITA --- */}
+        {isAdmin && (
+            <NavItem id="slots" label="Schedules" icon={Calendar} />
+        )}
+        
         <Link href="/admin/scanner">
             <Button variant="ghost" className="w-full justify-start gap-4 h-12 text-sm font-medium text-stone-400 hover:text-white hover:bg-stone-900">
                 <ScanLine size={18} /> Attendance Scanner
@@ -71,16 +95,17 @@ export function AdminSidebar({ activeTab, setActiveTab, isMobile, setIsOpen, use
         <NavItem id="profile" label="My Profile" icon={User} />
       </nav>
 
-      {/* FOOTER / LOGOUT */}
+      {/* FOOTER */}
       <div className="p-6 border-t border-stone-800/50 bg-stone-950">
         <div className="flex items-center gap-3 mb-4">
-            <Avatar className="border-2 border-stone-600">
+            <Avatar className="border-2 border-stone-600 bg-stone-800">
                 <AvatarImage src={user.avatar} />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarFallback className="text-xs font-bold text-stone-300 bg-stone-800">{userInitials}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-white truncate">{user.name}</p>
-                <p className="text-[10px] text-stone-500 truncate uppercase tracking-wider">{user.role}</p>
+                {/* Diri mu gawas ang gi-edit nga position gikan sa profile tab */}
+                <p className="text-[10px] text-amber-500 truncate uppercase tracking-wider">{displayPosition}</p>
             </div>
         </div>
         <Dialog>

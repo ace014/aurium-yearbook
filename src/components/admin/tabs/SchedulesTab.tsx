@@ -1,119 +1,329 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Edit3, Calendar } from "lucide-react";
+import { Plus, Edit3, Calendar, UserPlus, Hash, Users, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const MOCK_SCHEDULES = [
-  { date: "2026-03-15", amSlots: 50, amBooked: 48, pmSlots: 50, pmBooked: 12 },
-  { date: "2026-03-16", amSlots: 50, amBooked: 50, pmSlots: 50, pmBooked: 50 },
-];
+// gamiton nako ang custom hook diri para limpyo ang component, didto na tanang logic
+import { useSchedules } from "@/hooks/useSchedules";
 
 export function SchedulesTab() {
-  const [schedules, setSchedules] = useState(MOCK_SCHEDULES);
-  const [newDateInput, setNewDateInput] = useState("");
-  const [manualStudentName, setManualStudentName] = useState("");
-
-  const handleUpdateCapacity = (date: string, session: 'am' | 'pm', newCapacity: number) => {
-    setSchedules(prev => prev.map(sched => {
-        if (sched.date === date) {
-            return session === 'am' ? { ...sched, amSlots: newCapacity } : { ...sched, pmSlots: newCapacity };
-        }
-        return sched;
-    }));
-  };
-
-  const handleAddNewDate = () => {
-    if (!newDateInput) return;
-    const exists = schedules.some(s => s.date === newDateInput);
-    if (exists) { alert("Date exists!"); return; }
-    const newSchedule = { date: newDateInput, amSlots: 50, amBooked: 0, pmSlots: 50, pmBooked: 0 };
-    setSchedules(prev => [...prev, newSchedule].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-    setNewDateInput(""); 
-  };
-
-  const handleManualAdd = (date: string, session: 'am' | 'pm') => {
-    if (!manualStudentName) return;
-    setSchedules(prev => prev.map(sched => {
-        if (sched.date === date) {
-            const currentBooked = session === 'am' ? sched.amBooked : sched.pmBooked;
-            const limit = session === 'am' ? sched.amSlots : sched.pmSlots;
-            if (currentBooked >= limit) { alert("Slot full!"); return sched; }
-            return session === 'am' ? { ...sched, amBooked: sched.amBooked + 1 } : { ...sched, pmBooked: sched.pmBooked + 1 };
-        }
-        return sched;
-    }));
-    setManualStudentName(""); 
-  };
+  
+  // extract tanan states ug handlers gikan sa hook 
+  const {
+    schedules,
+    newDateInput, setNewDateInput,
+    sessionType, setSessionType,
+    newAmCapacity, setNewAmCapacity,
+    newPmCapacity, setNewPmCapacity,
+    isAddDateOpen, setIsAddDateOpen,
+    manualStudentId, setManualStudentId,
+    isAddStudentOpen, setIsAddStudentOpen,
+    activeAddStudentSession, 
+    isEditCapacityOpen, setIsEditCapacityOpen,
+    editingCapacity, setEditingCapacity,
+    isRosterOpen, setIsRosterOpen,
+    activeRoster,
+    handleConfirmCapacityUpdate,
+    openCapacityDialog,
+    openRosterDialog,
+    handleAddNewDate,
+    openAddStudentDialog,
+    handleManualAdd
+  } = useSchedules();
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-            <div><h2 className="text-2xl font-serif font-bold text-stone-800">Pictorial Availability</h2><p className="text-stone-500 text-sm">Manage capacities.</p></div>
-            <Dialog>
-                <DialogTrigger asChild><Button className="bg-amber-900 hover:bg-amber-800 shadow-lg"><Plus className="mr-2 h-4 w-4" /> Add Date</Button></DialogTrigger>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-6xl mx-auto">
+        
+        {/* Header Title ug Button para mag add ug schedule */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm gap-4">
+            <div>
+                <h2 className="text-2xl font-serif font-bold text-stone-800">Pictorial Availability</h2>
+                <p className="text-stone-500 text-sm mt-1">Manage dates, capacities, and monitor student attendance per session.</p>
+            </div>
+            
+            {/* Modal para sa pag add ug bag-ong date */}
+            <Dialog open={isAddDateOpen} onOpenChange={setIsAddDateOpen}>
+                <DialogTrigger asChild>
+                    <Button className="bg-amber-900 hover:bg-amber-800 shadow-lg">
+                        <Plus className="mr-2 h-4 w-4" /> Add Date
+                    </Button>
+                </DialogTrigger>
                 <DialogContent>
-                    <DialogHeader><DialogTitle>Open New Schedule</DialogTitle><DialogDescription>Add a new date.</DialogDescription></DialogHeader>
-                    <div className="py-4"><Label>Select Date</Label><Input type="date" value={newDateInput} onChange={(e) => setNewDateInput(e.target.value)} /></div>
-                    <DialogFooter><Button onClick={handleAddNewDate}>Create</Button></DialogFooter>
+                    <DialogHeader>
+                        <DialogTitle>Open New Schedule</DialogTitle>
+                        <DialogDescription>Configure date and slot capacity.</DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Select Date</Label>
+                            <Input type="date" value={newDateInput} onChange={(e) => setNewDateInput(e.target.value)} />
+                        </div>
+
+                        {/* Dropdown para maka pili kung whole day ba o half day ra */}
+                        <div className="space-y-2">
+                            <Label>Session Type</Label>
+                            <select 
+                                className="flex h-10 w-full items-center justify-between rounded-md border border-stone-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-950"
+                                value={sessionType}
+                                onChange={(e) => setSessionType(e.target.value)}
+                            >
+                                <option value="both">Whole Day (AM & PM)</option>
+                                <option value="am">Morning Only (AM)</option>
+                                <option value="pm">Afternoon Only (PM)</option>
+                            </select>
+                        </div>
+
+                        {/* Dynamic fields - mu gawas ra ni depende sa gipili sa dropdown */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {(sessionType === 'both' || sessionType === 'am') && (
+                                <div className="space-y-2">
+                                    <Label>AM Limit</Label>
+                                    <Input type="number" value={newAmCapacity} onChange={(e) => setNewAmCapacity(parseInt(e.target.value))} />
+                                </div>
+                            )}
+                            {(sessionType === 'both' || sessionType === 'pm') && (
+                                <div className="space-y-2">
+                                    <Label>PM Limit</Label>
+                                    <Input type="number" value={newPmCapacity} onChange={(e) => setNewPmCapacity(parseInt(e.target.value))} />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button onClick={handleAddNewDate}>Create Schedule</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
         
+        {/* Loop para idisplay tanang schedules */}
         <div className="grid gap-6">
-            {schedules.map((day, idx) => (
-                <Card key={idx} className="overflow-hidden border-t-4 border-t-amber-600 shadow-md rounded-2xl border-stone-200">
-                    <CardHeader className="bg-stone-50/80 pb-4 border-b border-stone-100">
-                        <div className="flex justify-between items-center">
-                            <CardTitle className="text-lg flex items-center gap-2 font-serif text-stone-800"><Calendar className="text-amber-600 h-5 w-5" /> {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</CardTitle>
-                            <Badge variant="outline" className={day.amBooked + day.pmBooked >= day.amSlots + day.pmSlots ? "text-red-600 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"}>{day.amBooked + day.pmBooked >= day.amSlots + day.pmSlots ? "FULLY BOOKED" : "AVAILABLE"}</Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="pt-6 bg-white">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {['am', 'pm'].map((session) => {
-                                const isAm = session === 'am';
-                                const booked = isAm ? day.amBooked : day.pmBooked;
-                                const slots = isAm ? day.amSlots : day.pmSlots;
-                                return (
-                                    <div key={session} className={`space-y-4 p-4 rounded-xl border border-stone-100 ${isAm ? 'bg-amber-50/30' : 'bg-blue-50/30'}`}>
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">{isAm ? '🌤️ Morning' : '☀️ Afternoon'}</h4>
-                                            <Dialog>
-                                                <DialogTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Edit3 className="h-3.5 w-3.5" /></Button></DialogTrigger>
-                                                <DialogContent>
-                                                    <DialogHeader><DialogTitle>Modify Capacity</DialogTitle></DialogHeader>
-                                                    <Input type="number" defaultValue={slots} onChange={(e) => handleUpdateCapacity(day.date, session as 'am'|'pm', parseInt(e.target.value))} />
-                                                </DialogContent>
-                                            </Dialog>
+            {schedules.map((day, idx) => {
+                // compute daan kung full naba ang slots for the day
+                const totalBooked = day.amStudents.length + day.pmStudents.length;
+                const totalSlots = day.amSlots + day.pmSlots;
+                const isFull = totalBooked >= totalSlots;
+
+                return (
+                    <Card key={idx} className="overflow-hidden border-t-4 border-t-amber-600 shadow-md rounded-2xl border-stone-200">
+                        <CardHeader className="bg-stone-50/80 pb-4 border-b border-stone-100">
+                            <div className="flex justify-between items-center">
+                                <CardTitle className="text-lg flex items-center gap-2 font-serif text-stone-800">
+                                    <Calendar className="text-amber-600 h-5 w-5" /> 
+                                    {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                                </CardTitle>
+                                <Badge variant="outline" className={isFull ? "text-red-600 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"}>
+                                    {isFull ? "FULLY BOOKED" : "AVAILABLE"}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+
+                        <CardContent className="pt-6 bg-white">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* i-map ang AM ug PM para di redundant ang code */}
+                                {['am', 'pm'].map((session) => {
+                                    const isAm = session === 'am';
+                                    const roster = isAm ? day.amStudents : day.pmStudents;
+                                    const bookedCount = roster.length;
+                                    const slots = isAm ? day.amSlots : day.pmSlots;
+                                    
+                                    // kung zero ang limit, hide ang session kay basin half day ra to
+                                    if (slots === 0) return (
+                                        <div key={session} className="flex items-center justify-center p-8 bg-stone-50 rounded-xl border border-dashed border-stone-200 text-stone-400 text-sm italic">
+                                            No {isAm ? 'Morning' : 'Afternoon'} Schedule
                                         </div>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-xs font-medium"><span className={booked >= slots ? "text-red-600" : "text-stone-700"}>{booked} Booked</span><span className="text-stone-400">Limit: {slots}</span></div>
-                                            <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden"><div className={`h-full transition-all duration-500 ${booked >= slots ? "bg-red-500" : isAm ? "bg-amber-500" : "bg-blue-500"}`} style={{ width: `${(booked / slots) * 100}%` }}></div></div>
+                                    );
+
+                                    return (
+                                        <div key={session} className={`space-y-4 p-5 rounded-xl border border-stone-100 ${isAm ? 'bg-amber-50/30' : 'bg-blue-50/30'}`}>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">
+                                                    {isAm ? '🌤️ Morning Session' : '☀️ Afternoon Session'}
+                                                </h4>
+                                                
+                                                {/* Edit Capacity Button - mu trigger sa modal */}
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="h-8 w-8 p-0 text-stone-400 hover:text-amber-700" 
+                                                    title="Edit Capacity"
+                                                    onClick={() => openCapacityDialog(day.date, session as 'am'|'pm', slots)}
+                                                >
+                                                    <Edit3 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+
+                                            {/* Progress Bar para dali makita if hapit na mapuno */}
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-xs font-medium">
+                                                    <span className={bookedCount >= slots ? "text-red-600" : "text-stone-700"}>{bookedCount} Booked</span>
+                                                    <span className="text-stone-400">Limit: {slots}</span>
+                                                </div>
+                                                <div className="h-2 w-full bg-stone-200/60 rounded-full overflow-hidden">
+                                                    <div className={`h-full transition-all duration-500 ${bookedCount >= slots ? "bg-red-500" : isAm ? "bg-amber-500" : "bg-blue-500"}`} style={{ width: `${(bookedCount / slots) * 100}%` }}></div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-2 pt-2">
+                                                {/* Kani tong gi request ni koi nga list sa students para transparency */}
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="flex-1 text-xs bg-white border-stone-200 hover:bg-stone-50 text-stone-600"
+                                                    onClick={() => openRosterDialog(day.date, session as 'am'|'pm', roster)}
+                                                >
+                                                    <Users className="mr-1.5 h-3.5 w-3.5" /> View Roster
+                                                </Button>
+
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="flex-1 text-xs bg-white border-stone-200 hover:bg-stone-50 text-stone-600"
+                                                    onClick={() => openAddStudentDialog(day.date, session as 'am'|'pm')}
+                                                >
+                                                    <UserPlus className="mr-1.5 h-3.5 w-3.5" /> Override
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <Dialog>
-                                            <DialogTrigger asChild><Button variant="outline" size="sm" className="w-full text-xs"><Plus className="mr-1 h-3 w-3" /> Add Student</Button></DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader><DialogTitle>Add to {isAm ? 'Morning' : 'Afternoon'}</DialogTitle></DialogHeader>
-                                                <Input placeholder="Student Name" value={manualStudentName} onChange={(e) => setManualStudentName(e.target.value)} />
-                                                <DialogFooter><Button onClick={() => handleManualAdd(day.date, session as 'am'|'pm')}>Confirm</Button></DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
+                                    )
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+            })}
         </div>
+
+        {/* --- MODAL: ROSTER / ATTENDANCE CHECKER --- */}
+        <Dialog open={isRosterOpen} onOpenChange={setIsRosterOpen}>
+            <DialogContent className="max-w-2xl bg-white p-0 overflow-hidden">
+                <div className="p-6 border-b border-stone-100 bg-stone-50/50">
+                    <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                        <Users className="text-amber-600 h-5 w-5"/> 
+                        Session Roster
+                    </DialogTitle>
+                    <DialogDescription className="mt-1">
+                        Showing students booked for {activeRoster?.date} ({activeRoster?.session === 'am' ? 'Morning' : 'Afternoon'})
+                    </DialogDescription>
+                </div>
+                
+                <div className="p-6">
+                    <Tabs defaultValue="all" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3 mb-4">
+                            <TabsTrigger value="all">All ({activeRoster?.students.length})</TabsTrigger>
+                            <TabsTrigger value="attended" className="text-green-700 data-[state=active]:bg-green-50 data-[state=active]:text-green-800">Attended</TabsTrigger>
+                            <TabsTrigger value="pending" className="text-amber-700 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-800">Pending/Missed</TabsTrigger>
+                        </TabsList>
+
+                        {/* nag loop ko dre sa tabs para dli cgeg copy paste sa UI elements sa sulod */}
+                        {[
+                            { value: 'all', filterFn: () => true },
+                            { value: 'attended', filterFn: (s: any) => s.status === 'attended' },
+                            { value: 'pending', filterFn: (s: any) => s.status !== 'attended' },
+                        ].map(tab => (
+                            <TabsContent key={tab.value} value={tab.value} className="mt-0">
+                                <ScrollArea className="h-[400px] pr-4">
+                                    <div className="space-y-2">
+                                        {activeRoster?.students.filter(tab.filterFn).map((student, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-3 rounded-xl border border-stone-100 hover:bg-stone-50 transition-colors">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-sm text-stone-800">{student.name}</span>
+                                                    <span className="text-xs text-stone-400 font-mono">{student.id}</span>
+                                                </div>
+                                                
+                                                {/* I-display ang status gamit ang badges */}
+                                                {student.status === 'attended' && <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-0"><CheckCircle2 className="w-3 h-3 mr-1"/> Attended</Badge>}
+                                                {student.status === 'pending' && <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0"><Clock className="w-3 h-3 mr-1"/> Pending</Badge>}
+                                                {student.status === 'missed' && <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0"><XCircle className="w-3 h-3 mr-1"/> No Show</Badge>}
+                                            </div>
+                                        ))}
+                                        
+                                        {activeRoster?.students.filter(tab.filterFn).length === 0 && (
+                                            <div className="text-center text-stone-400 py-10 text-sm italic">
+                                                No students found in this category.
+                                            </div>
+                                        )}
+                                    </div>
+                                </ScrollArea>
+                            </TabsContent>
+                        ))}
+                    </Tabs>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        {/* --- MODAL: MODIFY CAPACITY --- */}
+        <Dialog open={isEditCapacityOpen} onOpenChange={setIsEditCapacityOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Modify Session Capacity</DialogTitle>
+                    <DialogDescription>
+                        Updating the limit for {editingCapacity?.session === 'am' ? 'Morning' : 'Afternoon'} session on {editingCapacity?.date}.
+                    </DialogDescription>
+                </DialogHeader>
+                
+                {editingCapacity && (
+                    <div className="py-4 space-y-3">
+                         <Label>New Capacity Limit</Label>
+                         <Input 
+                            type="number" 
+                            value={editingCapacity.value} 
+                            onChange={(e) => setEditingCapacity({
+                                ...editingCapacity, 
+                                value: parseInt(e.target.value) || 0
+                            })} 
+                        />
+                         <p className="text-xs text-stone-500">
+                            Current Limit: <strong>{schedules.find(s => s.date === editingCapacity.date)?.[editingCapacity.session === 'am' ? 'amSlots' : 'pmSlots']}</strong>
+                         </p>
+                    </div>
+                )}
+
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsEditCapacityOpen(false)}>Cancel</Button>
+                    <Button onClick={handleConfirmCapacityUpdate} className="bg-amber-600 hover:bg-amber-700">Confirm Update</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* --- MODAL: ADD STUDENT MANUALLY --- */}
+        <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Student Override</DialogTitle>
+                    <DialogDescription>
+                        Manually adding student to {activeAddStudentSession?.session === 'am' ? 'Morning' : 'Afternoon'} session on {activeAddStudentSession?.date}.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 py-2">
+                    <Label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Student ID Number</Label>
+                    <div className="relative">
+                        <Hash className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
+                        <Input 
+                            placeholder="e.g. 2024-00123" 
+                            value={manualStudentId} 
+                            onChange={(e) => setManualStudentId(e.target.value)} 
+                            className="pl-9"
+                        />
+                    </div>  
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddStudentOpen(false)}>Cancel</Button>
+                    <Button onClick={handleManualAdd} className="bg-amber-600 hover:bg-amber-700">Confirm Override</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
     </div>
   );
 }
-
-             

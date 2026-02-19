@@ -8,10 +8,14 @@ import { Bell, Menu } from "lucide-react";
 
 // Modular Imports
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { VerificationTab } from "@/components/admin/tabs/VerificationTab";
+import { VerificationTab } from "@/components/admin/tabs/VerificationTab"; // Original Admin Tab
 import { ProfileTab } from "@/components/admin/tabs/ProfileTab";
 import { MasterlistTab } from "@/components/admin/tabs/MasterlistTab";
 import { SchedulesTab } from "@/components/admin/tabs/SchedulesTab";
+
+// --- MERGED IMPORTS ---
+import { NotesTab } from "@/components/admin/tabs/NotesTab"; 
+import { GraduateReviewTab } from "@/components/admin/tabs/GraduateReviewTab"; // <--- The Renamed Staff File
 
 // Service Import
 import * as adminService from "@/app/admin/adminService";
@@ -21,10 +25,17 @@ export default function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState("verification"); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Data States
   const [pendingStudents, setPendingStudents] = useState<any[]>([]);
+  
+  // State specific to the Graduate Review Tab (Moved from Staff)
+  // This handles the "Select a student to view details" feature
+  const [selectedReviewStudent, setSelectedReviewStudent] = useState<any>(null);
+
   const [staffUser, setStaffUser] = useState({ 
     name: "Admin User", 
-    role: "Head Moderator", 
+    role: "admin", 
     email: "admin@aurium.edu.ph", 
     avatar: "https://github.com/shadcn.png" 
   });
@@ -54,15 +65,13 @@ export default function AdminDashboard() {
     const res = await fetch("http://localhost:4000/api/auth/logout", {
       credentials: 'include'
     });
-
-    if (res.ok) {
-      router.push('/');
-    }
+    if (res.ok) router.push('/');
   }
 
   return (
     <div className="min-h-screen bg-stone-50 flex font-sans relative">
       
+      {/* Mobile Sidebar */}
       {isMobileMenuOpen && (
          <div className="fixed inset-0 z-50 md:hidden bg-black/80" onClick={() => setIsMobileMenuOpen(false)}>
              <AdminSidebar 
@@ -76,6 +85,7 @@ export default function AdminDashboard() {
          </div>
       )}
 
+      {/* Desktop Sidebar */}
       <AdminSidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
@@ -84,8 +94,6 @@ export default function AdminDashboard() {
         onLogout={() => onLogout()}
       />
 
-      {/* FIXED: Removed 'h-screen', 'overflow-y-auto' and scrollbar hacks.
-          Now using 'min-h-screen' so it just grows naturally. */}
       <main className="flex-1 md:ml-72 p-4 md:p-8 min-h-screen bg-[#FDFBF7]">
         
         <header className="flex items-center justify-between mb-8 py-4 border-b border-stone-200/50">
@@ -102,14 +110,13 @@ export default function AdminDashboard() {
                     <div className="relative w-8 h-8 overflow-hidden hover:scale-105 transition-transform duration-300">
                         <Image src="/images/aurium-logo.png" alt="Aurium" fill className="object-contain" />
                     </div>
-                    <div className="flex flex-col justify-center">
-                        <span className="text-lg font-serif font-bold text-stone-800 leading-none tracking-tight">AURIUM</span>
-                        <span className="text-[8px] text-amber-600 uppercase tracking-widest font-bold">Moderator</span>
-                    </div>
                 </div>
 
+                {/* Dynamic Title */}
                 <h1 className="text-2xl font-serif font-bold text-stone-800 hidden md:block">
                     {activeTab === 'verification' && "Verification Queue"}
+                    {activeTab === 'graduate-review' && "Graduate Verification"}
+                    {activeTab === 'notes' && "Staff Notes"}
                     {activeTab === 'slots' && "Schedule Manager"}
                     {activeTab === 'masterlist' && "Verified Masterlist"}
                     {activeTab === 'scanner' && "Attendance Scanner"}
@@ -128,11 +135,29 @@ export default function AdminDashboard() {
             </div>
         </header>
 
+        {/* CONTENT AREA */}
         <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {activeTab === "verification" && <VerificationTab pendingStudents={pendingStudents} onVerify={updateOnVerify} />}
-            {activeTab === "profile" && <ProfileTab user={staffUser} setUser={setStaffUser} />}
+            {/* 1. ORIGINAL ADMIN VERIFICATION (Queue) */}
+            {activeTab === "verification" && (
+                <VerificationTab pendingStudents={pendingStudents} onVerify={updateOnVerify} />
+            )}
+
+            {/* 2. MERGED STAFF VERIFICATION (Detailed Review) */}
+            {activeTab === "graduate-review" && (
+                <GraduateReviewTab 
+                    staffUser={staffUser}
+                    selectedStudent={selectedReviewStudent}
+                    setSelectedStudent={setSelectedReviewStudent}
+                />
+            )}
+
+            {/* 3. MERGED NOTES */}
+            {activeTab === 'notes' && <NotesTab />}
+
+            {/* 4. OTHER ADMIN TABS */}
             {activeTab === 'masterlist' && <MasterlistTab />}
             {activeTab === 'slots' && <SchedulesTab />}
+            {activeTab === "profile" && <ProfileTab user={staffUser} setUser={setStaffUser} />}
         </div>
       </main>
     </div>
