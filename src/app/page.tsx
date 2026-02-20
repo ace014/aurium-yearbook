@@ -558,37 +558,55 @@ export default function AuriumLandingPage() {
             <p className="text-amber-200/80 text-lg">The dedicated individuals who craft the AURIUM masterpiece.</p>
           </div>
 
-          {/* Draggable Carousel with Snap */}
+          {/* Draggable Carousel with Snap (NOW CLICKABLE CARDS) */}
           <motion.div 
              ref={carouselRef}
              className="flex gap-6 md:gap-8 overflow-x-auto pb-10 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing"
              whileTap={{ cursor: "grabbing" }}
           >
              {staff.map((team, index) => (
-               <motion.div 
-                 key={index}
-                 initial={{ opacity: 0, scale: 0.95 }}
-                 whileInView={{ opacity: 1, scale: 1 }}
-                 viewport={{ once: true }}
-                 className="bg-amber-950/50 p-4 rounded-2xl border border-amber-800/50 backdrop-blur-sm hover:border-amber-500/50 transition-colors snap-center shrink-0 min-w-[320px] md:min-w-[400px]"
-               >
-                 <div className="relative aspect-video w-full overflow-hidden rounded-xl mb-4 shadow-2xl">
-                    <Image 
-                      src={team.image} 
-                      alt={team.year} 
-                      fill 
-                      className="object-cover hover:scale-105 transition-transform duration-500"
-                    />
-                 </div>
-                 <h3 className="text-xl md:text-2xl font-serif font-bold text-amber-100 mb-2">{team.year}</h3>
-                 <p className="text-amber-200/60 text-sm italic">"{team.quote}"</p>
-               </motion.div>
+               <Link href="/team" key={index} className="snap-center shrink-0 min-w-[320px] md:min-w-[400px] block focus:outline-none">
+                 <motion.div 
+                   initial={{ opacity: 0, scale: 0.95 }}
+                   whileInView={{ opacity: 1, scale: 1 }}
+                   viewport={{ once: true }}
+                   className="bg-amber-950/50 p-4 rounded-2xl border border-amber-800/50 backdrop-blur-sm hover:border-amber-400 hover:bg-amber-900/80 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)] transition-all duration-300 h-full group"
+                 >
+                   <div className="relative aspect-video w-full overflow-hidden rounded-xl mb-4 shadow-2xl">
+                      <Image 
+                        src={team.image} 
+                        alt={team.year} 
+                        fill 
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                   </div>
+                   
+                   <div className="flex justify-between items-center mb-2">
+                     <h3 className="text-xl md:text-2xl font-serif font-bold text-amber-100 group-hover:text-white transition-colors">{team.year}</h3>
+                     
+                     {/* Cool Arrow that slides in on hover para makita nga clickable */}
+                     <ArrowRight size={20} className="text-amber-500 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                   </div>
+                   
+                   <p className="text-amber-200/60 text-sm italic">"{team.quote}"</p>
+                 </motion.div>
+               </Link>
              ))}
           </motion.div>
 
           {/* Mobile Scroll Hint */}
           <div className="flex justify-center mt-4 text-amber-200/40 text-xs animate-pulse md:hidden">
              <span>&larr; Swipe to explore &rarr;</span>
+          </div>
+
+          {/* LINK TO THE NEW DEDICATED TEAM PAGE */}
+          <div className="flex justify-center mt-12 relative z-20">
+            <Link href="/team">
+              <Button size="lg" className="bg-transparent border-2 border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-stone-900 rounded-full px-10 h-14 text-lg font-bold transition-all group">
+                  Explore Full Editorial Archives
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
