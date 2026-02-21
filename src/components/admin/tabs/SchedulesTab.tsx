@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Edit3, Calendar, UserPlus, Hash, Users, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Plus, Edit3, Calendar, UserPlus, Hash, Users, CheckCircle2, XCircle, Clock, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,33 +10,133 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// gamiton nako ang custom hook diri para limpyo ang component, didto na tanang logic
-import { useSchedules } from "@/hooks/useSchedules";
+import { useState } from "react";
+import { Schedule } from "@/types";
+import * as adminService from "@/app/admin/adminService"
 
-export function SchedulesTab() {
-  
-  // extract tanan states ug handlers gikan sa hook 
-  const {
-    schedules,
-    newDateInput, setNewDateInput,
-    sessionType, setSessionType,
-    newAmCapacity, setNewAmCapacity,
-    newPmCapacity, setNewPmCapacity,
-    isAddDateOpen, setIsAddDateOpen,
-    manualStudentId, setManualStudentId,
-    isAddStudentOpen, setIsAddStudentOpen,
-    activeAddStudentSession, 
-    isEditCapacityOpen, setIsEditCapacityOpen,
-    editingCapacity, setEditingCapacity,
-    isRosterOpen, setIsRosterOpen,
-    activeRoster,
-    handleConfirmCapacityUpdate,
-    openCapacityDialog,
-    openRosterDialog,
-    handleAddNewDate,
-    openAddStudentDialog,
-    handleManualAdd
-  } = useSchedules();
+interface ScheduleProp {
+    schedules: Schedule[];
+    fetchSchedules: () => Promise<void>;
+}
+
+export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
+
+  //input states
+  const [newDateInput, setNewDateInput] = useState("");
+  const [sessionType, setSessionType] = useState("both"); // options: both, am, pm
+  const [newAmCapacity, setNewAmCapacity] = useState(50);
+  const [newPmCapacity, setNewPmCapacity] = useState(50);
+  const [isAddDateOpen, setIsAddDateOpen] = useState(false);
+
+  //input override states
+  const [manualStudentId, setManualStudentId] = useState("");
+  const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [activeAddStudentSession, setActiveAddStudentSession] = useState<{date: string, session: 'am'|'pm'} | null>(null);
+
+  //capacity override states
+  const [isEditCapacityOpen, setIsEditCapacityOpen] = useState(false);
+  const [editingCapacity, setEditingCapacity] = useState<{date: string, session: 'am'|'pm', value: number} | null>(null);
+
+  //show student state
+  const [isRosterOpen, setIsRosterOpen] = useState(false);
+  const [activeRoster, setActiveRoster] = useState<{date: string, session: 'morning' | 'afternoon', students: any[]} | null>(null);
+
+  const openCapacityDialog = (date: string, session: 'am'|'pm', currentSlots: number) => {
+    setEditingCapacity({ date, session, value: currentSlots });
+    setIsEditCapacityOpen(true);
+  };
+
+  const openRosterDialog = (date: string, session: 'morning' | 'afternoon', students: any[]) => {
+    setActiveRoster({ date, session, students });
+    setIsRosterOpen(true);
+  };
+
+  //handle add date
+  const handleAddNewDate = async () => {
+    if (!newDateInput) return;
+    const exists = schedules.some(s => s.date === newDateInput);
+    if (exists) { alert("Date already exists!"); return; }
+
+    const amLimit = (sessionType === 'both' || sessionType === 'am') ? newAmCapacity : 0;
+    const pmLimit = (sessionType === 'both' || sessionType === 'pm') ? newPmCapacity : 0;
+
+    try {
+      const res = await adminService.addSchedule(newDateInput, amLimit, pmLimit);
+      if (res.success) {
+        alert("New schedule has been added succesfully!");
+        
+        fetchSchedules();
+
+        // reset form fields
+        setNewDateInput("");
+        setNewAmCapacity(0);
+        setNewPmCapacity(0);
+        setIsAddDateOpen(false);
+      } else {
+        alert(res.reason);
+      }
+    } catch(err) {
+      console.error("Error adding schedule", err);
+      alert("Error connecting to the server");
+    }
+  };
+
+  //TODOS:
+  /*
+   const handleConfirmCapacityUpdate = () => {
+    if (editingCapacity) {
+        setSchedules(prev => prev.map(sched => {
+            if (sched.date === editingCapacity.date) {
+                return editingCapacity.session === 'am' 
+                    ? { ...sched, amSlots: editingCapacity.value } 
+                    : { ...sched, pmSlots: editingCapacity.value };
+            }
+            return sched;
+        }));
+        setIsEditCapacityOpen(false);
+        setEditingCapacity(null);
+    }
+  }; 
+  */
+
+  //manaually add student based on id number
+  /*
+  const openAddStudentDialog = (date: string, session: 'am'|'pm') => {
+      setActiveAddStudentSession({ date, session });
+      setManualStudentId("");
+      setIsAddStudentOpen(true);
+  }
+  */
+
+  /*
+  const handleManualAdd = () => {
+    if (!manualStudentId || !activeAddStudentSession) return;
+    
+    const { date, session } = activeAddStudentSession;
+
+    setSchedules(prev => prev.map(sched => {
+        if (sched.date === date) {
+            const currentStudents = session === 'am' ? sched.amStudents : sched.pmStudents;
+            const limit = session === 'am' ? sched.amSlots : sched.pmSlots;
+            
+            if (limit === 0) { alert("This session is closed."); return sched; }
+            if (currentStudents.length >= limit) { alert("Slot full!"); return sched; }
+            
+            // i-push nato ang bag-ong student sa roster array
+            const newStudent = { id: manualStudentId, name: "Manual Added Student", status: "pending" };
+            
+            return session === 'am' 
+              ? { ...sched, amStudents: [...sched.amStudents, newStudent] } 
+              : { ...sched, pmStudents: [...sched.pmStudents, newStudent] };
+        }
+        return sched;
+    }));
+    
+    setManualStudentId(""); 
+    setIsAddStudentOpen(false);
+    setActiveAddStudentSession(null);
+  };
+  */
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-6xl mx-auto">
@@ -105,12 +205,13 @@ export function SchedulesTab() {
             </Dialog>
         </div>
         
-        {/* Loop para idisplay tanang schedules */}
+        {/* Banner */}
         <div className="grid gap-6">
-            {schedules.map((day, idx) => {
-                // compute daan kung full naba ang slots for the day
-                const totalBooked = day.amStudents.length + day.pmStudents.length;
-                const totalSlots = day.amSlots + day.pmSlots;
+            {schedules.map((day: Schedule, idx) => {
+
+                //calculate slots for rendering
+                const totalBooked = day.bookings.length;
+                const totalSlots = day.max_morning_cap + day.max_afternoon_cap;
                 const isFull = totalBooked >= totalSlots;
 
                 return (
@@ -129,25 +230,32 @@ export function SchedulesTab() {
 
                         <CardContent className="pt-6 bg-white">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* i-map ang AM ug PM para di redundant ang code */}
-                                {['am', 'pm'].map((session) => {
-                                    const isAm = session === 'am';
-                                    const roster = isAm ? day.amStudents : day.pmStudents;
-                                    const bookedCount = roster.length;
-                                    const slots = isAm ? day.amSlots : day.pmSlots;
+                                {/* count students for morning and afternoon session */}
+                                {['morning', 'afternoon'].map((session) => {
+                                    const is_morning = session === 'morning';
+
+                                    //list of students
+                                    const roster = is_morning 
+                                    ? day.bookings.filter(p => p.period === "morning") 
+                                    : day.bookings.filter(p => p.period === "afternoon");
                                     
-                                    // kung zero ang limit, hide ang session kay basin half day ra to
+                                    const bookedCount = roster.length;
+
+                                    const slots = is_morning 
+                                    ? day.max_morning_cap 
+                                    : day.max_afternoon_cap;
+                                    
                                     if (slots === 0) return (
                                         <div key={session} className="flex items-center justify-center p-8 bg-stone-50 rounded-xl border border-dashed border-stone-200 text-stone-400 text-sm italic">
-                                            No {isAm ? 'Morning' : 'Afternoon'} Schedule
+                                            No {is_morning ? 'Morning' : 'Afternoon'} Schedule
                                         </div>
                                     );
 
                                     return (
-                                        <div key={session} className={`space-y-4 p-5 rounded-xl border border-stone-100 ${isAm ? 'bg-amber-50/30' : 'bg-blue-50/30'}`}>
+                                        <div key={session} className={`space-y-4 p-5 rounded-xl border border-stone-100 ${is_morning ? 'bg-amber-50/30' : 'bg-blue-50/30'}`}>
                                             <div className="flex justify-between items-center mb-2">
                                                 <h4 className="font-bold text-stone-700 flex items-center gap-2 text-sm">
-                                                    {isAm ? '🌤️ Morning Session' : '☀️ Afternoon Session'}
+                                                    {is_morning ? '🌤️ Morning Session' : '☀️ Afternoon Session'}
                                                 </h4>
                                                 
                                                 {/* Edit Capacity Button - mu trigger sa modal */}
@@ -169,18 +277,17 @@ export function SchedulesTab() {
                                                     <span className="text-stone-400">Limit: {slots}</span>
                                                 </div>
                                                 <div className="h-2 w-full bg-stone-200/60 rounded-full overflow-hidden">
-                                                    <div className={`h-full transition-all duration-500 ${bookedCount >= slots ? "bg-red-500" : isAm ? "bg-amber-500" : "bg-blue-500"}`} style={{ width: `${(bookedCount / slots) * 100}%` }}></div>
+                                                    <div className={`h-full transition-all duration-500 ${bookedCount >= slots ? "bg-red-500" : is_morning ? "bg-amber-500" : "bg-blue-500"}`} style={{ width: `${(bookedCount / slots) * 100}%` }}></div>
                                                 </div>
                                             </div>
                                             
                                             {/* Action Buttons */}
                                             <div className="flex gap-2 pt-2">
-                                                {/* Kani tong gi request ni koi nga list sa students para transparency */}
                                                 <Button 
                                                     variant="outline" 
                                                     size="sm" 
                                                     className="flex-1 text-xs bg-white border-stone-200 hover:bg-stone-50 text-stone-600"
-                                                    onClick={() => openRosterDialog(day.date, session as 'am'|'pm', roster)}
+                                                    onClick={() => openRosterDialog(day.date, session as 'morning'|'afternoon', roster)}
                                                 >
                                                     <Users className="mr-1.5 h-3.5 w-3.5" /> View Roster
                                                 </Button>
@@ -189,7 +296,7 @@ export function SchedulesTab() {
                                                     variant="outline" 
                                                     size="sm" 
                                                     className="flex-1 text-xs bg-white border-stone-200 hover:bg-stone-50 text-stone-600"
-                                                    onClick={() => openAddStudentDialog(day.date, session as 'am'|'pm')}
+                                                    onClick={() => {}}
                                                 >
                                                     <UserPlus className="mr-1.5 h-3.5 w-3.5" /> Override
                                                 </Button>
@@ -213,7 +320,7 @@ export function SchedulesTab() {
                         Session Roster
                     </DialogTitle>
                     <DialogDescription className="mt-1">
-                        Showing students booked for {activeRoster?.date} ({activeRoster?.session === 'am' ? 'Morning' : 'Afternoon'})
+                        Showing students booked for {activeRoster?.date.substring(0,10)} ({activeRoster?.session === 'morning' ? 'Morning' : 'Afternoon'})
                     </DialogDescription>
                 </div>
                 
@@ -225,11 +332,11 @@ export function SchedulesTab() {
                             <TabsTrigger value="pending" className="text-amber-700 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-800">Pending/Missed</TabsTrigger>
                         </TabsList>
 
-                        {/* nag loop ko dre sa tabs para dli cgeg copy paste sa UI elements sa sulod */}
+                        {/* map result based on status */}
                         {[
                             { value: 'all', filterFn: () => true },
-                            { value: 'attended', filterFn: (s: any) => s.status === 'attended' },
-                            { value: 'pending', filterFn: (s: any) => s.status !== 'attended' },
+                            { value: 'attended', filterFn: (s: any) => s.status === 'ATTENDED' },
+                            { value: 'pending', filterFn: (s: any) => s.status !== 'ATTENDED' },
                         ].map(tab => (
                             <TabsContent key={tab.value} value={tab.value} className="mt-0">
                                 <ScrollArea className="h-[400px] pr-4">
@@ -237,14 +344,13 @@ export function SchedulesTab() {
                                         {activeRoster?.students.filter(tab.filterFn).map((student, idx) => (
                                             <div key={idx} className="flex justify-between items-center p-3 rounded-xl border border-stone-100 hover:bg-stone-50 transition-colors">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-sm text-stone-800">{student.name}</span>
-                                                    <span className="text-xs text-stone-400 font-mono">{student.id}</span>
+                                                    <span className="font-bold text-sm text-stone-800">{`${student.student.first_name} ${student.student.last_name}`}</span>
+                                                    <span className="text-xs text-stone-400 font-mono">{student.student_number}</span>
                                                 </div>
                                                 
-                                                {/* I-display ang status gamit ang badges */}
-                                                {student.status === 'attended' && <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-0"><CheckCircle2 className="w-3 h-3 mr-1"/> Attended</Badge>}
-                                                {student.status === 'pending' && <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0"><Clock className="w-3 h-3 mr-1"/> Pending</Badge>}
-                                                {student.status === 'missed' && <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0"><XCircle className="w-3 h-3 mr-1"/> No Show</Badge>}
+                                                {/* display status using badges */}
+                                                {student.student.StudentAuth.status === 'ATTENDED' && <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-0"><CheckCircle2 className="w-3 h-3 mr-1"/> Attended</Badge>}
+                                                {student.student.StudentAuth.status === 'BOOKED' && <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0"><Clock className="w-3 h-3 mr-1"/> Pending</Badge>}
                                             </div>
                                         ))}
                                         
@@ -284,14 +390,14 @@ export function SchedulesTab() {
                             })} 
                         />
                          <p className="text-xs text-stone-500">
-                            Current Limit: <strong>{schedules.find(s => s.date === editingCapacity.date)?.[editingCapacity.session === 'am' ? 'amSlots' : 'pmSlots']}</strong>
+                            Current Limit: <strong>{"TODO"}</strong>
                          </p>
                     </div>
                 )}
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsEditCapacityOpen(false)}>Cancel</Button>
-                    <Button onClick={handleConfirmCapacityUpdate} className="bg-amber-600 hover:bg-amber-700">Confirm Update</Button>
+                    <Button onClick={() => {}} className="bg-amber-600 hover:bg-amber-700">Confirm Update</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -319,7 +425,7 @@ export function SchedulesTab() {
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsAddStudentOpen(false)}>Cancel</Button>
-                    <Button onClick={handleManualAdd} className="bg-amber-600 hover:bg-amber-700">Confirm Override</Button>
+                    <Button onClick={() => {}} className="bg-amber-600 hover:bg-amber-700">Confirm Override</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
