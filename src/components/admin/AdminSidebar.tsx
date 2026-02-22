@@ -72,11 +72,12 @@ export function AdminSidebar({ activeTab, setActiveTab, isMobile, setIsOpen, use
            </>
         )}
         
-        {/* --- TABS NGA MAKITA SA TANAN (Admin ug Staff) --- */}
-        <NavItem id="masterlist" label="Graduate Masterlist" icon={BookOpen} />
+        {/* --- GIBAYLO NGA TABS BASE SA REQUEST NI KOI --- */}
+        <NavItem id="graduate-review" label="Graduate Verification" icon={FileCheck} />
         
         <div className="my-2 px-3 text-[10px] font-bold uppercase tracking-widest text-stone-600 mt-4">Review & Notes</div>
-        <NavItem id="graduate-review" label="Graduate Verification" icon={FileCheck} />
+        
+        <NavItem id="masterlist" label="Graduate Masterlist" icon={BookOpen} />
         <NavItem id="notes" label="Staff Notes" icon={ClipboardList} />
 
         <div className="my-2 border-t border-stone-800/50"></div>
