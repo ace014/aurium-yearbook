@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+// Gitangtang ang Link kay dili na nato need mo-navigate to another page
 import { 
   ArrowLeft, 
   MapPin, 
@@ -13,54 +13,57 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-// --- MOCK DATA (Ideally, this comes from your database) ---
-const STUDENT_DATA = {
-  name: "Juan Dela Cruz",
-  idNumber: "2022-00123",
-  // Using standard Pinterest image
-  photoUrl: "https://i.pinimg.com/736x/09/7b/2d/097b2d53634008344447550541004724.jpg", 
+// BAG-O: Gidugang ang interface para modawat og data (user) ug action (onClose) gikan sa parent
+interface YearbookPreviewProps {
+  user: any; // Gidawat ang user data gikan sa StudentDashboard
+  onClose: () => void; // Function para i-close ang preview
+}
+
+// BAG-O: Giusab gikan sa "export default function YearbookPreviewPage()"
+export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
   
-  details: {
+  // BAG-O: Imbes nga hardcoded STUDENT_DATA, atong i-map ang `user` prop padulong sa imong existing object structure
+  // In this way, dili nato kailangan usbon ang imong mga {details.personal.lname} sa ubos.
+  const details = {
     personal: {
-      fname: "Juan",
-      mname: "Santos",
-      lname: "Dela Cruz",
+      fname: user?.first_name || "Juan",
+      mname: "Santos", // Placeholder lang usa ni kung wala sa DB
+      lname: user?.last_name || "Dela Cruz",
       suffix: "Jr.",
-      nickname: "Juanny",
+      nickname: user?.first_name || "Juanny",
       birthdate: "January 1, 2000",
     },
     address: {
       full: "Apokon, Tagum City, Davao del Norte"
     },
     academic: {
-      course: "BACHELOR OF SCIENCE IN COMPUTER SCIENCE",
-      major: "Data Science",
+      course: user?.course || "BACHELOR OF SCIENCE IN COMPUTER SCIENCE",
+      major: user?.major || "Data Science", // Karon dynamic na ni
       thesis: "Development of an AI-Powered Yearbook Layout System using Genetic Algorithms",
-      email: "juan.delacruz@gmail.com",
+      email: `${(user?.first_name || "Juan").toLowerCase()}.${(user?.last_name || "DelaCruz").toLowerCase().replace(/\s/g, '')}@gmail.com`,
       contact: "09123456789"
     },
     family: {
       father: "Mr. Pedro Santos Dela Cruz",
       mother: "Mrs. Maria Santos Dela Cruz",
     }
-  }
-};
+  };
 
-export default function YearbookPreviewPage() {
-  const { details } = STUDENT_DATA;
+  const photoUrl = user?.photo_url || "https://i.pinimg.com/736x/09/7b/2d/097b2d53634008344447550541004724.jpg";
 
   return (
-    <div className="min-h-screen bg-[#2a1a10] text-amber-50 font-sans selection:bg-amber-500/30">
+    // BAG-O: Gidugangan og "fixed inset-0 z-50 overflow-y-auto" para mahimo siyang overlay/modal imbes nga bag-ong page.
+    <div className="fixed inset-0 z-50 overflow-y-auto min-h-screen bg-[#2a1a10] text-amber-50 font-sans selection:bg-amber-500/30">
       
       {/* FLOATING BACK BUTTON - UPDATED CONTRAST */}
       <div className="fixed top-4 left-4 z-50">
-        <Link href="/student/dashboard">
-          <Button 
-            className="bg-white/90 text-stone-900 hover:bg-white hover:text-black border border-white rounded-full gap-2 shadow-lg transition-all hover:scale-105 font-bold"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-          </Button>
-        </Link>
+        {/* BAG-O: Gitangtang ang Link, gibutangan og onClick={onClose} */}
+        <Button 
+          onClick={onClose}
+          className="bg-white/90 text-stone-900 hover:bg-white hover:text-black border border-white rounded-full gap-2 shadow-lg transition-all hover:scale-105 font-bold"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+        </Button>
       </div>
 
       {/* FLOATING BADGE */}
@@ -73,20 +76,20 @@ export default function YearbookPreviewPage() {
       <div className="w-full min-h-screen lg:h-screen flex flex-col lg:flex-row">
         
         {/* --- LEFT: PHOTO SECTION (40% width on Desktop) --- */}
-        <div className="w-full lg:w-[40%] bg-stone-100 relative flex items-center justify-center p-8 lg:p-12 order-1">
+        <div className="w-full lg:w-[40%] bg-stone-100 relative flex items-center justify-center p-8 lg:p-12 order-1 pt-24 lg:pt-12">
             {/* White Frame Effect */}
-            <div className="bg-white p-4 shadow-2xl rotate-1 w-full max-w-md mx-auto relative">
+            <div className="bg-white p-4 shadow-2xl rotate-1 w-full max-w-md mx-auto relative z-10">
                 {/* Image Container with fixed aspect ratio */}
                 <div className="aspect-[3/4] w-full bg-stone-200 relative overflow-hidden">
                    <img 
-                     src={STUDENT_DATA.photoUrl} 
+                     src={photoUrl} 
                      alt="Graduation Portrait" 
                      className="w-full h-full object-cover" 
                    />
                 </div>
                 {/* Name Tag on Photo */}
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#2a1a10] text-white px-6 py-2 shadow-lg">
-                   <span className="text-xl font-serif font-bold tracking-widest">{details.personal.lname}</span>
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#2a1a10] text-white px-6 py-2 shadow-lg w-max max-w-[90%] text-center">
+                   <span className="text-xl font-serif font-bold tracking-widest truncate block">{details.personal.lname}</span>
                 </div>
             </div>
 
@@ -95,7 +98,7 @@ export default function YearbookPreviewPage() {
         </div>
 
         {/* --- RIGHT: DETAILS SECTION (60% width on Desktop) --- */}
-        <div className="w-full lg:w-[60%] bg-[#3f2e22] relative flex flex-col justify-center p-8 md:p-16 lg:p-20 order-2 overflow-y-auto">
+        <div className="w-full lg:w-[60%] bg-[#3f2e22] relative flex flex-col justify-center p-8 md:p-16 lg:p-20 order-2 pt-16 lg:pt-8">
             {/* Texture */}
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/leather.png')" }}></div>
 
@@ -112,8 +115,8 @@ export default function YearbookPreviewPage() {
                      <span className="italic text-amber-500">"{details.personal.nickname}"</span>
                    </div>
                    <div className="mt-6 flex items-center gap-3">
-                      <GraduationCap className="w-5 h-5 text-amber-500" />
-                      <p className="text-sm font-bold tracking-[0.2em] uppercase text-amber-200">
+                      <GraduationCap className="w-5 h-5 text-amber-500 shrink-0" />
+                      <p className="text-sm font-bold tracking-[0.2em] uppercase text-amber-200 leading-snug">
                         {details.academic.course}
                       </p>
                    </div>
@@ -153,8 +156,8 @@ export default function YearbookPreviewPage() {
                           <div>
                              <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">Contact</h4>
                              <div className="space-y-1">
-                                <p className="flex items-center gap-2"><Phone className="w-3 h-3" /> {details.academic.contact}</p>
-                                <p className="flex items-center gap-2"><Mail className="w-3 h-3" /> {details.academic.email}</p>
+                                <p className="flex items-center gap-2"><Phone className="w-3 h-3 text-amber-500" /> {details.academic.contact}</p>
+                                <p className="flex items-center gap-2 break-all"><Mail className="w-3 h-3 text-amber-500" /> {details.academic.email}</p>
                              </div>
                           </div>
                        </div>
@@ -187,4 +190,4 @@ export default function YearbookPreviewPage() {
       </div>
     </div>
   );
-}  
+}
