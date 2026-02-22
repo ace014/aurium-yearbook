@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 
 // --- 1. CONFIGURATION ---
+// @Koi: Ako na gi setup daan ang mga departments nato para gamiton sa grouping ug ordering sa UI nato.
 export const ACADEMIC_CONFIG = [
   {
     name: "GRADUATE SCHOOL",
@@ -90,94 +91,43 @@ export const STATUS_STEPS = [
   { id: 6, label: "Pictorial" }, 
 ];
 
-// --- 3. DATA GENERATOR ---
-const generateMockData = () => {
-  const firstNames = ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "David", "Elizabeth", "Sarah", "Joseph", "Thomas", "Charles", "Christopher", "Daniel", "Matthew", "Anthony", "Donald", "Mark"];
-  const middleNames = ["Santos", "Reyes", "Cruz", "Bautista", "Ocampo", "Garcia", "Mendoza", "Torres", "Aquino", "Flores"];
-  const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson"];
-  const suffixes = ["", "", "", "", "Jr.", "III"]; 
+// =========================================================================
 
-  let allStudents: any[] = [];
-  let globalCounter = 1;
-
-  ACADEMIC_CONFIG.forEach(dept => {
-    dept.courses.forEach(courseObj => {
-      let programs = courseObj.majors.length > 0 ? courseObj.majors.map(m => `${courseObj.name} - ${m}`) : [courseObj.name];
-
-      programs.forEach(programName => {
-        const numStudents = Math.floor(Math.random() * 15) + 5; 
-
-        for (let i = 0; i < numStudents; i++) {
-          const fname = firstNames[Math.floor(Math.random() * firstNames.length)];
-          const mname = middleNames[Math.floor(Math.random() * middleNames.length)];
-          const lname = lastNames[Math.floor(Math.random() * lastNames.length)];
-          const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
-          
-          allStudents.push({
-            id: `STU-${globalCounter}`,
-            idNumber: `2024-${String(globalCounter).padStart(5, '0')}`,
-            lname, fname, mname, suffix,
-            department: dept.name,
-            course: courseObj.name,
-            major: programName.includes('-') ? programName.split('-')[1].trim() : "N/A",
-            program: programName,
-            statusStep: 4, 
-            status: "pending",
-            nickname: fname.substring(0, 4) + "y",
-            photo: `https://ui-avatars.com/api/?name=${fname}+${lname}&background=random&size=512`, 
-            photo_grad: null, 
-            photo_creative: null,
-            details: {
-              address: "Visayan Village, Tagum City",
-              contactNum: "09123456789",
-              personalEmail: `${fname.toLowerCase()}@gmail.com`,
-              thesis: "Research on Modern Systems",
-              father: `Mr. ${lname}`,
-              mother: `Mrs. ${lname}`,
-              guardian: "N/A",
-              birthdate: "2002-05-15"
-            },
-            last_edited_by: null,
-            last_edited_at: null
-          });
-          globalCounter++;
-        }
-      });
-    });
-  });
-
-  return allStudents;
-};
-
-const MOCK_GRADUATES = generateMockData();
-
-export function useGraduateReview(staffUser: any, selectedStudent: any, setSelectedStudent: any) {
+export function useGraduateReview(staffUser: any, selectedStudent: any, setSelectedStudent: any, studentsData: any[] = []) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [graduates, setGraduates] = useState(MOCK_GRADUATES);
+  const [graduates, setGraduates] = useState(studentsData); 
   const [isEditing, setIsEditing] = useState(false);
-  
-  // Managing the folder expansion state
   const [expandedDepts, setExpandedDepts] = useState<string[]>([]);
+
+  // Update ang local state nato kung naa kay bag-o i-feed gikan sa database
+  useEffect(() => {
+    // @Koi: Nag-add kog JSON.stringify check diri para dili mag-infinite loop inig feed nimo gikan DB
+    const currentData = JSON.stringify(graduates);
+    const newData = JSON.stringify(studentsData);
+    
+    if (currentData !== newData) {
+        setGraduates(studentsData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentsData]);
 
   // 1. Filter logic
   const filteredList = useMemo(() => {
     return graduates.filter(g => 
-      g.lname.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      g.fname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      g.idNumber.includes(searchTerm) 
+      (g.lname || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (g.fname || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (g.idNumber || "").includes(searchTerm) 
     );
   }, [graduates, searchTerm]);
 
   // 2. Grouping Logic (Folder Structure) with PENDING COUNT
   const processedData = useMemo(() => {
-    const groups: Record<string, Record<string, typeof MOCK_GRADUATES>> = {};
+    const groups: Record<string, Record<string, any[]>> = {};
     const deptCounts: Record<string, number> = {};
     
-    // --- UPDATED LOGIC: Count how many tasks are actually left ---
     let pendingCount = 0;
 
     filteredList.forEach(student => {
-      // If status is not verified, it counts as pending work
       if (student.status !== 'verified') {
         pendingCount++;
       }
@@ -204,18 +154,24 @@ export function useGraduateReview(staffUser: any, selectedStudent: any, setSelec
         sortedDepts, 
         deptCounts, 
         totalResults: filteredList.length, 
-        pendingCount // <--- Export this to UI
+        pendingCount 
     };
   }, [filteredList]);
 
-  // Auto-expand folders on search ("Viola" effect)
   useEffect(() => {
-    if (searchTerm) {
-        setExpandedDepts(processedData.sortedDepts); 
+    if (searchTerm.trim() !== "") {
+        const currentSorted = JSON.stringify(processedData.sortedDepts);
+        const currentExpanded = JSON.stringify(expandedDepts);
+        if (currentSorted !== currentExpanded) {
+            setExpandedDepts(processedData.sortedDepts); 
+        }
     } else {
-        setExpandedDepts([]); 
+        if (expandedDepts.length > 0) {
+            setExpandedDepts([]); 
+        }
     }
-  }, [searchTerm, processedData.sortedDepts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   const toggleDept = (dept: string) => {
     setExpandedDepts(prev => 
@@ -223,7 +179,6 @@ export function useGraduateReview(staffUser: any, selectedStudent: any, setSelec
     );
   };
 
-  // --- SAVE EDIT HANDLER ---
   const handleSaveEdit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -243,8 +198,7 @@ export function useGraduateReview(staffUser: any, selectedStudent: any, setSelec
             contactNum: (formData.get("contactNum") as string) || selectedStudent.details.contactNum,
             personalEmail: (formData.get("personalEmail") as string) || selectedStudent.details.personalEmail,
         },
-        // Note: Editing info doesn't automatically verify them, we keep current status unless finalized
-        last_edited_by: staffUser.name,
+        last_edited_by: staffUser?.name || "Admin",
         last_edited_at: timestamp,
     };
 
@@ -253,7 +207,6 @@ export function useGraduateReview(staffUser: any, selectedStudent: any, setSelec
     setIsEditing(false);
   };
 
-  // --- PHOTO UPLOAD HANDLER ---
   const handlePhotoUpload = (type: 'grad' | 'creative', file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -266,13 +219,12 @@ export function useGraduateReview(staffUser: any, selectedStudent: any, setSelec
     reader.readAsDataURL(file);
   };
 
-  // --- FINALIZE / VERIFY HANDLER ---
   const handleFinalize = () => {
     const timestamp = new Date().toLocaleString();
     const update = { 
         status: "verified", 
         statusStep: 5, 
-        last_edited_by: staffUser.name, 
+        last_edited_by: staffUser?.name || "Admin", 
         last_edited_at: timestamp 
     };
     setGraduates(prev => prev.map(g => g.id === selectedStudent.id ? { ...g, ...update } : g));
