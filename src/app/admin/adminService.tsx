@@ -1,19 +1,41 @@
 //Admin Services Module - Do not modify <3
 
-export async function fetchStudents() {
+export async function fetchStudents(page: number) {
     try {
         const res = await fetch(
-            'http://localhost:4000/api/admin/student/fetch', 
+            `http://localhost:4000/api/admin/student/fetch?page=${page}`, 
             { credentials: 'include' }
         );
 
         if (!res.ok) throw new Error("API Error");
 
         const data = await res.json();
-        return Array.isArray(data) ? data : [];
+        return { success: true, data };
     } catch (err) {
         console.error(err);
-        return [];
+        return { success: false };
+    }
+};
+
+export async function searchStudentById(student_number: number) {
+    try {
+        const res = await fetch(
+            `http://localhost:4000/api/admin/student/search?id=${student_number}`, 
+            { credentials: 'include' }
+        );
+        const data = await res.json();
+
+        if (!res.ok) {
+            if (res.status == 404) {
+                return { success: false, reason: data.reason }
+            }
+            return { success: false, reason: "Something went wrong.." }
+        };
+
+        return { success: true, data };
+    } catch (err) {
+        console.error(err);
+        return { success: false };
     }
 };
 

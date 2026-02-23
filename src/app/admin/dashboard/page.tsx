@@ -31,6 +31,12 @@ export default function AdminDashboard() {
   
   // Data States
   const [pendingStudents, setPendingStudents] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1); 
+  const [totalUnverified, setTotalUnverified] = useState(0);
+  //TODO: make and use types.. zz
+  const [studentCache, setStudentCache] = useState<{[page: number]: any[]}>({});
+
+  //Schedules 
   const { schedules, fetchSchedules } = useSchedules();  
 
   // State specific to the Graduate Review Tab (Moved from Staff)
@@ -44,19 +50,60 @@ export default function AdminDashboard() {
     avatar: "https://github.com/shadcn.png" 
   });
 
-  const loadStudents = useCallback(async () => {
+  const onPageChange = (page: number) => {
+    setCurrentPage(page);
+    loadStudents(page);
+  }
+
+  const searchStudentById = async (student_number: number) => {
     try {
-        const students = await adminService.fetchStudents();
-        setPendingStudents(students || []);
+      const students = await adminService.searchStudentById(student_number);
+      if (!students.success) {
+        console.log(students.reason);
+        setPendingStudents([]);
+        return;
+      }
+
+      setPendingStudents([students.data]);
+    } catch (error) {
+      console.error("Error loading student:", error);
+    }
+  }
+
+  const loadStudents = useCallback(async (page: number) => {
+
+    /*
+    using cache to avoid fetching again
+    (experimental for now, doesn't seem to work well with the current pagination feature)
+
+    if (studentCache[page]) {
+      setPendingStudents(studentCache[page]);
+      return;
+    }
+    */
+
+    try {
+        const students = await adminService.fetchStudents(page);
+        if (!students.success) {
+          setPendingStudents([]);
+          return;
+        }
+
+        setPendingStudents(students.data.student_list);
+        setTotalUnverified(students.data.total);
+        setStudentCache(prev => ({
+          ...prev,
+          [page]: students.data.student_list
+        }));
+
     } catch (error) {
         console.error("Error loading students:", error);
     }
   }, []);
 
   useEffect(() => {
-    loadStudents();
-    localStorage.setItem("aurium_admin_session", "true");
-  }, [loadStudents]);
+    loadStudents(currentPage);
+  }, [loadStudents, currentPage]);
 
   const updateOnVerify = async (studentId: number) => {
     const res = await adminService.handleVerify(studentId);
@@ -143,7 +190,14 @@ export default function AdminDashboard() {
         <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* 1. ORIGINAL ADMIN VERIFICATION (Queue) */}
             {activeTab === "verification" && (
-                <VerificationTab pendingStudents={pendingStudents} onVerify={updateOnVerify} />
+                <VerificationTab 
+                  pendingStudents={pendingStudents} 
+                  currentPage={currentPage}
+                  totalUnverified={totalUnverified}
+                  onVerify={updateOnVerify}
+                  onSearch={searchStudentById}
+                  setCurrentPage={onPageChange}
+                />
             )}
 
             {/* 2. MERGED STAFF VERIFICATION (Detailed Review) */}
