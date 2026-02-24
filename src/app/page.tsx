@@ -256,7 +256,7 @@ export default function AuriumLandingPage() {
                 The Official Yearbook of UM Tagum College
               </div>
             </motion.div>
-
+          
             <motion.h1 variants={fadeInUp} className="text-5xl md:text-8xl lg:text-9xl font-serif font-bold text-amber-950 mb-6 md:mb-8 leading-[1] tracking-tight drop-shadow-sm">
               A Timeless Work <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-800 italic">

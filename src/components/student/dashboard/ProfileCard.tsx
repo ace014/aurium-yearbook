@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+// Gitangtang nako ang 'import Link from "next/link";' kay di na nato ni kailangan
 import { UserCircle, CheckCircle, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,9 +11,11 @@ interface ProfileCardProps {
   idNumber: string;
   course: string;
   photoUrl: string | null;
+  onCheckEntry: () => void; // BAG-O: Gidugang nato ang onCheckEntry prop
 }
 
-export function ProfileCard({ fullName, idNumber, course, photoUrl }: ProfileCardProps) {
+// BAG-O: Gi-apil nato og dawat ang onCheckEntry sa parameters
+export function ProfileCard({ fullName, idNumber, course, photoUrl, onCheckEntry }: ProfileCardProps) {
   return (
     <Card className="md:col-span-1 border-t-4 border-t-amber-900 shadow-sm">
       <CardHeader>
@@ -38,11 +40,14 @@ export function ProfileCard({ fullName, idNumber, course, photoUrl }: ProfileCar
           <p className="text-xs text-stone-500 mt-2 leading-relaxed px-4">{course}</p>
         </div>
 
-        <Link href="/student/dashboard/yearbook-preview" className="w-full">
-          <Button variant="outline" className="w-full text-xs border-amber-200 text-amber-900 hover:bg-amber-50 hover:text-amber-900">
-            <Info className="w-3 h-3 mr-2" /> Check Yearbook Entry
-          </Button>
-        </Link>
+        {/* BAG-O: Gitangtang nato ang <Link> wrapper ug gi-add ang onClick sa mismong Button */}
+        <Button 
+          variant="outline" 
+          className="w-full text-xs border-amber-200 text-amber-900 hover:bg-amber-50 hover:text-amber-900"
+          onClick={onCheckEntry} 
+        >
+          <Info className="w-3 h-3 mr-2" /> Check Yearbook Entry
+        </Button>
       </CardContent>
     </Card>
   );

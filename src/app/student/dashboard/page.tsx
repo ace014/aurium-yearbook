@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { CheckCircle, Clock } from "lucide-react";
+// BAG-O: Nag-add ko og Loader2 diri para sa atong nindot nga loading animation
+import { CheckCircle, Clock, Loader2 } from "lucide-react"; 
 import { Badge } from "@/components/ui/badge";
 import { StudentHeader } from "@/components/student/dashboard/StudentHeader";
 import { ProfileCard } from "@/components/student/dashboard/ProfileCard";
 import { BookingWidget } from "@/components/student/dashboard/BookingWidget";
 import { YearbookTeaser } from "@/components/student/dashboard/YearbookTeaser";
-
-// BAG-O: I-import ang refactored nga YearbookPreview component
 import { YearbookPreview } from "@/components/student/dashboard/YearbookPreview";
+
+// BAG-O: I-import ang toast
+import toast from "react-hot-toast";
 
 import { Booking, Schedule } from "@/types/index";
 import * as studentService from "@/app/student/studentService";
@@ -20,7 +22,6 @@ export default function StudentDashboard() {
   const [schedule, setSchedule] = useState<Schedule[]>([]);
   const [booking, setBooking] = useState<Booking>();
   
-  // BAG-O: State para pag-show/hide sa Yearbook Preview
   const [showPreview, setShowPreview] = useState(false);
 
   const fetchStudent = useCallback(async () => {
@@ -28,7 +29,6 @@ export default function StudentDashboard() {
       const res = await studentService.getStudentProfile();
       console.log(res);
 
-      //check if student already has a booking (as a business req, student can only have one booking, this is temporary for now: TODO)
       const hasBooking = res.booking.length > 0 ? res.booking[0] : null;
       if (hasBooking) setBooking(hasBooking);
 
@@ -55,19 +55,26 @@ export default function StudentDashboard() {
   const handleBooking = async (booking_id: number, period: string) => {
     const res = await studentService.addBook(booking_id, period)
 
-    //TODO: optimize..
     if (!res) {
-      alert("Something went wrong submitting the book!");
+      // BAG-O: Ilisan ang alert og toast.error
+      toast.error("Something went wrong submitting the book!");
     } else {
-      alert("Successfully booked! Please be on time!");
+      // BAG-O: Ilisan ang alert og toast.success
+      toast.success("Successfully booked! Please be on time!");
+      fetchStudent(); // Refresh the student data to get the latest booking info
     }
   };
 
-  //TODO: use loading screen?
-  if (!user) return <div>Loading...</div>;
+  // BAG-O: Gi-ilisan ang plain nga "Loading..." og nindot nga spinner UI
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center font-sans">
+        <Loader2 className="h-10 w-10 animate-spin text-amber-600 mb-4" />
+        <p className="text-stone-500 font-medium animate-pulse">Loading your dashboard...</p>
+      </div>
+    );
+  }
 
-  // BAG-O: Conditional Rendering. Kung e-click ang teaser, kani nga component ang mo-render.
-  // Gipasa nato ang `user` data as PROPS para dili na siya mag-fetch usab!
   if (showPreview) {
     return <YearbookPreview user={user} onClose={() => setShowPreview(false)} />;
   }
@@ -97,15 +104,14 @@ export default function StudentDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          {/* 1. Profile Card Component */}
           <ProfileCard
             fullName={`${user.first_name} ${user.last_name}`}
             idNumber={user.student_number}
             course={user.course}
             photoUrl={user.photo_url}
+            onCheckEntry={() => setShowPreview(true)} 
           />
 
-          {/* 2. Booking Widget Component */}
           <BookingWidget
             bookingList={schedule}
             booking={booking} 
@@ -114,13 +120,7 @@ export default function StudentDashboard() {
           />
 
           {/* 3. Yearbook Teaser Component */}
-          {/* BAG-O: Gi-wrap og div nga naay onClick para mo-trigger sa atong state */}
-          <div 
-            onClick={() => setShowPreview(true)} 
-            className="cursor-pointer transition-transform hover:scale-[1.02] h-full"
-          >
-            <YearbookTeaser />
-          </div>
+          <YearbookTeaser />
 
         </div>
       </main>
