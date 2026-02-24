@@ -7,11 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Schedule } from "@/types";
+import { Booking, Schedule } from "@/types";
 
 interface BookingWidgetProps {
   bookingList: Schedule[], 
-  booking: any,
+  booking?: Booking,
   idNumber: string;
   onBook: (booking_id: number, period: string) => void;
 };
@@ -44,7 +44,9 @@ export function BookingWidget({ bookingList, booking, idNumber, onBook }: Bookin
         <CardTitle className="flex items-center gap-2 text-stone-700">
           <Calendar className="w-5 h-5 text-amber-700" /> Pictorial Schedule
         </CardTitle>
-        <CardDescription>Select a date for your official yearbook photoshoot.</CardDescription>
+        <CardDescription className={booking ? "collapse" : "visible"}>
+          Select a date for your official yearbook photoshoot.
+        </CardDescription>
       </CardHeader>
       <CardContent className="min-h-[200px] flex items-center justify-center">
         {booking ? (
@@ -59,10 +61,10 @@ export function BookingWidget({ bookingList, booking, idNumber, onBook }: Bookin
                 <p className="text-xs font-bold text-stone-400 uppercase tracking-wider">Pictorial Pass</p>
               </div>
               <h3 className="text-2xl font-bold text-stone-800 mt-2">
-                {new Date(booking.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', weekday: 'long' })}
+                {new Date(booking.booking_day.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', weekday: 'long' })}
               </h3>
               <p className="text-stone-600 font-medium">
-                {booking.date === 'AM' ? '☀️ Morning Session (8AM - 12PM)' : '🌙 Afternoon Session (1PM - 5PM)'}
+                {booking.period === 'AM' ? '☀️ Morning Session (8AM - 12PM)' : '🌙 Afternoon Session (1PM - 5PM)'}
               </p>
               <p className="text-xs text-stone-400 italic mt-2">Present this QR to the attendance officer.</p>
             </div>
@@ -74,7 +76,7 @@ export function BookingWidget({ bookingList, booking, idNumber, onBook }: Bookin
                 <QRCode
                   size={256}
                   style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                  value={idNumber} // <--- THIS MAKES IT VALID. Scans as "2022-00123"
+                  value={String(idNumber)}
                   viewBox={`0 0 256 256`}
                 />
               </div>
