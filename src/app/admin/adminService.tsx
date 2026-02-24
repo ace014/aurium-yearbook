@@ -48,11 +48,11 @@ export async function handleVerify(studentId: number) {
             credentials: 'include'
         });
 
-        alert(`Student Verified!`);
+    //    alert(`Student Verified!`);
         return true;
     } catch (err) {
         console.error(err); 
-        alert("Verification failed.");
+    //   alert("Verification failed.");
         return false;
     }
 };
