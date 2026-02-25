@@ -214,12 +214,12 @@ export default function AuriumLandingPage() {
                 <Link href="#about" onClick={toggleMobileMenu} className="hover:text-amber-800 py-2 border-b border-stone-100">About</Link>
               </nav>
               <div className="flex flex-col gap-3 pt-2">
-                <Link href="/register" onClick={toggleMobileMenu} className="w-full">
+                <Link href="/auth/register" onClick={toggleMobileMenu} className="w-full">
                   <Button className="w-full bg-amber-900 hover:bg-amber-800 text-white h-12 text-lg">
                     Pre-Register Now
                   </Button>
                 </Link>
-                <Link href="/login" onClick={toggleMobileMenu} className="w-full">
+                <Link href="/auth/login" onClick={toggleMobileMenu} className="w-full">
                   <Button variant="outline" className="w-full border-amber-200 text-amber-900 h-12 text-lg">
                     <UserCircle className="mr-2" size={20} /> Portal Login
                   </Button>
@@ -231,7 +231,8 @@ export default function AuriumLandingPage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-28">
+      {/* @Koi: Gi-iban-ibanan nako ang padding dire para mo-saka ang tanan ug makita dritso ang buttons sa desktop (pt-28 md:pt-32) */}
+      <section className="relative pt-28 pb-12 md:pt-32 md:pb-16 flex items-center justify-center overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
            {/* Background Blobs */}
            <div className="absolute top-[-10%] right-[-5%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-amber-200/20 rounded-full blur-[100px]" />
@@ -241,49 +242,43 @@ export default function AuriumLandingPage() {
            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] opacity-40 mix-blend-multiply"></div>
 
            {/* --- SMOOTH GRADIENT FADE --- */}
-           <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-white via-white/80 to-transparent z-10"></div>
+           <div className="absolute bottom-0 left-0 w-full h-24 md:h-32 bg-gradient-to-t from-white via-white/80 to-transparent z-10"></div>
         </div>
 
-        <div className="container relative z-20 px-4 md:px-6 text-center">
+        <div className="container relative z-20 px-4 md:px-6 text-center mt-4 md:mt-8">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
             className="max-w-5xl mx-auto"
           >
-            <motion.div variants={fadeInUp} className="mb-6 md:mb-8 flex justify-center">
+            <motion.div variants={fadeInUp} className="mb-4 md:mb-6 flex justify-center">
               <div className="inline-flex items-center gap-2 md:gap-3 py-2 px-4 md:px-6 rounded-full bg-white/80 border border-amber-200 shadow-sm backdrop-blur-sm text-amber-900 text-[10px] md:text-xs font-bold tracking-widest uppercase">
                 The Official Yearbook of UM Tagum College
               </div>
             </motion.div>
-          
-            <motion.h1 variants={fadeInUp} className="text-5xl md:text-8xl lg:text-9xl font-serif font-bold text-amber-950 mb-6 md:mb-8 leading-[1] tracking-tight drop-shadow-sm">
+
+            <motion.h1 variants={fadeInUp} className="text-5xl md:text-8xl lg:text-9xl font-serif font-bold text-amber-950 mb-4 md:mb-6 leading-[1] tracking-tight drop-shadow-sm">
               A Timeless Work <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-800 italic">
                 Of Art.
               </span>
             </motion.h1>
 
-            <motion.p variants={fadeInUp} className="text-lg md:text-2xl text-stone-600 max-w-3xl mx-auto mb-10 md:mb-12 leading-relaxed">
+            <motion.p variants={fadeInUp} className="text-lg md:text-2xl text-stone-600 max-w-3xl mx-auto mb-8 md:mb-10 leading-relaxed">
               We aim to produce a yearbook edition that serves as a monument to your journey. 
               Honoring and celebrating the graduating class with excellence.
             </motion.p>
             
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link href="/register" className="w-full sm:w-auto">
+              <Link href="/auth/register" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto bg-amber-900 hover:bg-amber-800 text-white px-8 md:px-10 h-14 md:h-16 text-lg rounded-full shadow-xl shadow-amber-900/20 transition-transform hover:-translate-y-1 font-bold">
                   Start Registration
                 </Button>
               </Link>
               
-              {/* UPDATED: "View Editions" -> "Portal Login" on Mobile */}
               <div className="w-full sm:w-auto">
-                <Link href="/login" className="block sm:hidden w-full">
-                    <Button size="lg" variant="outline" className="w-full border-amber-200 bg-white/50 backdrop-blur-sm text-amber-900 hover:bg-white px-8 md:px-10 h-14 md:h-16 text-lg rounded-full font-medium">
-                        <UserCircle className="mr-2 h-5 w-5"/> Portal Login
-                    </Button>
-                </Link>
-                <Link href="#editions" className="hidden sm:block w-full">
+                <Link href="#editions" className="block w-full">
                     <Button size="lg" variant="outline" className="w-full border-amber-200 bg-white/50 backdrop-blur-sm text-amber-900 hover:bg-white px-8 md:px-10 h-14 md:h-16 text-lg rounded-full font-medium">
                         View Editions
                     </Button>
@@ -296,12 +291,13 @@ export default function AuriumLandingPage() {
       </section>
 
       {/* --- VISION STATEMENT (IMPROVED COOL UI) --- */}
-      <section id="about" className="py-24 bg-white relative overflow-hidden">
+      {/* @Koi: Gi-pamub-an nako ang py (padding y-axis) para mopilit ni siya sa Hero */}
+      <section id="about" className="py-12 md:py-16 bg-white relative overflow-hidden">
         {/* Subtle Background Accent */}
         <div className="absolute top-0 right-0 w-1/3 h-full bg-amber-50/50 -skew-x-12 z-0 pointer-events-none" />
 
         <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="flex flex-col md:flex-row gap-16 items-center">
+          <div className="flex flex-col md:flex-row gap-12 md:gap-16 items-center">
             
             {/* Left Column: Text */}
             <motion.div 
@@ -311,17 +307,17 @@ export default function AuriumLandingPage() {
               transition={{ duration: 0.8 }}
               className="w-full md:w-1/2"
             >
-              <div className="inline-flex items-center gap-2 mb-6">
+              <div className="inline-flex items-center gap-2 mb-4 md:mb-6">
                  <div className="h-px w-8 bg-amber-600"></div>
                  <span className="text-amber-800 text-xs font-bold uppercase tracking-widest">Our Mandate</span>
               </div>
               
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-amber-950 mb-8 leading-tight">
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-amber-950 mb-6 md:mb-8 leading-tight">
                 Defining the <br/>
                 <span className="text-stone-400 italic">Aurium Vision</span>
               </h2>
 
-              <div className="text-base md:text-lg text-stone-600 leading-relaxed space-y-6 text-justify border-l-2 border-stone-200 pl-6">
+              <div className="text-base md:text-lg text-stone-600 leading-relaxed space-y-4 md:space-y-6 text-justify border-l-2 border-stone-200 pl-6">
                 <p>
                   <strong className="text-amber-900">AURIUM</strong> stands for the <em>Ambitious United Responsive Individuals of the University of Mindanao</em>. 
                 </p>
@@ -353,11 +349,10 @@ export default function AuriumLandingPage() {
                 </motion.div>
 
                {/* The Main Prestige Card (UPDATED WITH IMAGE) */}
-               <div className="relative bg-stone-950 rounded-3xl overflow-hidden shadow-2xl border border-stone-800 group h-[400px] flex flex-col justify-center items-center">
-                  
-                  {/* Background Image (Replaces Black Box) */}
-                  <div className="absolute inset-0 z-0">
-                     {/* Replace '/images/vision-bg.jpg' with your actual image path */}
+               <div className="relative bg-stone-950 rounded-3xl overflow-hidden shadow-2xl border border-stone-800 group h-[350px] md:h-[400px] flex flex-col justify-center items-center">
+                 
+                 {/* Background Image (Replaces Black Box) */}
+                 <div className="absolute inset-0 z-0">
                      <Image 
                        src="/images/gradpics/DSC_0963.jpg" 
                        alt="Standard of Excellence" 
@@ -366,35 +361,35 @@ export default function AuriumLandingPage() {
                      />
                      {/* Gradient Overlay for Text Readability */}
                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30"></div>
-                  </div>
+                 </div>
 
-                  {/* Glowing Background Effect */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/30 transition-colors duration-1000 z-10 pointer-events-none"></div>
-                  
-                  {/* Content */}
-                  <div className="relative z-20 flex flex-col items-center text-center p-8 md:p-12">
-                      <div className="mb-4 relative">
-                          <div className="absolute inset-0 bg-amber-500 blur-xl opacity-20"></div>
-                          <Trophy size={64} className="text-gradient bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-600 relative z-10 drop-shadow-lg" color="#fbbf24" />
-                      </div>
+                 {/* Glowing Background Effect */}
+                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/30 transition-colors duration-1000 z-10 pointer-events-none"></div>
+                 
+                 {/* Content */}
+                 <div className="relative z-20 flex flex-col items-center text-center p-8 md:p-12">
+                     <div className="mb-4 relative">
+                         <div className="absolute inset-0 bg-amber-50 blur-xl opacity-20"></div>
+                         <Trophy size={56} className="text-gradient bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-600 relative z-10 drop-shadow-lg md:w-16 md:h-16 w-12 h-12" color="#fbbf24" />
+                     </div>
 
-                      <h3 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-wide drop-shadow-md">
-                        Standard of <br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600">Excellence</span>
-                      </h3>
-                      
-                      <div className="h-1 w-16 bg-amber-600 rounded-full my-6 shadow-sm shadow-amber-500/50"></div>
+                     <h3 className="text-2xl md:text-4xl font-serif font-bold text-white mb-2 tracking-wide drop-shadow-md">
+                       Standard of <br/>
+                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600">Excellence</span>
+                     </h3>
+                     
+                     <div className="h-1 w-16 bg-amber-600 rounded-full my-4 md:my-6 shadow-sm shadow-amber-500/50"></div>
 
-                      <p className="text-stone-200 text-lg font-light italic leading-relaxed max-w-sm drop-shadow-sm">
-                        "Producing a yearbook edition that serves as a timeless work of art."
-                      </p>
-                      
-                      <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-stone-400">
-                          <Sparkles size={14} className="text-amber-500"/>
-                          <span>Vision 2026</span>
-                          <Sparkles size={14} className="text-amber-500"/>
-                      </div>
-                  </div>
+                     <p className="text-stone-200 text-base md:text-lg font-light italic leading-relaxed max-w-sm drop-shadow-sm">
+                       "Producing a yearbook edition that serves as a timeless work of art."
+                     </p>
+                     
+                     <div className="mt-6 md:mt-8 flex items-center gap-2 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-stone-400">
+                         <Sparkles size={14} className="text-amber-500"/>
+                         <span>Vision 2026</span>
+                         <Sparkles size={14} className="text-amber-500"/>
+                     </div>
+                 </div>
                </div>
             </motion.div>
 
@@ -403,7 +398,8 @@ export default function AuriumLandingPage() {
       </section>
 
       {/* --- EDITIONS GALLERY (UPDATED CAROUSEL WITH BOTTOM DEFINITION) --- */}
-      <section id="editions" className="py-20 md:py-28 bg-stone-50 overflow-hidden relative">
+      {/* @Koi: Gi-ilisan nakog py-12 md:py-16 para sikit lang siya sa babaw ug ubos */}
+      <section id="editions" className="py-12 md:py-16 bg-stone-50 overflow-hidden relative">
         {/* Background Decors */}
         <div className="absolute top-0 left-0 w-full h-full z-0 pointer-events-none opacity-40">
            <div className="absolute top-20 right-[-100px] w-96 h-96 bg-amber-100/50 rounded-full blur-3xl"></div>
@@ -413,11 +409,11 @@ export default function AuriumLandingPage() {
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-6">
             <div className="max-w-xl">
                <span className="text-amber-700 font-bold uppercase tracking-widest text-xs mb-2 block">The Archives</span>
-               <h2 className="text-4xl md:text-5xl font-serif font-bold text-amber-950 mb-4">Heritage Editions</h2>
-               <p className="text-stone-500 text-lg">A curated journey through the themes and stories that defined our history.</p>
+               <h2 className="text-3xl md:text-5xl font-serif font-bold text-amber-950 mb-3 md:mb-4">Heritage Editions</h2>
+               <p className="text-stone-500 text-base md:text-lg">A curated journey through the themes and stories that defined our history.</p>
             </div>
             
             {/* Desktop Navigation Buttons */}
@@ -434,7 +430,7 @@ export default function AuriumLandingPage() {
           {/* Carousel Container */}
           <div 
             ref={editionsRef}
-            className="flex gap-6 overflow-x-auto pb-12 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
+            className="flex gap-6 overflow-x-auto pb-8 md:pb-12 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
             style={{ scrollBehavior: 'smooth' }}
           >
             {editions.map((edition, index) => (
@@ -503,13 +499,14 @@ export default function AuriumLandingPage() {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none z-10"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-transparent to-stone-900 z-20 pointer-events-none"></div>
 
-        <div className="py-12 md:py-16">
-            <div className="container mx-auto px-6 mb-8 text-center relative z-20">
+        {/* @Koi: Gitanggal nako ang dagkong margin. py-8 md:py-12 na lang. */}
+        <div className="py-8 md:py-12">
+            <div className="container mx-auto px-6 mb-6 md:mb-8 text-center relative z-20">
                 <div className="inline-flex items-center justify-center p-3 bg-amber-900/30 rounded-full border border-amber-800/50 backdrop-blur-sm mb-4">
                     <Camera size={24} className="text-amber-400" />
                 </div>
-                <h2 className="text-3xl md:text-4xl font-serif font-bold text-amber-50 tracking-tight">Moments of Triumph</h2>
-                <p className="text-amber-200/60 mt-2">Capturing the joy of achievement.</p>
+                <h2 className="text-2xl md:text-4xl font-serif font-bold text-amber-50 tracking-tight">Moments of Triumph</h2>
+                <p className="text-amber-200/60 mt-1 md:mt-2 text-sm md:text-base">Capturing the joy of achievement.</p>
             </div>
 
             {/* Infinite Marquee Wrapper */}
@@ -528,13 +525,13 @@ export default function AuriumLandingPage() {
                     {[...galleryImages, ...galleryImages].map((src, index) => (
                         <div 
                             key={index} 
-                            className="relative w-[280px] h-[180px] md:w-[400px] md:h-[260px] shrink-0 rounded-lg overflow-hidden border-2 border-stone-800 shadow-2xl hover:border-amber-700 hover:scale-105 transition-all duration-300"
+                            className="relative w-[240px] h-[150px] md:w-[400px] md:h-[260px] shrink-0 rounded-lg overflow-hidden border-2 border-stone-800 shadow-2xl hover:border-amber-700 hover:scale-105 transition-all duration-300"
                         >
                             <Image 
                                 src={src} 
                                 alt={`Graduation Moment ${index}`} 
                                 fill 
-                                sizes="(max-width: 768px) 280px, 400px"
+                                sizes="(max-width: 768px) 240px, 400px"
                                 className="object-cover transition-all duration-500" 
                             />
                             {/* Film Grain/Vignette Overlay */}
@@ -547,25 +544,26 @@ export default function AuriumLandingPage() {
       </section>
 
       {/* --- STAFF / EDITORIAL BOARD SECTION --- */}
-      <section id="staff" className="py-16 md:py-24 bg-amber-900 text-white overflow-hidden relative">
+      {/* @Koi: py-12 md:py-16 para sikit */}
+      <section id="staff" className="py-12 md:py-16 bg-amber-900 text-white overflow-hidden relative">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-10"></div>
         <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="text-center mb-12 md:mb-16">
-            <div className="flex justify-center mb-4">
-               <Users size={32} className="text-amber-300" />
+          <div className="text-center mb-10 md:mb-12">
+            <div className="flex justify-center mb-3 md:mb-4">
+               <Users size={28} className="text-amber-300 md:w-8 md:h-8" />
             </div>
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-amber-50 mb-4">The Team Behind the Legacy</h2>
-            <p className="text-amber-200/80 text-lg">The dedicated individuals who craft the AURIUM masterpiece.</p>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-amber-50 mb-3 md:mb-4">The Team Behind the Legacy</h2>
+            <p className="text-amber-200/80 text-base md:text-lg">The dedicated individuals who craft the AURIUM masterpiece.</p>
           </div>
 
           {/* Draggable Carousel with Snap (NOW CLICKABLE CARDS) */}
           <motion.div 
              ref={carouselRef}
-             className="flex gap-6 md:gap-8 overflow-x-auto pb-10 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing"
+             className="flex gap-4 md:gap-8 overflow-x-auto pb-8 md:pb-10 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing"
              whileTap={{ cursor: "grabbing" }}
           >
              {staff.map((team, index) => (
-               <Link href="/team" key={index} className="snap-center shrink-0 min-w-[320px] md:min-w-[400px] block focus:outline-none">
+               <Link href="/team" key={index} className="snap-center shrink-0 min-w-[300px] md:min-w-[400px] block focus:outline-none">
                  <motion.div 
                    initial={{ opacity: 0, scale: 0.95 }}
                    whileInView={{ opacity: 1, scale: 1 }}
@@ -595,14 +593,14 @@ export default function AuriumLandingPage() {
           </motion.div>
 
           {/* Mobile Scroll Hint */}
-          <div className="flex justify-center mt-4 text-amber-200/40 text-xs animate-pulse md:hidden">
+          <div className="flex justify-center mt-2 text-amber-200/40 text-xs animate-pulse md:hidden">
              <span>&larr; Swipe to explore &rarr;</span>
           </div>
 
           {/* LINK TO THE NEW DEDICATED TEAM PAGE */}
-          <div className="flex justify-center mt-12 relative z-20">
+          <div className="flex justify-center mt-8 md:mt-12 relative z-20">
             <Link href="/team">
-              <Button size="lg" className="bg-transparent border-2 border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-stone-900 rounded-full px-10 h-14 text-lg font-bold transition-all group">
+              <Button size="lg" className="bg-transparent border-2 border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-stone-900 rounded-full px-8 md:px-10 h-12 md:h-14 text-base md:text-lg font-bold transition-all group">
                   Explore Full Editorial Archives
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -612,11 +610,12 @@ export default function AuriumLandingPage() {
       </section>
 
       {/* --- GRADUATE SERVICES GRID --- */}
-      <section id="services" className="py-16 md:py-24 bg-white relative z-10">
+      {/* @Koi: py-12 md:py-16 para di sad siya lapad nga white space */}
+      <section id="services" className="py-12 md:py-16 bg-white relative z-10">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-amber-950 mb-4">Graduate Services</h2>
-            <p className="text-stone-500 max-w-lg mx-auto text-lg">Everything you need to prepare for graduation.</p>
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-amber-950 mb-3 md:mb-4">Graduate Services</h2>
+            <p className="text-stone-500 max-w-lg mx-auto text-base md:text-lg">Everything you need to prepare for graduation.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -628,7 +627,7 @@ export default function AuriumLandingPage() {
               </div>
               <h3 className="text-xl font-bold text-stone-800 mb-3">Pre-Registration</h3>
               <p className="text-stone-500 mb-6 text-sm leading-relaxed">Create your profile, submit your details, and initialize your yearbook entry.</p>
-              <Link href="/register" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+              <Link href="/auth/register" className="text-amber-700 font-bold text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
                 Register Now <ArrowRight size={16} />
               </Link>
             </motion.div>
@@ -664,9 +663,9 @@ export default function AuriumLandingPage() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-stone-950 text-stone-400 py-16 border-t border-stone-800">
+      <footer className="bg-stone-950 text-stone-400 py-12 md:py-16 border-t border-stone-800">
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-12 mb-16">
+          <div className="grid md:grid-cols-4 gap-12 mb-12 md:mb-16">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-4 mb-6">
                 {/* Footer Logo Area */}
@@ -687,7 +686,7 @@ export default function AuriumLandingPage() {
               <ul className="space-y-4 text-stone-500 text-sm">
                 <li><Link href="#yearbook" className="hover:text-amber-500 transition-colors">Browse Yearbook</Link></li>
                 <li><Link href="#faq" className="hover:text-amber-500 transition-colors">FAQ</Link></li>
-                <li><Link href="/login" className="hover:text-amber-500 transition-colors">Graduate Portal</Link></li>
+                <li><Link href="/auth/login" className="hover:text-amber-500 transition-colors">Graduate Portal</Link></li>
               </ul>
             </div>
 
@@ -701,7 +700,7 @@ export default function AuriumLandingPage() {
             </div>
           </div>
 
-          <div className="border-t border-stone-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-stone-500">
+          <div className="border-t border-stone-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-stone-500 text-center md:text-left gap-4 md:gap-0">
             <p>&copy; 2026 AURIUM Yearbook Committee. All rights reserved.</p>
             <p>Designed with <span className="text-amber-900">♥</span> for the students of UMTC.</p>
           </div>
