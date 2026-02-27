@@ -2,13 +2,14 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 // BAG-O: Nag-add ko og Loader2 diri para sa atong nindot nga loading animation
-import { CheckCircle, Clock, Loader2 } from "lucide-react"; 
+import { CheckCircle, Clock, Loader2, LogOut } from "lucide-react"; 
 import { Badge } from "@/components/ui/badge";
 import { StudentHeader } from "@/components/student/dashboard/StudentHeader";
 import { ProfileCard } from "@/components/student/dashboard/ProfileCard";
 import { BookingWidget } from "@/components/student/dashboard/BookingWidget";
 import { YearbookTeaser } from "@/components/student/dashboard/YearbookTeaser";
 import { YearbookPreview } from "@/components/student/dashboard/YearbookPreview";
+import { useRouter } from "next/navigation"; 
 
 // BAG-O: I-import ang toast
 import toast from "react-hot-toast";
@@ -18,17 +19,25 @@ import * as studentService from "@/app/student/studentService";
 import { Student } from "@/types";
 
 export default function StudentDashboard() {
+  const router = useRouter(); 
   const [user, setUser] = useState<Student | null>(null);
   const [schedule, setSchedule] = useState<Schedule[]>([]);
   const [booking, setBooking] = useState<Booking>();
+  
   const [showPreview, setShowPreview] = useState(false);
+  
+  // @Koi: State para mu-gawas ang Logout Confirmation Modal
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const fetchStudent = useCallback(async () => {
     try {
-      const res = await studentService.getStudentProfile();
-      const hasBooking = res.booking.length > 0 ? res.booking[0] : null;
+      const res = await studentService.getStudentProfile(); 
+      console.log(res);
 
+      const hasBooking = res.booking.length > 0 ? res.booking[0] : null;
       if (hasBooking) setBooking(hasBooking);
+
       setUser(res);
     } catch(err) {
       console.error(err);
@@ -56,11 +65,34 @@ export default function StudentDashboard() {
       toast.error("Something went wrong submitting the book!");
     } else {
       toast.success("Successfully booked! Please be on time!");
-      fetchStudent(); // Refresh the student data to get the latest booking info
+      fetchStudent(); 
     }
   };
 
-  //show loading screen while waiting for the record to load
+  // @Koi: Tinuod nga Logout Handler
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      // 1. I-clear ang local storage basin naa siyay gibilin diri
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // 2. I-call ang API sa backend para i-clear ang HTTP Cookies. 
+      // (Basta mag-logout sa Next.js, kailangan naay API call para ma-destroy ang session sa server)
+      await fetch('http://localhost:4000/api/student/logout', { method: 'POST' }).catch(() => {});
+
+      toast.success("You have successfully logged out.");
+      
+      // 3. I-redirect sa Landing Page (/) unya i-refresh para limpyo ang state
+      window.location.href = "/"; 
+    } catch (err) {
+      toast.error("Failed to log out properly.");
+      console.error(err);
+      setIsLoggingOut(false);
+    }
+  };
+
+  // BAG-O: Gi-ilisan ang plain nga "Loading..." og nindot nga spinner UI
   if (!user) {
     return (
       <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center font-sans">
@@ -75,8 +107,13 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 font-sans">
-      <StudentHeader user={{ fname: user.first_name, idNumber: user.student_number, photoUrl: undefined}} />
+    <div className="min-h-screen bg-stone-50 font-sans relative">
+      
+      {/* @Koi: Gipasa nako ang setShowLogoutConfirm(true) padulong sa header imbes lahos logout */}
+      <StudentHeader 
+        user={{ fname: user.first_name, idNumber: user.student_number, photoUrl: undefined}} 
+        onLogout={() => setShowLogoutConfirm(true)} 
+      />
 
       <main className="max-w-5xl mx-auto p-6 space-y-8">
         
@@ -119,6 +156,38 @@ export default function StudentDashboard() {
 
         </div>
       </main>
+
+      {/* --- LOGOUT CONFIRMATION MODAL --- */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogOut size={28} />
+            </div>
+            <h3 className="text-xl font-bold text-stone-800 mb-2">Ready to leave?</h3>
+            <p className="text-stone-500 text-sm mb-6">
+              Are you sure you want to log out of your student portal?
+            </p>
+            <div className="flex gap-3 w-full">
+              <button 
+                onClick={() => setShowLogoutConfirm(false)}
+                disabled={isLoggingOut}
+                className="flex-1 py-2.5 rounded-lg border border-stone-200 text-stone-600 font-medium hover:bg-stone-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmLogout}
+                disabled={isLoggingOut}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {isLoggingOut ? <Loader2 size={18} className="animate-spin" /> : "Log Out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

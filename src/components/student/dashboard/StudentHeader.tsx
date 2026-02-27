@@ -3,6 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// @Koi: Gidugang nako ang LogOut icon diri
+import { LogOut } from "lucide-react"; 
 
 interface StudentHeaderProps {
   user: {
@@ -10,9 +12,11 @@ interface StudentHeaderProps {
     idNumber?: string;
     photoUrl?: string;
   };
+  // @Koi: Gidugang ang onLogout function as prop
+  onLogout: () => void; 
 }
 
-export function StudentHeader({ user }: StudentHeaderProps) {
+export function StudentHeader({ user, onLogout }: StudentHeaderProps) {
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-amber-100/50 shadow-sm">
       <div className="container mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
@@ -32,7 +36,7 @@ export function StudentHeader({ user }: StudentHeaderProps) {
           </div>
         </Link>
 
-        {/* User Profile */}
+        {/* User Profile & Logout */}
         <div className="flex items-center gap-3">
           <div className="text-right hidden md:block">
              <p className="text-xs font-bold text-stone-700 leading-none">Hi, {user.fname}</p>
@@ -42,6 +46,16 @@ export function StudentHeader({ user }: StudentHeaderProps) {
              <AvatarImage src={user.photoUrl} />
              <AvatarFallback className="bg-amber-100 text-amber-800 text-xs">JD</AvatarFallback>
           </Avatar>
+          
+          {/* @Koi: Kani ang Logout Button nga gisumpay ra nako sa kilid sa avatar */}
+          <div className="h-6 w-[1px] bg-stone-200 ml-1"></div>
+          <button 
+            onClick={onLogout} 
+            title="Log out"
+            className="text-stone-400 hover:text-red-500 transition-colors p-1.5 rounded-md hover:bg-red-50"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
     </nav>
