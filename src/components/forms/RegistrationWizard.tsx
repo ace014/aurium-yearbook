@@ -11,9 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox"; 
-import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar, Wifi, WifiOff, Loader2, CreditCard, Building2 } from "lucide-react";
-
-// --- 2. CONFIGURATION DATA ---
+import { UserCircle, ClipboardCheck, MapPin, GraduationCap, Users, Mail, Phone, Calendar, Wifi, WifiOff, Loader2, CreditCard, Building2, ShieldCheck, CheckCircle } from "lucide-react";
 const titleOptions = ["Mr.", "Mrs.", "Ms.", "Dr.", "Atty.", "Engr.", "Arch.", "Prof.", "Rev."];
 
 // NEW DATA STRUCTURE: Department -> Course -> Major
@@ -106,6 +104,7 @@ const departmentOptions = [
   }
 ];
 
+// @Koi: Gi-update nako ang steps dire, gidungag ang Verify sa 7, ang Privacy nahimong 8.
 const steps = [
   { id: 1, name: "Personal", title: "Personal Information" },
   { id: 2, name: "Address", title: "Home Address" },
@@ -113,7 +112,8 @@ const steps = [
   { id: 4, name: "Family", title: "Parents or Guardian" },
   { id: 5, name: "Photo", title: "Upload Formal Photo" },
   { id: 6, name: "Review", title: "Review Details" }, 
-  { id: 7, name: "Privacy", title: "Data Privacy" },
+  { id: 7, name: "Verify", title: "Email Verification" }, 
+  { id: 8, name: "Privacy", title: "Data Privacy" },
 ];
 
 // Title Case function
@@ -304,11 +304,16 @@ export default function RegistrationWizard() {
   const [guardianLname, setGuardianLname] = useState("");
   const [guardianRel, setGuardianRel] = useState("");
 
-  // --- STATE: Photo & Privacy ---
+  // --- STATE: Photo, Review & Privacy ---
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
+
+  // --- STATE: EMAIL VERIFICATION (NEW FOR STEP 7) ---
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   // --- DERIVED ACADEMIC OPTIONS ---
   const currentCourses = useMemo(() => {
@@ -351,6 +356,24 @@ export default function RegistrationWizard() {
     fileInputRef.current?.click();
   };
 
+  // --- VERIFICATION HANDLERS (STEP 7) ---
+  const handleSendCode = () => {
+    setIsCodeSent(true);
+    // @Koi: Diri isalpak ang API pang send og Email Verification sa backend nato.
+    // Example: await fetch('/api/send-code', { body: JSON.stringify({ email: umEmail }) })
+    alert(`A verification code has been sent to your UM Email: ${umEmail} \n\n(For now, use any code to proceed in this UI testing)`);
+  };
+
+  const handleVerifyCode = () => {
+    if (verificationCode.trim().length > 3) {
+      // @Koi: Diri isalpak ang check kung match ba sa database ang gi-type nga code.
+      // Example: const isValid = await fetch('/api/verify-code', ...)
+      setIsEmailVerified(true);
+    } else {
+      alert("Please enter a valid verification code.");
+    }
+  };
+
   // --- VALIDATION ---
   const isStepValid = () => {
     switch (currentStep) {
@@ -359,7 +382,6 @@ export default function RegistrationWizard() {
       case 2: 
         return selectedProvinceCode !== "" && selectedCityCode !== "" && selectedBarangayCode !== "";
       case 3: 
-        // Added validation for selectedDepartment
         return selectedDepartment !== "" && selectedCourse !== "" && selectedMajor !== "" && thesisTitle.trim() !== "" && contactNum.trim() !== "" && email.trim() !== "" && umEmail.trim() !== "";
       case 4: 
         if (useGuardian) {
@@ -372,7 +394,9 @@ export default function RegistrationWizard() {
       case 6: 
         return reviewConfirmed;
       case 7: 
-        return privacyAgreed;
+        return isEmailVerified; // @Koi: Validation sa Step 7 (Must be verified)
+      case 8: 
+        return privacyAgreed;   // @Koi: Validation sa Step 8 (Must agree)
       default:
         return false;
     }
@@ -426,7 +450,7 @@ export default function RegistrationWizard() {
       birthdate: bdate,
       contact_num: contactNum,
       academics: {
-        department: selectedDepartment, //Added Department
+        department: selectedDepartment,
         course: selectedCourse,
         major: selectedMajor,
         thesis: thesisTitle,
@@ -1106,10 +1130,62 @@ export default function RegistrationWizard() {
                         </div>
                     )}
 
-                    {/* --- STEP 7: PRIVACY --- */}
+                    {/* --- STEP 7: EMAIL VERIFICATION (NEW STEP) --- */}
                     {currentStep === 7 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="bg-blue-50 p-5 rounded-lg border border-blue-100">
+                                <h4 className="font-bold text-blue-900 flex items-center gap-2 mb-2">
+                                    <ShieldCheck size={20} /> Verify Your UM Email
+                                </h4>
+                                <p className="text-sm text-blue-800 leading-relaxed">
+                                    To ensure account security, we need to verify your official University of Mindanao student email address: <br/>
+                                    <strong className="text-blue-950 font-mono text-base block mt-2 p-2 bg-white rounded border border-blue-200 shadow-sm w-fit">{umEmail || "No email provided"}</strong>
+                                </p>
+                            </div>
+
+                            {!isCodeSent ? (
+                                <Button 
+                                    onClick={handleSendCode} 
+                                    className="w-full h-12 text-lg bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-600/20"
+                                >
+                                    <Mail className="mr-2" size={20}/> Send Verification Code
+                                </Button>
+                            ) : (
+                                <div className="space-y-5 p-6 border border-stone-200 rounded-xl bg-white shadow-sm">
+                                    <div className="space-y-3">
+                                        <Label className="text-stone-600">Enter the 6-digit code sent to your email</Label>
+                                        <Input 
+                                            value={verificationCode} 
+                                            onChange={e => setVerificationCode(e.target.value)} 
+                                            placeholder="XXXXXX" 
+                                            maxLength={6}
+                                            className="h-14 text-center text-2xl tracking-[0.5em] font-mono font-bold border-amber-300 focus:border-amber-600 focus:ring-amber-600/20 transition-all"
+                                            disabled={isEmailVerified}
+                                        />
+                                    </div>
+                                    {!isEmailVerified ? (
+                                        <Button 
+                                            onClick={handleVerifyCode}
+                                            className="w-full h-12 bg-amber-900 hover:bg-amber-800 text-white text-base"
+                                        >
+                                            Verify Code
+                                        </Button>
+                                    ) : (
+                                        <div className="flex items-center justify-center gap-2 text-green-700 font-bold bg-green-50 border border-green-200 p-4 rounded-lg animate-in zoom-in-95 duration-300">
+                                            <CheckCircle size={24} className="text-green-600" />
+                                            Email Verified Successfully!
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* --- STEP 8: PRIVACY --- */}
+                    {/* @Koi: Nahimo na ning Step 8 */}
+                    {currentStep === 8 && (
                         <div className="space-y-4">
-                        <div className="p-5 bg-stone-50 border border-stone-200 rounded-lg h-72 overflow-y-auto text-sm text-stone-600 leading-relaxed text-justify pr-2">
+                        <div className="p-5 bg-stone-50 border border-stone-200 rounded-lg h-72 overflow-y-auto text-sm text-stone-600 leading-relaxed text-justify pr-2 scrollbar-thin scrollbar-thumb-stone-300 scrollbar-track-transparent">
                             <h4 className="font-bold text-amber-900 mb-3 text-base">Data Privacy Consent</h4>
                             <p className="mb-3">
                                 In compliance with the <strong>Data Privacy Act of 2012 (R.A. 10173)</strong>, I hereby authorize the AURIUM Yearbook Committee of the University of Mindanao Tagum College to collect, process, and store the personal data indicated herein for the purpose of the yearbook publication.
@@ -1158,10 +1234,11 @@ export default function RegistrationWizard() {
                     
                     <Button 
                     className={`min-w-[140px] shadow-lg ${isStepValid() ? "bg-amber-900 hover:bg-amber-800 text-white shadow-amber-900/20" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
-                    onClick={currentStep === 7 ? onSubmit : handleNext}
+                    onClick={currentStep === 8 ? onSubmit : handleNext}
                     disabled={!isStepValid()}
                     >
-                    {currentStep === 7 ? "Submit Registration" : "Next Step"}
+                    {/* @Koi: Updated to Step 8 para ma-submit */}
+                    {currentStep === 8 ? "Submit Registration" : "Next Step"}
                     </Button>
                 </CardFooter>
             </Card>
