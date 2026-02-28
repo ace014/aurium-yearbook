@@ -38,7 +38,8 @@ const departmentOptions = [
   {
     name: "DEPARTMENT OF ARTS AND SCIENCES EDUCATION",
     courses: [
-      { name: "BACHELOR OF ARTS IN ENGLISH", majors: [] },
+      // Updated the program name based on testing feedback
+      { name: "BACHELOR OF ARTS IN ENGLISH LANGUAGE", majors: [] }, 
       { name: "BACHELOR OF SCIENCE IN PSYCHOLOGY", majors: [] }
     ]
   },
@@ -104,7 +105,7 @@ const departmentOptions = [
   }
 ];
 
-// @Koi: Gi-update nako ang steps dire, gidungag ang Verify sa 7, ang Privacy nahimong 8.
+// Temporarily reverted to 7 steps. Email verification is commented out for now.
 const steps = [
   { id: 1, name: "Personal", title: "Personal Information" },
   { id: 2, name: "Address", title: "Home Address" },
@@ -362,14 +363,14 @@ export default function RegistrationWizard() {
   /* --- VERIFICATION HANDLERS (STEP 7) ---
   const handleSendCode = () => {
     setIsCodeSent(true);
-    // @Koi: Diri isalpak ang API pang send og Email Verification sa backend nato.
+    // Integration point for email verification sending
     // Example: await fetch('/api/send-code', { body: JSON.stringify({ email: umEmail }) })
     alert(`A verification code has been sent to your UM Email: ${umEmail} \n\n(For now, use any code to proceed in this UI testing)`);
   };
 
   const handleVerifyCode = () => {
     if (verificationCode.trim().length > 3) {
-      // @Koi: Diri isalpak ang check kung match ba sa database ang gi-type nga code.
+      // Integration point for verifying the code
       // Example: const isValid = await fetch('/api/verify-code', ...)
       setIsEmailVerified(true);
     } else {
@@ -398,7 +399,7 @@ export default function RegistrationWizard() {
       case 6: 
         return reviewConfirmed;
       case 7: 
-        //return isEmailVerified; 
+        // return isEmailVerified; 
         return privacyAgreed;   
       default:
         return false;
@@ -791,7 +792,6 @@ export default function RegistrationWizard() {
                             </Select>
                         </div>
 
-                        {/* --- ADDED THESIS TITLE FIELD --- */}
                         <div className="space-y-2">
                             <Label>Thesis / Capstone Title <span className="text-red-500">*</span></Label>
                             <Input 
@@ -804,17 +804,34 @@ export default function RegistrationWizard() {
 
                         <div className="h-px bg-gray-200 my-2"></div>
 
+                        {/* Enforced 11-digit limit for valid PH mobile numbers */}
                         <div className="space-y-2">
                             <Label>Primary Contact Number <span className="text-red-500">*</span></Label>
-                            <Input value={contactNum} onChange={e => setContactNum(e.target.value)} placeholder="09XXXXXXXXX" inputMode="numeric" className="h-11" />
+                            <Input 
+                                value={contactNum} 
+                                onChange={e => setContactNum(e.target.value)} 
+                                placeholder="09XXXXXXXXX" 
+                                inputMode="numeric" 
+                                maxLength={11} 
+                                className="h-11" 
+                            />
                         </div>
+
                         <div className="space-y-2">
                             <Label>Personal Email Address <span className="text-red-500">*</span></Label>
                             <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com" className="h-11" />
                         </div>
+
+                        {/* Updated placeholder to match actual UM student email format */}
                         <div className="space-y-2">
                             <Label>UM Student Email <span className="text-red-500">*</span></Label>
-                            <Input type="email" value={umEmail} onChange={e => setUmEmail(e.target.value)} placeholder="IDNUMBER.tc@umindanao.edu.ph" className="h-11" />
+                            <Input 
+                                type="email" 
+                                value={umEmail} 
+                                onChange={e => setUmEmail(e.target.value)} 
+                                placeholder="y.ybanez.149449.tc@umindanao.edu.ph" 
+                                className="h-11" 
+                            />
                         </div>
                         </div>
                     )}
@@ -990,7 +1007,6 @@ export default function RegistrationWizard() {
                                 <UserCircle size={16} /> Personal Identity
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 bg-white p-4 rounded-lg border border-stone-100 shadow-sm">
-                                {/* --- NEW ID NUMBER REVIEW --- */}
                                 <div className="md:col-span-2 pb-2 border-b border-stone-50 mb-2">
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Student ID Number</span>
                                     <div className="flex items-center gap-2 text-amber-800 font-mono font-bold text-lg">
@@ -1004,7 +1020,6 @@ export default function RegistrationWizard() {
                                 </div>
                                 <div>
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Nickname</span>
-                                    {/* FIX: Add Quotes here in Step 6 Review */}
                                     <span className="text-stone-900 font-medium">{nickname ? `"${nickname}"` : "-"}</span>
                                 </div>
                                 <div>
@@ -1032,7 +1047,6 @@ export default function RegistrationWizard() {
                                 </h4>
                                 <div className="bg-white p-4 rounded-lg border border-stone-100 shadow-sm space-y-4">
                                 <div>
-                                    {/* ADDED DEPARTMENT REVIEW */}
                                     <span className="block text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1">Department</span>
                                     <span className="text-stone-900 font-bold block mb-2">{selectedDepartment}</span>
 
@@ -1133,7 +1147,6 @@ export default function RegistrationWizard() {
                         </div>
                     )}
 
-                    {/* --- STEP 7: EMAIL VERIFICATION (NEW STEP) --- */}
                     {/*
                     {currentStep === 7 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -1186,8 +1199,7 @@ export default function RegistrationWizard() {
                     )}
                     */}
 
-                    {/* --- STEP 8: PRIVACY --- */}
-                    {/* @Koi: Nahimo na ning Step 8 */}
+                    {/* --- STEP 7: PRIVACY --- */}
                     {currentStep === 7 && (
                         <div className="space-y-4">
                         <div className="p-5 bg-stone-50 border border-stone-200 rounded-lg h-72 overflow-y-auto text-sm text-stone-600 leading-relaxed text-justify pr-2 scrollbar-thin scrollbar-thumb-stone-300 scrollbar-track-transparent">
@@ -1234,7 +1246,7 @@ export default function RegistrationWizard() {
                         Previous
                         </Button>
                     ) : (
-                        <div className="w-20"></div> // Placeholder to keep Next button on the right
+                        <div className="w-20"></div> // Placeholder to keep Next button aligned to the right
                     )}
                     
                     <Button 
@@ -1242,7 +1254,6 @@ export default function RegistrationWizard() {
                     onClick={currentStep === 7 ? onSubmit : handleNext}
                     disabled={!isStepValid()}
                     >
-                    {/* @Koi: Updated to Step 8 para ma-submit */}
                     {currentStep === 7 ? "Submit Registration" : "Next Step"}
                     </Button>
                 </CardFooter>
