@@ -819,7 +819,7 @@ export default function RegistrationWizard() {
 
                         <div className="space-y-2">
                             <Label>Personal Email Address <span className="text-red-500">*</span></Label>
-                            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com" className="h-11" />
+                            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="juandelacruz@email.com" className="h-11" />
                         </div>
 
                         {/* Updated placeholder to match actual UM student email format */}
@@ -829,7 +829,7 @@ export default function RegistrationWizard() {
                                 type="email" 
                                 value={umEmail} 
                                 onChange={e => setUmEmail(e.target.value)} 
-                                placeholder="y.ybanez.149449.tc@umindanao.edu.ph" 
+                                placeholder="j.delacruz.142458.tc@umindanao.edu.ph" 
                                 className="h-11" 
                             />
                         </div>
