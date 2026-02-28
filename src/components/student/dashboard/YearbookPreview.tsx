@@ -19,8 +19,10 @@ interface YearbookPreviewProps {
 export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
   const stud_detail = user.studentDetail;
 
-  //if there's a guardian, means no parent info
-  const guardian = stud_detail.guardians_name;
+  // Gi-update ang check para kung empty string, di niya i-treat nga naay guardian
+  const guardian = stud_detail?.guardians_name && stud_detail.guardians_name.trim() !== "" 
+      ? stud_detail.guardians_name 
+      : null;
 
   const details = {
     personal: {
@@ -44,9 +46,10 @@ export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
       contact: stud_detail.contact_num
      },
      family: {
-        guardian: stud_detail?.guardians_name,
-        father: stud_detail?.fathers_name,
-        mother: stud_detail?.mothers_name,
+       guardian: guardian,
+       //  Gidugangan nako og fallback 'N/A' in case null jud ang ma-return sa API
+       father: stud_detail?.fathers_name || "N/A", 
+       mother: stud_detail?.mothers_name || "N/A",
      }
   };
 
@@ -112,7 +115,7 @@ export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
                    </h1>
                    <div className="flex flex-wrap items-baseline gap-3 text-2xl md:text-4xl text-amber-100/80 font-serif">
                      <span>{details.personal.fname}</span>
-                     <span>{details.personal.mname.charAt(0)}.</span>
+                     <span>{details.personal.mname ? details.personal.mname.charAt(0) + "." : ""}</span>
                      <span className="italic text-amber-500">"{details.personal.nickname}"</span>
                    </div>
                    <div className="mt-6 flex items-center gap-3">
@@ -168,13 +171,14 @@ export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
                              <h4 className="font-bold text-amber-500 text-[10px] uppercase tracking-widest mb-1">
                               {guardian ? "Guardian" : "Parents"}
                              </h4>
-                             <div className="space-y-1">
+                             <div className="space-y-1 text-base text-white">
                                 {guardian ? (
                                    <p>{details.family.guardian}</p>
                                 ) : (
                                    <>
-                                      <p>{details.family.father}</p>
-                                      <p>{details.family.mother}</p>
+                                      {/*  Gibutangan nakog identifier gamay para F: and M: para chada tan-awon */}
+                                      <p><span className="text-amber-500/60 text-xs mr-2">F:</span> {details.family.father}</p>
+                                      <p><span className="text-amber-500/60 text-xs mr-2">M:</span> {details.family.mother}</p>
                                    </>
                                 )}
                              </div>

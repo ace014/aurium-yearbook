@@ -10,7 +10,7 @@ interface StudentHeaderProps {
   user: {
     fname?: string;
     idNumber?: string;
-    photoUrl?: string;
+    photoUrl?: string | null; 
   };
   // @Koi: Gidugang ang onLogout function as prop
   onLogout: () => void; 
@@ -43,7 +43,7 @@ export function StudentHeader({ user, onLogout }: StudentHeaderProps) {
              <p className="text-[10px] text-stone-400 uppercase tracking-wider">{user.idNumber}</p>
           </div>
           <Avatar className="h-9 w-9 border border-amber-200">
-             <AvatarImage src={user.photoUrl} />
+             <AvatarImage src={user.photoUrl ?? undefined} />
              <AvatarFallback className="bg-amber-100 text-amber-800 text-xs">JD</AvatarFallback>
           </Avatar>
           
