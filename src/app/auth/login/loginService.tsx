@@ -1,8 +1,9 @@
 //Auth Module (Login)
+const baseUrl = process.env.NEXT_PUBLIC_LOCAL_URL || "";
 
 export async function handleLogin(id: string, pass: string, is_admin?: boolean) {
     try {
-        const res = await fetch("/api/auth/login", {
+        const res = await fetch(`${baseUrl}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
