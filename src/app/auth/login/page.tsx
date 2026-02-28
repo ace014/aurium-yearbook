@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Added toast for alerts
+import toast from "react-hot-toast";
+
 // IMPORT KOII'S SERVICE (Make sure this file is in the same folder)
 import * as loginService from "./loginService";
 
@@ -35,21 +38,28 @@ export default function StudentLoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Call the service
-    const res = await loginService.handleLogin(id, pass);
-    
-    if (res.success) {
-        // SUCCESS: Redirect to Dashboard
-        router.push('/student/dashboard'); 
-    } else {
-        // ERROR HANDLER
-        console.log(res.message);
-        // Optional: Add UI error state here if needed
-        setIsLoading(false);
-    }
+    try {
+      // Call the service
+      const res = await loginService.handleLogin(id, pass);
+      
+      if (res.success) {
+          // SUCCESS: Toast Alert and Redirect to Dashboard
+          toast.success("Successfully logged in!");
+          router.push('/student/dashboard'); 
+      } else {
+          // ERROR HANDLER: Show toast alert
+          console.log(res.message);
+          toast.error(res.message || "Invalid ID Number or Password. Please try again.");
+          setIsLoading(false);
+      }
 
-    // TEST: Uncomment this line below to test the "Update Password" screen without API
-    // setIsPasswordUpdateRequired(true); setIsLoading(false);
+      // TEST: Uncomment this line below to test the "Update Password" screen without API
+      // setIsPasswordUpdateRequired(true); setIsLoading(false);
+
+    } catch (error) {
+      toast.error("Something went wrong. Please check your connection.");
+      setIsLoading(false);
+    }
   };
 
   // --- KOII'S UPDATE PASSWORD FUNCTION ---
@@ -72,8 +82,8 @@ export default function StudentLoginPage() {
     // Simulate API call to update password
     setTimeout(() => {
         setIsLoading(false);
-        // In a real app, show a toast notification here
-        alert("Password successfully updated!"); 
+        // Changed to toast notification instead of alert
+        toast.success("Password successfully updated!"); 
         router.push('/student/dashboard'); 
     }, 2000);
   };
@@ -135,7 +145,7 @@ export default function StudentLoginPage() {
                                             id="id"
                                             value={id}
                                             onChange={(e) => setId(e.target.value)}
-                                            placeholder="ID Number (e.g. 2022-00123)" 
+                                            placeholder="ID Number (e.g. 145796)" 
                                             className="pl-10 bg-stone-50 border-stone-200 text-stone-800 focus:border-amber-500 focus:ring-amber-500/20 h-11" 
                                             required
                                         />
