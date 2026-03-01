@@ -45,22 +45,22 @@ export default function StudentLoginPage() {
     setIsLoading(true);
 
     try {
-      // Call the service
       const res = await loginService.handleLogin(id, pass);
       
       if (res.success) {
-          // SUCCESS: Toast Alert and Redirect to Dashboard
           toast.success("Successfully logged in!");
-          router.push('/student/dashboard'); 
-      } else {
-          // ERROR HANDLER: Show toast alert
-          console.log(res.message);
-          toast.error(res.message || "Invalid ID Number or Password. Please try again.");
-          setIsLoading(false);
-      }
 
-      // TEST: Uncomment this line below to test the "Update Password" screen without API
-      // setIsPasswordUpdateRequired(true); setIsLoading(false);
+          if (res.is_new) {
+              setIsPasswordUpdateRequired(true);
+              setIsLoading(false);
+          }
+          router.push('/student/dashboard');
+
+      } else {
+          toast.error(res.reason || "Invalid ID Number or Password. Please try again.");
+          setIsLoading(false);
+          return;
+      }
 
     } catch (error) {
       toast.error("Something went wrong. Please check your connection.");
@@ -68,12 +68,12 @@ export default function StudentLoginPage() {
     }
   };
 
-  // --- KOII'S UPDATE PASSWORD FUNCTION ---
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  // --- UPDATE PASSWORD UPON LOG IN ---
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError("");
 
-    if (newPassword.length < 8) {
+    if (newPassword.length < 5) {
         setPasswordError("Password must be at least 8 characters.");
         return;
     }
@@ -85,13 +85,20 @@ export default function StudentLoginPage() {
 
     setIsLoading(true);
 
-    // Simulate API call to update password
-    setTimeout(() => {
-        setIsLoading(false);
-        // Changed to toast notification instead of alert
-        toast.success("Password successfully updated!"); 
-        router.push('/student/dashboard'); 
-    }, 2000);
+    try {
+        const res = await loginService.handleUpdatePass(newPassword); 
+
+        if (res.success) {
+          toast.success(res.reason);
+          router.push('/student/dashboard');
+        } else {
+            toast.error(res.reason);
+        }
+
+    } catch (error) {
+      toast.error("Something went wrong. Please check your connection.");
+      setIsLoading(false);
+    }
   };
 
   return (
