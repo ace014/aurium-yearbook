@@ -30,7 +30,7 @@ export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
       mname: user?.mid_name,
       lname: user?.last_name,
       suffix: user?.suffix,
-      nickname: user?.first_name, 
+      nickname: user?.nickname, 
       birthdate: new Date(stud_detail.birth_date).toLocaleDateString(),
     },
     address: {
@@ -48,7 +48,7 @@ export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
      family: {
        guardian: guardian,
        //  Gidugangan nako og fallback 'N/A' in case null jud ang ma-return sa API
-       father: stud_detail?.fathers_name || "N/A", 
+       father: stud_detail?.fathers_name || (stud_detail as any)?.father_name || "N/A", 
        mother: stud_detail?.mothers_name || "N/A",
      }
   };
