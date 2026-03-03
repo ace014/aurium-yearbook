@@ -9,6 +9,8 @@ import { ProfileCard } from "@/components/student/dashboard/ProfileCard";
 import { BookingWidget } from "@/components/student/dashboard/BookingWidget";
 import { YearbookTeaser } from "@/components/student/dashboard/YearbookTeaser";
 import { YearbookPreview } from "@/components/student/dashboard/YearbookPreview";
+// BAG-O: I-import ang bag-ong component
+import { SolicitationWidget } from "@/components/student/dashboard/SolicitationWidget"; 
 import { useRouter } from "next/navigation"; 
 import toast from "react-hot-toast";
 
@@ -26,13 +28,11 @@ export default function StudentDashboard() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  //get photo url
+  
   const getObjectKey = (url: string): string => {
     if (typeof url !== 'string') return "";
     const findStr = `/aurium/`;
-
     const idx = url.indexOf(findStr);
-
     if (idx === -1) return "";
     return "https://static.auriumi.cloud/" + url.substring(idx + findStr.length);
   }
@@ -75,7 +75,7 @@ export default function StudentDashboard() {
     }
   };
 
-  //handle logout
+  // BINALIK: Ang original nga onLogout function para safe sa backend ni Koi
   const onLogout = async () => {
     const res = await fetch(`${baseUrl}/api/auth/logout`, {
       credentials: 'include'
@@ -97,7 +97,20 @@ export default function StudentDashboard() {
     }
   };
 
-  //show loading screen when user is still fetching
+  // BAG-O: Function para sa pag-save sa Sponsors
+  const handleSaveSponsors = async (newSponsors: string[]) => {
+    return new Promise<void>((resolve) => {
+      // Simulate API call delay
+      setTimeout(async () => {
+        // @Koi: Diri nimo isumpay ang API call padulong sa backend.
+        // Example: await studentService.updateSponsors(newSponsors);
+        
+        toast.success("Solicitation sponsors saved successfully!");
+        resolve();
+      }, 1000);
+    });
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center font-sans">
@@ -138,25 +151,39 @@ export default function StudentDashboard() {
             )}
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/*  2-Column Layout Setup */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          <ProfileCard
-            fullName={`${user.first_name} ${user.last_name}`}
-            idNumber={user.student_number}
-            course={user.course}
-            photoUrl={getObjectKey(user.studentDetail.photo_url)}
-            onCheckEntry={() => setShowPreview(true)} 
-          />
+          {/* LEFT COLUMN: Profile ra ang ibilin diri */}
+          <div className="flex flex-col gap-6 lg:col-span-1">
+            <ProfileCard
+              fullName={`${user.first_name} ${user.last_name}`}
+              idNumber={user.student_number}
+              course={user.course}
+              photoUrl={getObjectKey(user.studentDetail.photo_url)}
+              onCheckEntry={() => setShowPreview(true)} 
+            />
+          </div>
 
-          <BookingWidget
-            bookingList={schedule}
-            booking={booking} 
-            idNumber={user.student_number}
-            onBook={handleBooking}
-          />
+          {/* RIGHT COLUMN: Booking Widget ug Solicitation Widget (Landscape format) */}
+          <div className="flex flex-col gap-6 lg:col-span-2">
+            <BookingWidget
+              bookingList={schedule}
+              booking={booking} 
+              idNumber={user.student_number}
+              onBook={handleBooking}
+            />
 
-          {/* 3. Yearbook Teaser Component */}
-          <YearbookTeaser />
+            {/* BAG-O: Ang Solicitation Widget gibutang sa ilalom sa Booking */}
+            <SolicitationWidget 
+              onSave={handleSaveSponsors}
+            />
+          </div>
+
+          {/* BOTTOM FULL WIDTH: Yearbook Teaser */}
+          <div className="lg:col-span-3">
+             <YearbookTeaser />
+          </div>
 
         </div>
       </main>
