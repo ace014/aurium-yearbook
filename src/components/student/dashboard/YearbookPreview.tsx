@@ -47,9 +47,8 @@ export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
      },
      family: {
        guardian: guardian,
-       //  Gidugangan nako og fallback 'N/A' in case null jud ang ma-return sa API
-       father: stud_detail?.fathers_name || (stud_detail as any)?.father_name || "N/A", 
-       mother: stud_detail?.mothers_name || "N/A",
+       father: stud_detail?.fathers_name, 
+       mother: stud_detail?.mothers_name,
      }
   };
 
@@ -176,9 +175,8 @@ export function YearbookPreview({ user, onClose }: YearbookPreviewProps) {
                                    <p>{details.family.guardian}</p>
                                 ) : (
                                    <>
-                                      {/*  Gibutangan nakog identifier gamay para F: and M: para chada tan-awon */}
-                                      <p><span className="text-amber-500/60 text-xs mr-2">F:</span> {details.family.father}</p>
-                                      <p><span className="text-amber-500/60 text-xs mr-2">M:</span> {details.family.mother}</p>
+                                      <p><span className="text-amber-500/60 text-xs mr-2">Father:</span> {details.family.father}</p>
+                                      <p><span className="text-amber-500/60 text-xs mr-2">Mother:</span> {details.family.mother}</p>
                                    </>
                                 )}
                              </div>
