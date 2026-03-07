@@ -86,7 +86,7 @@ export function ProfileCard({ fullName, idNumber, course, photoUrl, onCheckEntry
     <Card className="md:col-span-1 border-t-4 border-t-amber-900 shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-stone-700">
-          <UserCircle className="w-5 h-5 text-amber-700" /> Yearbook Profile
+          <UserCircle className="w-5 h-5 text-amber-700" />Profile
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center text-center space-y-4">
@@ -150,9 +150,8 @@ export function ProfileCard({ fullName, idNumber, course, photoUrl, onCheckEntry
                 {photoUrl ? "Update Formal Photo" : "Upload Formal Photo"}
               </Button>
               
-              {/* Added reminder text for CDN caching as instructed by Backend */}
-              <p className="text-[10px] text-stone-400 leading-tight px-1">
-                Note: Uploaded photos may take a few hours to fully update due to server caching.
+              <p className="text-[12px] text-stone-400 leading-tight px-1">
+                Note: Uploading a picture may take a few hours to reflect in your dashboard
               </p>
             </div>
           )}
