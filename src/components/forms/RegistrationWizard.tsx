@@ -177,7 +177,17 @@ export default function RegistrationWizard() {
     const isValidEmailFormat = (emailStr: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
 
     switch (currentStep) {
-      case 1: return idNumber.trim() !== "" && lname.trim() !== "" && fname.trim() !== "" && bdate !== "";
+      case 1: 
+        // FIXED: Gi-apil na nato ang nickname checking ug bdate range checking
+        const year = bdate ? new Date(bdate).getFullYear() : 0;
+        return (
+            idNumber.trim() !== "" && 
+            lname.trim() !== "" && 
+            fname.trim() !== "" && 
+            nickname.trim() !== "" && // Dili pwede empty or spaces lang
+            bdate !== "" && 
+            year >= 1950 && year <= 2012 // Dapat realistic year
+        );
       case 2: return selectedProvinceCode !== "" && selectedCityCode !== "" && selectedBarangayCode !== "";
       case 3: 
 
