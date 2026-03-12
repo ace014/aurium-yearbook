@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+const baseUrl = process.env.NEXT_PUBLIC_LOCAL_URL || "";
 
 // --- 1. CONFIGURATIONS ---
 export const ACADEMIC_CONFIG = [
@@ -79,11 +80,11 @@ export const ACADEMIC_CONFIG = [
 ];
 
 export const STATUS_STEPS = [
-  { id: 1, label: "Registered", color: "bg-stone-500" },      
-  { id: 2, label: "Approved", color: "bg-blue-500" },        
-  { id: 3, label: "Booked", color: "bg-orange-500" },        
-  { id: 4, label: "Attended", color: "bg-purple-500" },      
-  { id: 5, label: "Fully Verified", color: "bg-green-600" }, 
+  { id: 1, label: "REGISTERED", color: "bg-stone-500" },      
+  { id: 2, label: "APPROVED", color: "bg-blue-500" },        
+  { id: 3, label: "BOOKED", color: "bg-orange-500" },        
+  { id: 4, label: "ATTENDED", color: "bg-purple-500" },      
+  { id: 5, label: "FULLY VERIFIED", color: "bg-green-600" }, 
 ];
 
 export const DEPARTMENT_ORDER = ACADEMIC_CONFIG.map(d => d.name);
@@ -97,12 +98,11 @@ export function useMasterlist() {
   
   // --- APPLIED FILTERS ---
   const [appliedFilters, setAppliedFilters] = useState({
-      search: "",
       dept: "ALL",
       course: "ALL",
       status: "ALL"
   });
-
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
@@ -113,14 +113,13 @@ export function useMasterlist() {
 
   const ITEMS_PER_PAGE = 9; 
 
-  // Reset Course Filter kung ilisan ang Department
   useEffect(() => {
       setActiveCourseFilter("ALL");
   }, [activeDeptFilter]);
 
   // --- EXPLICIT ACTIONS ---
   const handleSearchClick = () => {
-      setAppliedFilters({ search: searchQuery, dept: "ALL", course: "ALL", status: "ALL" });
+      setAppliedFilters({dept: "ALL", course: "ALL", status: "ALL" });
       setActiveDeptFilter("ALL");
       setActiveCourseFilter("ALL");
       setActiveStatusFilter("ALL");
@@ -128,7 +127,7 @@ export function useMasterlist() {
   };
 
   const handleLoadClick = () => {
-      setAppliedFilters({ search: "", dept: activeDeptFilter, course: activeCourseFilter, status: activeStatusFilter });
+      setAppliedFilters({dept: activeDeptFilter, course: activeCourseFilter, status: activeStatusFilter });
       setSearchQuery("");
       setCurrentPage(1);
   };
@@ -139,44 +138,37 @@ export function useMasterlist() {
 
   // --- FETCHING LOGIC (API INTEGRATION READY) ---
   useEffect(() => {
-      const fetchFromAPI = async () => {
-          setIsLoading(true);
-          try {
-              /* TODO (@Koi): Replace this with your actual database query endpoint.
-                The frontend now uses a Flat Grid structure to avoid N+1 query problems.
-                
-                Expected implementation:
-                const queryParams = new URLSearchParams({
-                    page: currentPage.toString(),
-                    limit: ITEMS_PER_PAGE.toString(),
-                    search: appliedFilters.search,
-                    dept: appliedFilters.dept,
-                    course: appliedFilters.course,
-                    status: appliedFilters.status
-                });
+    const fetchFromAPI = async () => {
+      setIsLoading(true);
+      try {
+        const queryParams = new URLSearchParams({
+          page: currentPage.toString(),
+          dept: appliedFilters.dept,
+          course: appliedFilters.course,
+          status: appliedFilters.status
+        });
 
-                const res = await fetch(`/api/masterlist?${queryParams}`);
-                const data = await res.json();
-                
-                setStudents(data.students);
-                setTotalResults(data.totalResults);
-              */
-              
-              console.log("Ready for API Call with params:", { ...appliedFilters, page: currentPage });
-              
-              // Temporary empty state until API is hooked up
-              setStudents([]);
-              setTotalResults(0);
-          } catch (error) {
-              console.error("Failed to fetch students:", error);
-              setStudents([]);
-              setTotalResults(0);
-          } finally {
-              setIsLoading(false);
-          }
-      };
+        const res = await fetch(`${baseUrl}/api/admin/masterlist?${queryParams}`, {
+          credentials: 'include'
+        });
 
-      fetchFromAPI();
+        if (res.ok) {
+          const data = await res.json();
+
+          setStudents(data.students);
+          setTotalResults(data.total_result);
+        }
+
+      } catch (error) {
+        console.error("Failed to fetch students:", error);
+        setStudents([]);
+        setTotalResults(0);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFromAPI();
   }, [appliedFilters, currentPage]);
 
   return {
