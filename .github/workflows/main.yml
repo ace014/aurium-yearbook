@@ -1,7 +1,7 @@
-name: deploy and build to vps
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
