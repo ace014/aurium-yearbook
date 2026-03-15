@@ -115,7 +115,21 @@ export default function AdminDashboard() {
     const res = await adminService.handleVerify(studentId);
     if (res) {
       setPendingStudents(prev => prev.filter(s => s.student_number !== studentId))
-      toast.success("Student Verified!");
+      loadStudents(currentPage);
+
+      toast.success("Student succesfully verified!");
+      return;
+    }
+    toast.error("Something went wrong!");
+  }
+
+  const updateOnCancel = async (studentId: number) => {
+    const res = await adminService.handleCancel(studentId);
+    if (res) {
+      setPendingStudents(prev => prev.filter(s => s.student_number !== studentId))
+      loadStudents(currentPage);
+
+      toast.success("Student succesfully rejected!")
       return;
     }
     toast.error("Something went wrong!");
@@ -205,6 +219,7 @@ export default function AdminDashboard() {
                   currentPage={currentPage}
                   totalUnverified={totalUnverified}
                   onVerify={updateOnVerify}
+                  onCancel={updateOnCancel}
                   onSearch={searchStudentById}
                   setCurrentPage={onPageChange}
                 />
