@@ -24,6 +24,7 @@ import * as adminService from "@/app/admin/adminService";
 
 //hooks
 import { useSchedules } from "@/hooks/useSchedules";
+import { useMasterlist } from "@/hooks/useMasterlist";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -35,8 +36,10 @@ export default function AdminDashboard() {
   const [pendingStudents, setPendingStudents] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1); 
   const [totalUnverified, setTotalUnverified] = useState(0);
-  //TODO: make and use types.. zz
-  //const [studentCache, setStudentCache] = useState<{[page: number]: any[]}>({});
+
+  //Cache
+  const [studentCache, setStudentCache] = useState<{[page: number]: any[]}>({});
+  const masterlistProps = useMasterlist();
 
   //Schedules 
   const { schedules, fetchSchedules } = useSchedules();  
@@ -75,15 +78,10 @@ export default function AdminDashboard() {
 
   const loadStudents = useCallback(async (page: number) => {
 
-    /*
-    using cache to avoid fetching again
-    (experimental for now, doesn't seem to work well with the current pagination feature)
-
     if (studentCache[page]) {
       setPendingStudents(studentCache[page]);
       return;
     }
-    */
 
     try {
         const students = await adminService.fetchStudents(page);
@@ -95,17 +93,15 @@ export default function AdminDashboard() {
         setPendingStudents(students.data.student_list);
         setTotalUnverified(students.data.total);
 
-        /*
         setStudentCache(prev => ({
           ...prev,
           [page]: students.data.student_list
         }));
-        */
 
     } catch (error) {
         console.error("Error loading students:", error);
     }
-  }, []);
+  }, [studentCache]);
 
   useEffect(() => {
     loadStudents(currentPage);
@@ -113,8 +109,17 @@ export default function AdminDashboard() {
 
   const updateOnVerify = async (studentId: number) => {
     const res = await adminService.handleVerify(studentId);
+
     if (res) {
-      setPendingStudents(prev => prev.filter(s => s.student_number !== studentId))
+      //invalidate cache and refetch
+      masterlistProps.invalidateCache();
+
+      setStudentCache(prev => {
+        const newCache = { ...prev };
+        delete newCache[currentPage];
+        return newCache;
+      });
+
       loadStudents(currentPage);
 
       toast.success("Student succesfully verified!");
@@ -126,7 +131,15 @@ export default function AdminDashboard() {
   const updateOnCancel = async (studentId: number) => {
     const res = await adminService.handleCancel(studentId);
     if (res) {
-      setPendingStudents(prev => prev.filter(s => s.student_number !== studentId))
+      //invalidate cache and refetch
+      masterlistProps.invalidateCache();
+
+      setStudentCache(prev => {
+        const newCache = { ...prev };
+        delete newCache[currentPage];
+        return newCache;
+      });
+
       loadStudents(currentPage);
 
       toast.success("Student succesfully rejected!")
@@ -238,7 +251,7 @@ export default function AdminDashboard() {
             {activeTab === 'notes' && <NotesTab />}
 
             {/* 4. OTHER ADMIN TABS */}
-            {activeTab === 'masterlist' && <MasterlistTab />}
+            {activeTab === 'masterlist' && <MasterlistTab {...masterlistProps}/>}
             {activeTab === 'slots' && <SchedulesTab schedules={schedules} fetchSchedules={fetchSchedules} />}
             {activeTab === "profile" && <ProfileTab user={staffUser} setUser={setStaffUser} />}
         </div>
