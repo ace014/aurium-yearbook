@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { Schedule } from "@/types";
 import * as adminService from "@/app/admin/adminService"
+import toast from "react-hot-toast";
 
 interface ScheduleProp {
     schedules: Schedule[];
@@ -46,6 +47,7 @@ export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
   // Schedule management states
   const [isCloseDateOpen, setIsCloseDateOpen] = useState(false);
   const [dateToClose, setDateToClose] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
 
   // Global loading state for network requests
   const [isProcessing, setIsProcessing] = useState(false);
@@ -64,7 +66,7 @@ export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
     setIsEditCapacityOpen(true);
   };
 
-  // Toggles the session between open and closed (0 capacity)
+  // Toggles the session between open and closed (0 capacity) UNSAFE! (This shouldn't set the capacity to zero as it contains data within it)
   const toggleSessionStatus = () => {
       if (isSessionClosed) {
           setIsSessionClosed(false);
@@ -119,6 +121,7 @@ export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
   };
 
   // Processes the server request to update the schedule capacity
+  /*
   const executeCapacityUpdate = async () => {
     if (!editingCapacity) return;
     
@@ -145,8 +148,9 @@ export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
         setIsProcessing(false);
     }
   };
+  */
 
-  // Processes the server request to manually assign a student to a schedule
+  /* Processes the server request to manually assign a student to a schedule
   const executeStudentOverride = async () => {
     if (!manualStudentId || !activeAddStudentSession) return;
 
@@ -174,22 +178,23 @@ export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
         setIsProcessing(false);
     }
   };
+  */
 
   // Processes the server request to lock a specific schedule date
   const executeCloseSchedule = async () => {
-    if (!dateToClose) return;
+    if (!selectedBookingId) return;
 
     setIsProcessing(true);
     try {
-        const response = await adminService.closeSchedule(dateToClose);
+        const response = await adminService.toggleScheduleState(selectedBookingId);
 
         if (response.success) {
-            alert("Schedule has been successfully closed.");
+            toast.success("Schedule's availability has been successfully updated.");
             await fetchSchedules();
             setIsCloseDateOpen(false);
-            setDateToClose(null);
+            setSelectedBookingId(null);
         } else {
-            alert(response.reason || "Failed to close the schedule.");
+            toast.error(response.reason || "Failed to close the schedule.");
         }
     } catch (error) {
         console.error("Close schedule error:", error);
@@ -283,17 +288,27 @@ export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
                                     <Calendar className="text-amber-600 h-5 w-5" /> 
                                     {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                                 </CardTitle>
+                                {/* TODO: need some tweaking, should be a toggle now rather than closing it entirely.
+                                    Also, update the message dialog whether we're opening or closing the given schedule dynamically. 
+                                    Might be nice to have some indicator if it's open or not, this button can be easily confused at the moment.
+                                    Pressing "Open" actually closes the schedule and vice versa for "Close".
+                                    (I have no idea on how did you pass the "not allowed" symbol into this button) */}
                                 <div className="flex items-center gap-3">
                                     <Button 
                                         variant="ghost" 
                                         size="sm" 
-                                        className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-3 font-medium"
+                                        className={ 
+                                            day.is_open 
+                                            ? "text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-3 font-medium" 
+                                            : "text-green-600 hover:bg-green-50 hover:text-green-700 h-8 px-3 font-medium"
+                                        }
                                         onClick={() => {
                                             setDateToClose(day.date);
+                                            setSelectedBookingId(day.id);
                                             setIsCloseDateOpen(true);
                                         }}
                                     >
-                                        <Ban className="w-4 h-4 mr-1.5" /> Close Date
+                                        <Ban className="w-4 h-4 mr-1.5" /> {day.is_open ? "Close" : "Open"} 
                                     </Button>
                                     <Badge variant="outline" className={isFull ? "text-red-600 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"}>
                                         {isFull ? "FULLY BOOKED" : "AVAILABLE"}
@@ -483,7 +498,7 @@ export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsEditCapacityOpen(false)} disabled={isProcessing}>Cancel</Button>
                     <Button 
-                        onClick={executeCapacityUpdate} 
+                        onClick={() => {}} //TODO 
                         disabled={isProcessing}
                         className="bg-amber-600 hover:bg-amber-700"
                     >
@@ -517,7 +532,7 @@ export function SchedulesTab({ schedules, fetchSchedules }: ScheduleProp) {
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsAddStudentOpen(false)} disabled={isProcessing}>Cancel</Button>
                     <Button 
-                        onClick={executeStudentOverride} 
+                        onClick={() => {}} //TODO: executeStudentOverride 
                         disabled={isProcessing}
                         className="bg-amber-600 hover:bg-amber-700"
                     >
