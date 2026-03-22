@@ -173,3 +173,52 @@ export const fv_getPaginatedStudents = async (page: number) => {
         return { success: false };
     }
 };
+
+export async function fv_updateStudent(studentId: number, type: string, data: any) {
+    try {
+        const res = await fetch(`${baseUrl}/api/admin/finalize/update/${studentId}?type=${type}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+            credentials: 'include'
+        });
+        const responseData = await res.json();
+
+        if (!res.ok) {
+            return { success: false, reason: responseData.reason || "Something went wrong" };
+        }
+
+        return { success: true };
+    } catch (err) {
+        console.error(err);
+        return { success: false, reason: "Cannot connect to the server at the moment" };
+    }
+}
+
+export async function fv_finalizeStudent(studentId: string | number) {
+    try {
+        const res = await fetch(`${baseUrl}/api/admin/finalize/verify?id=${encodeURIComponent(String(studentId))}`, {
+            method: "PATCH",
+            credentials: 'include'
+        });
+
+        let responseData: any = null;
+        try {
+            responseData = await res.json();
+        } catch {
+            responseData = null;
+        }
+
+        if (!res.ok) {
+            return {
+                success: false,
+                reason: responseData?.reason || "Failed to finalize student"
+            };
+        }
+
+        return { success: true, data: responseData };
+    } catch (err) {
+        console.error(err);
+        return { success: false, reason: "Cannot connect to the server at the moment" };
+    }
+}
