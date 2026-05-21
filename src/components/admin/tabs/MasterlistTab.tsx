@@ -2,17 +2,77 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Search, BookOpen, GraduationCap, FileText, MapPin, Phone, Mail, Clock, Filter, User, Image as ImageIcon, X, Home, Building2, ListFilter, ChevronLeft, ChevronRight, Loader2, Download, Trash2, AlertTriangle, Send, CheckCircle2 } from "lucide-react";
+import { Search, BookOpen, GraduationCap, FileText, MapPin, Phone, Mail, Clock, Filter, User, Image as ImageIcon, X, Home, Building2, ListFilter, ChevronLeft, ChevronRight, Loader2, Download, Trash2, AlertTriangle, Send, CheckCircle2, FileSpreadsheet, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import * as XLSX from "xlsx";
 import { useMasterlist } from "@/hooks/useMasterlist";
 import * as adminService from "@/app/admin/adminService";
 
 type MasterlistTabProps = ReturnType<typeof useMasterlist>;
 const baseUrl = process.env.NEXT_PUBLIC_LOCAL_URL || "";
+
+const EXPORT_COLUMN_GROUPS = [
+  { label: "Academic", columns: [
+    { key: "student_number", label: "Student No." },
+    { key: "department",     label: "Department" },
+    { key: "course",         label: "Course" },
+    { key: "major",          label: "Major" },
+    { key: "thesis_title",   label: "Thesis Title" },
+    { key: "status",         label: "Status" },
+    { key: "created_at",     label: "Date Registered" },
+  ]},
+  { label: "Personal", columns: [
+    { key: "last_name",  label: "Last Name" },
+    { key: "first_name", label: "First Name" },
+    { key: "mid_name",   label: "Middle Name" },
+    { key: "nickname",   label: "Nickname" },
+    { key: "suffix",     label: "Suffix" },
+    { key: "birth_date", label: "Birth Date" },
+  ]},
+  { label: "Contact", columns: [
+    { key: "personal_email", label: "Personal Email" },
+    { key: "school_email",   label: "School Email" },
+    { key: "contact_num",    label: "Contact No." },
+  ]},
+  { label: "Address", columns: [
+    { key: "province", label: "Province" },
+    { key: "city",     label: "City" },
+    { key: "barangay", label: "Barangay" },
+  ]},
+  { label: "Family", columns: [
+    { key: "mothers_name",    label: "Mother's Name" },
+    { key: "mothers_title",   label: "Mother's Title" },
+    { key: "fathers_name",    label: "Father's Name" },
+    { key: "fathers_title",   label: "Father's Title" },
+    { key: "guardians_name",  label: "Guardian's Name" },
+    { key: "guardians_title", label: "Guardian's Title" },
+  ]},
+];
+
+const DEFAULT_EXPORT_COLUMNS = new Set(["student_number", "first_name", "last_name", "department", "course", "major", "status"]);
+
+const STATUS_LABELS: Record<string, string> = {
+  REGISTERED:     "Registered",
+  APPROVED:       "Approved",
+  BOOKED:         "Booked",
+  ATTENDED:       "Attended",
+  FULLY_VERIFIED: "Fully Verified",
+};
+
+const EXPORT_STATUS_OPTIONS = [
+  { value: "ALL", label: "All Statuses",  color: null },
+  { value: "1",   label: "Registered",    color: "bg-stone-500" },
+  { value: "2",   label: "Approved",      color: "bg-blue-500" },
+  { value: "3",   label: "Booked",        color: "bg-orange-500" },
+  { value: "4",   label: "Attended",      color: "bg-purple-500" },
+  { value: "5",   label: "Fully Verified",color: "bg-green-600" },
+];
 
 export function MasterlistTab(props: MasterlistTabProps) {
   const {
@@ -41,6 +101,22 @@ export function MasterlistTab(props: MasterlistTabProps) {
   // UX update: New states for the OTP Confirmation workflow
   const [otpConfirmTarget, setOtpConfirmTarget] = useState<'personal' | 'school' | null>(null);
   const [isResendingOtp, setIsResendingOtp] = useState(false);
+
+  // Export States
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState<Set<string>>(new Set(DEFAULT_EXPORT_COLUMNS));
+  const [exportDeptFilter, setExportDeptFilter] = useState("ALL");
+  const [exportCourseFilter, setExportCourseFilter] = useState("ALL");
+  const [exportMajorFilter, setExportMajorFilter] = useState("ALL");
+  const [exportStatusFilter, setExportStatusFilter] = useState("ALL");
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Password Confirm States
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
 
   const getObjectKey = (url: string): string => {
     if (typeof url !== 'string') return "";
@@ -169,6 +245,96 @@ export function MasterlistTab(props: MasterlistTabProps) {
       }
   };
 
+  const toggleColumn = (key: string) => {
+    setSelectedColumns(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const toggleGroup = (keys: readonly { key: string }[]) => {
+    const allSelected = keys.every(c => selectedColumns.has(c.key));
+    setSelectedColumns(prev => {
+      const next = new Set(prev);
+      keys.forEach(c => allSelected ? next.delete(c.key) : next.add(c.key));
+      return next;
+    });
+  };
+
+  const handleExport = () => {
+    if (selectedColumns.size === 0) {
+      toast.error("Please select at least one column to export.");
+      return;
+    }
+    setConfirmPassword("");
+    setPasswordError("");
+    setShowConfirmPassword(false);
+    setShowPasswordConfirm(true);
+  };
+
+  const handleVerifyAndExport = async () => {
+    if (!confirmPassword) {
+      setPasswordError("Please enter your password.");
+      return;
+    }
+    setIsVerifyingPassword(true);
+    setPasswordError("");
+    try {
+      const verifyRes = await fetch(`${baseUrl}/api/admin/verify-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: confirmPassword }),
+        credentials: "include",
+      });
+      if (!verifyRes.ok) {
+        const body = await verifyRes.json();
+        setPasswordError(body.reason ?? "Incorrect password.");
+        return;
+      }
+    } catch {
+      setPasswordError("Could not verify. Check your connection.");
+      return;
+    } finally {
+      setIsVerifyingPassword(false);
+    }
+
+    setShowPasswordConfirm(false);
+    setIsExporting(true);
+    try {
+      const query = new URLSearchParams({
+        columns: Array.from(selectedColumns).join(","),
+        dept: exportDeptFilter,
+        course: exportCourseFilter,
+        major: exportMajorFilter,
+        status: exportStatusFilter,
+      });
+      const res = await fetch(`${baseUrl}/api/admin/masterlist/export?${query}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Export failed");
+      const { data, total } = await res.json();
+      const keyToLabel = Object.fromEntries(
+        EXPORT_COLUMN_GROUPS.flatMap(g => g.columns.map(c => [c.key, c.label]))
+      );
+      const labeled = (data as Record<string, any>[]).map(row =>
+        Object.fromEntries(Object.entries(row).map(([k, v]) => {
+          const header = keyToLabel[k] ?? k;
+          const value = k === "status" && typeof v === "string" ? (STATUS_LABELS[v] ?? v) : v;
+          return [header, value];
+        }))
+      );
+      const ws = XLSX.utils.json_to_sheet(labeled);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Masterlist");
+      XLSX.writeFile(wb, `masterlist_${new Date().toISOString().split("T")[0]}.xlsx`);
+      toast.success(`Exported ${total} records successfully.`);
+      setShowExportDialog(false);
+    } catch {
+      toast.error("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const InfoField = ({ label, value, icon: Icon, fullWidth = false }: any) => (
     <div className={`flex flex-col space-y-1 ${fullWidth ? "col-span-2" : "col-span-1"}`}>
         <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -183,9 +349,15 @@ export function MasterlistTab(props: MasterlistTabProps) {
   const selectedDeptConfig = ACADEMIC_CONFIG.find((d: any) => d.name === activeDeptFilter);
   const availableCoursesConfig = selectedDeptConfig ? selectedDeptConfig.courses : [];
   const availableCourses = availableCoursesConfig.map((c: any) => c.name);
-  
+
   const selectedCourseConfig = availableCoursesConfig.find((c: any) => c.name === activeCourseFilter);
   const availableMajors = selectedCourseConfig?.majors || [];
+
+  const exportDeptConfig = ACADEMIC_CONFIG.find((d: any) => d.name === exportDeptFilter);
+  const exportCoursesConfig = exportDeptConfig ? exportDeptConfig.courses : [];
+  const exportCourses = exportCoursesConfig.map((c: any) => c.name);
+  const exportCourseConfig = exportCoursesConfig.find((c: any) => c.name === exportCourseFilter);
+  const exportMajors = exportCourseConfig?.majors || [];
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 w-full overflow-x-hidden">
@@ -200,9 +372,20 @@ export function MasterlistTab(props: MasterlistTabProps) {
                         Secure repository of verified graduates. Monitoring all students from Registration to Final Verification.
                     </p>
                 </div>
-                <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200 px-4 py-1.5 text-sm h-fit">
-                    {isLoading ? "Fetching..." : `${totalResults} Records Found`}
-                </Badge>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowExportDialog(true)}
+                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 shadow-sm h-fit py-1.5"
+                    >
+                        <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+                        Export Excel
+                    </Button>
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200 px-4 py-1.5 text-sm h-fit">
+                        {isLoading ? "Fetching..." : `${totalResults} Records Found`}
+                    </Badge>
+                </div>
             </div>
             
             <div className="flex flex-col xl:flex-row gap-4 justify-between items-center bg-stone-50/50 p-2 rounded-xl border border-stone-100 min-w-0">
@@ -759,6 +942,209 @@ export function MasterlistTab(props: MasterlistTabProps) {
                             Yes, Delete Record
                         </Button>
                     </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        {/* EXPORT DIALOG */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+            <DialogContent className="max-w-3xl p-6 bg-white rounded-xl shadow-2xl border-stone-100">
+                <DialogHeader className="mb-1">
+                    <DialogTitle className="text-xl font-bold text-stone-900 flex items-center gap-2">
+                        <FileSpreadsheet className="w-5 h-5 text-emerald-600" /> Export to Excel
+                    </DialogTitle>
+                    <DialogDescription className="text-stone-500 text-sm">
+                        Select which columns to include. Active filters (department, course, status) will be applied to the export.
+                    </DialogDescription>
+                </DialogHeader>
+
+                {/* Export filters */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 py-2 border-y border-stone-100">
+                    {/* Department */}
+                    <div className="space-y-1 col-span-2">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Department</span>
+                        <Select value={exportDeptFilter} onValueChange={v => { setExportDeptFilter(v); setExportCourseFilter("ALL"); setExportMajorFilter("ALL"); }}>
+                            <SelectTrigger className="h-8 text-xs border-stone-200 bg-white focus:ring-amber-500/20 focus:border-amber-500">
+                                <SelectValue placeholder="All Departments" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL" className="text-xs">All Departments</SelectItem>
+                                {ACADEMIC_CONFIG.map((d: any) => (
+                                    <SelectItem key={d.name} value={d.name} className="text-xs">{d.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Course */}
+                    <div className="space-y-1 col-span-2">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Course</span>
+                        <Select value={exportCourseFilter} onValueChange={v => { setExportCourseFilter(v); setExportMajorFilter("ALL"); }} disabled={exportDeptFilter === "ALL"}>
+                            <SelectTrigger className="h-8 text-xs border-stone-200 bg-white focus:ring-amber-500/20 focus:border-amber-500 disabled:opacity-50">
+                                <SelectValue placeholder={exportDeptFilter === "ALL" ? "Select dept first" : "All Courses"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL" className="text-xs">All Courses</SelectItem>
+                                {exportCourses.map((c: string) => (
+                                    <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Major */}
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Major</span>
+                        <Select value={exportMajorFilter} onValueChange={setExportMajorFilter} disabled={exportCourseFilter === "ALL" || exportMajors.length === 0}>
+                            <SelectTrigger className="h-8 text-xs border-stone-200 bg-white focus:ring-amber-500/20 focus:border-amber-500 disabled:opacity-50">
+                                <SelectValue placeholder={exportCourseFilter === "ALL" ? "Select course first" : exportMajors.length === 0 ? "N/A" : "All Majors"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL" className="text-xs">All Majors</SelectItem>
+                                {exportMajors.map((m: string) => (
+                                    <SelectItem key={m} value={m} className="text-xs">{m}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Status */}
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Status</span>
+                        <Select value={exportStatusFilter} onValueChange={setExportStatusFilter}>
+                            <SelectTrigger className="h-8 text-xs border-stone-200 bg-white focus:ring-amber-500/20 focus:border-amber-500">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {EXPORT_STATUS_OPTIONS.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                        <span className="flex items-center gap-2">
+                                            <span className={`w-2 h-2 rounded-full shrink-0 ${opt.color ?? "bg-transparent"}`} />
+                                            {opt.label}
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                {/* Global actions */}
+                <div className="flex gap-2 pt-1">
+                    <button
+                        className="text-xs text-amber-700 hover:underline font-medium"
+                        onClick={() => setSelectedColumns(new Set(EXPORT_COLUMN_GROUPS.flatMap(g => g.columns.map(c => c.key))))}
+                    >
+                        Select All
+                    </button>
+                    <span className="text-stone-300 text-xs">|</span>
+                    <button
+                        className="text-xs text-stone-400 hover:underline font-medium"
+                        onClick={() => setSelectedColumns(new Set())}
+                    >
+                        Clear All
+                    </button>
+                </div>
+
+                {/* Column groups */}
+                <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
+                    {EXPORT_COLUMN_GROUPS.map(group => {
+                        const allGroupSelected = group.columns.every(c => selectedColumns.has(c.key));
+                        return (
+                            <div key={group.label}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{group.label}</span>
+                                    <button
+                                        className="text-[10px] text-amber-600 hover:underline font-semibold"
+                                        onClick={() => toggleGroup(group.columns)}
+                                    >
+                                        {allGroupSelected ? "Deselect all" : "Select all"}
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+                                    {group.columns.map(col => (
+                                        <div key={col.key} className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={col.key}
+                                                checked={selectedColumns.has(col.key)}
+                                                onCheckedChange={() => toggleColumn(col.key)}
+                                                className="border-stone-300 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                                            />
+                                            <Label htmlFor={col.key} className="text-sm text-stone-700 cursor-pointer font-normal leading-none">
+                                                {col.label}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="flex gap-3 pt-3 border-t border-stone-100">
+                    <Button variant="outline" className="flex-1 border-stone-200 text-stone-600" onClick={() => setShowExportDialog(false)} disabled={isExporting}>
+                        Cancel
+                    </Button>
+                    <Button
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm disabled:opacity-50"
+                        onClick={handleExport}
+                        disabled={isExporting || selectedColumns.size === 0}
+                    >
+                        {isExporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+                        {isExporting ? "Exporting..." : "Download .xlsx"}
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        {/* PASSWORD CONFIRM DIALOG */}
+        <Dialog open={showPasswordConfirm} onOpenChange={(open) => { if (!isVerifyingPassword) setShowPasswordConfirm(open); }}>
+            <DialogContent className="max-w-sm p-6 bg-white rounded-xl shadow-2xl border-stone-100">
+                <DialogHeader className="mb-2">
+                    <DialogTitle className="text-lg font-bold text-stone-900 flex items-center gap-2">
+                        <ShieldCheck className="w-5 h-5 text-amber-600" /> Confirm Your Identity
+                    </DialogTitle>
+                    <DialogDescription className="text-stone-500 text-sm">
+                        Enter your admin password to authorize this export.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-2 py-1">
+                    <div className="relative">
+                        <Input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="Your password"
+                            value={confirmPassword}
+                            onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(""); }}
+                            onKeyDown={(e) => e.key === "Enter" && handleVerifyAndExport()}
+                            className={`pr-10 bg-stone-50 border-stone-200 focus:border-amber-500 focus:ring-amber-500/20 ${passwordError ? "border-red-400 focus:border-red-500 focus:ring-red-500/20" : ""}`}
+                            disabled={isVerifyingPassword}
+                            autoFocus
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(p => !p)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                            tabIndex={-1}
+                        >
+                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                    </div>
+                    {passwordError && <p className="text-xs text-red-500 font-medium">{passwordError}</p>}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                    <Button variant="outline" className="flex-1 border-stone-200 text-stone-600" onClick={() => setShowPasswordConfirm(false)} disabled={isVerifyingPassword}>
+                        Cancel
+                    </Button>
+                    <Button
+                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white shadow-sm disabled:opacity-50"
+                        onClick={handleVerifyAndExport}
+                        disabled={isVerifyingPassword || !confirmPassword}
+                    >
+                        {isVerifyingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                        {isVerifyingPassword ? "Verifying..." : "Confirm & Export"}
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>
