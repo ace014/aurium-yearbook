@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { useMasterlist } from "@/hooks/useMasterlist";
 import * as adminService from "@/app/admin/adminService";
 
@@ -306,25 +306,49 @@ export function MasterlistTab(props: MasterlistTabProps) {
         major: exportMajorFilter,
         status: exportStatusFilter,
       });
+
       const res = await fetch(`${baseUrl}/api/admin/masterlist/export?${query}`, { credentials: "include" });
       if (!res.ok) throw new Error("Export failed");
       const { data, total } = await res.json();
       const keyToLabel = Object.fromEntries(
         EXPORT_COLUMN_GROUPS.flatMap(g => g.columns.map(c => [c.key, c.label]))
       );
+
       const labeled = (data as Record<string, any>[]).map(row =>
         Object.fromEntries(Object.entries(row).map(([k, v]) => {
           const header = keyToLabel[k] ?? k;
-          const value = k === "status" && typeof v === "string" ? (STATUS_LABELS[v] ?? v) : v;
+
+          //this parses ISO date into formal date
+          const value =
+            k === "status" && typeof v === "string" ? (STATUS_LABELS[v] ?? v) :
+            k === "birth_date" && typeof v === "string" ? v.split("T")[0] : v;
+
           return [header, value];
         }))
       );
-      const ws = XLSX.utils.json_to_sheet(labeled);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Masterlist");
-      XLSX.writeFile(wb, `masterlist_${new Date().toISOString().split("T")[0]}.xlsx`);
+
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet("Masterlist");
+
+      if (labeled.length > 0) {
+        ws.columns = Object.keys(labeled[0]).map(key => ({ header: key, key }));
+      }
+
+      ws.addRows(labeled);
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+
+      anchor.href = url;
+      anchor.download = `masterlist_${new Date().toISOString().split("T")[0]}.xlsx`;
+      anchor.click();
+
+      URL.revokeObjectURL(url);
       toast.success(`Exported ${total} records successfully.`);
       setShowExportDialog(false);
+
     } catch {
       toast.error("Export failed. Please try again.");
     } finally {
