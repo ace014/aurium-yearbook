@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Edit3, Calendar, UserPlus, Hash, Users, CheckCircle2, XCircle, Clock, Filter, Loader2, Ban, Lock, Unlock } from "lucide-react";
+import { Plus, Edit3, Calendar, UserPlus, Hash, Users, CheckCircle2, XCircle, Clock, Filter, Loader2, Ban, Lock, Unlock, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +46,12 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
   const [isRosterOpen, setIsRosterOpen] = useState(false);
   const [activeRoster, setActiveRoster] = useState<{date: string, session: 'morning' | 'afternoon', students: any[]} | null>(null);
 
+  // Toggles between the upcoming schedule list and the read-only history view
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Toggles between the detailed card layout and a compact list/table layout
+  const [isCompactView, setIsCompactView] = useState(false);
+
   // Schedule management states
   const [isCloseDateOpen, setIsCloseDateOpen] = useState(false);
   const [dateToClose, setDateToClose] = useState<string | null>(null);
@@ -67,6 +73,34 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
       if (!dateString) return "";
       return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: '2-digit' });
   };
+
+  // True if the schedule date is strictly before today (time-of-day ignored)
+  const isPastDate = (dateString: string) => {
+      const scheduleDate = new Date(dateString);
+      scheduleDate.setHours(0, 0, 0, 0);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      return scheduleDate < today;
+  };
+
+  // Today's date as "YYYY-MM-DD", used to stop the date picker from offering past dates
+  const todayInputValue = (() => {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${now.getFullYear()}-${month}-${day}`;
+  })();
+
+  // Newest date first
+  const byDateDescending = (a: Schedule, b: Schedule) => new Date(b.date).getTime() - new Date(a.date).getTime();
+
+  // Past dates are hidden from the main list entirely, so they can never be re-opened from here.
+  // They remain viewable (read-only) through the History toggle.
+  const upcomingSchedules = schedules.filter((day) => !isPastDate(day.date)).sort(byDateDescending);
+  const pastSchedules = schedules.filter((day) => isPastDate(day.date)).sort(byDateDescending);
+  const displayedSchedules = showHistory ? pastSchedules : upcomingSchedules;
 
   // Opens the capacity modal and determines initial lock state
   const openCapacityDialog = (date: string, session: 'AM'|'PM', currentSlots: number, limit: number, id: number) => {
@@ -97,6 +131,9 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
   // Handles adding a new schedule date
   const handleAddNewDate = async () => {
     if (!newDateInput) return;
+
+    if (isPastDate(newDateInput)) { toast.error("Cannot schedule a date that has already passed."); return; }
+
     const exists = schedules.some(s => s.date === newDateInput);
     if (exists) { toast.error("Date already exists!"); return; }
 
@@ -228,9 +265,23 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm gap-4">
             <div>
                 <h2 className="text-2xl font-serif font-bold text-stone-800">Pictorial Availability</h2>
-                <p className="text-stone-500 text-sm mt-1">Manage dates, capacities, and monitor student attendance per session.</p>
+                <p className="text-stone-500 text-sm mt-1">
+                    Manage dates, capacities, and monitor student attendance per session.
+                </p>
             </div>
-            
+
+            <div className="flex items-center gap-3">
+                {/* Toggle between upcoming schedules and a read-only history view of past dates */}
+                <Button
+                    variant="outline"
+                    className="border-stone-200 text-stone-600 hover:bg-stone-50"
+                    onClick={() => setShowHistory(!showHistory)}
+                >
+                    {showHistory
+                        ? <><Calendar className="mr-2 h-4 w-4" /> View Upcoming</>
+                        : <><Clock className="mr-2 h-4 w-4" /> View History</>}
+                </Button>
+
             {/* Modal for adding a new schedule date — ADMINISTRATOR only */}
             <Dialog open={isAddDateOpen} onOpenChange={setIsAddDateOpen}>
                 {canCreateSchedule && (
@@ -249,7 +300,7 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
                             <Label>Select Date</Label>
-                            <Input type="date" value={newDateInput} onChange={(e) => setNewDateInput(e.target.value)} />
+                            <Input type="date" min={todayInputValue} value={newDateInput} onChange={(e) => setNewDateInput(e.target.value)} />
                         </div>
 
                         {/* Dropdown to select whole day or half day session */}
@@ -288,11 +339,160 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            </div>
         </div>
-        
+
+        {/* Layout toggle: switch between the detailed card layout and a compact list/table layout */}
+        <div className="flex items-center justify-end">
+            <div className="flex items-center rounded-lg border border-stone-200 bg-white p-1">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    title="Card view"
+                    className={`h-8 px-2.5 ${!isCompactView ? "bg-stone-100 text-stone-800" : "text-stone-400 hover:text-stone-600"}`}
+                    onClick={() => setIsCompactView(false)}
+                >
+                    <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    title="Compact list view"
+                    className={`h-8 px-2.5 ${isCompactView ? "bg-stone-100 text-stone-800" : "text-stone-400 hover:text-stone-600"}`}
+                    onClick={() => setIsCompactView(true)}
+                >
+                    <List className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+
+        {/* Empty state — shared between both layouts */}
+        {displayedSchedules.length === 0 && (
+            <div className="text-center text-stone-400 py-12 text-sm italic bg-white rounded-2xl border border-dashed border-stone-200">
+                {showHistory ? "No past schedule dates yet." : "No upcoming schedule dates."}
+            </div>
+        )}
+
+        {/* Compact list/table view — same actions as the card view, just denser */}
+        {isCompactView && displayedSchedules.length > 0 && (
+            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden overflow-x-auto">
+                <table className="w-full text-sm">
+                    <thead className="bg-stone-50 border-b border-stone-100 text-stone-500 uppercase text-xs tracking-wider">
+                        <tr>
+                            <th className="text-left font-semibold px-4 py-3">Date</th>
+                            <th className="text-left font-semibold px-4 py-3">Status</th>
+                            <th className="text-left font-semibold px-4 py-3">Morning (AM)</th>
+                            <th className="text-left font-semibold px-4 py-3">Afternoon (PM)</th>
+                            {/* No actionable state on past dates, so the column is dropped entirely */}
+                            {!showHistory && <th className="text-right font-semibold px-4 py-3">Actions</th>}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                        {displayedSchedules.map((day: Schedule, idx) => {
+                            const totalBooked = day.bookings.length;
+                            const totalSlots = day.max_morning_cap + day.max_afternoon_cap;
+                            const isFull = totalBooked >= totalSlots;
+
+                            const amRoster = day.bookings.filter(p => p.period === "AM");
+                            const pmRoster = day.bookings.filter(p => p.period === "PM");
+
+                            return (
+                                <tr key={idx} className={!day.is_open ? "opacity-60" : ""}>
+                                    <td className="px-4 py-3 font-medium text-stone-800 whitespace-nowrap">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className={`${day.is_open ? "text-amber-600" : "text-stone-400"} h-4 w-4`} />
+                                            {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {showHistory ? (
+                                            <Badge variant="outline" className="text-stone-500 border-stone-300 bg-stone-100 uppercase font-bold tracking-wider">
+                                                <Clock className="w-3 h-3 mr-1"/> ENDED
+                                            </Badge>
+                                        ) : !day.is_open ? (
+                                            <Badge variant="outline" className="text-stone-500 border-stone-300 bg-stone-100 uppercase font-bold tracking-wider">
+                                                <Lock className="w-3 h-3 mr-1"/> CLOSED
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="outline" className={isFull ? "text-red-600 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"}>
+                                                {isFull ? "FULLY BOOKED" : "AVAILABLE"}
+                                            </Badge>
+                                        )}
+                                    </td>
+
+                                    {/* Morning / Afternoon session cells share the same layout */}
+                                    {([
+                                        { label: 'AM' as const, slots: day.max_morning_cap, roster: amRoster, rosterKey: 'morning' as const },
+                                        { label: 'PM' as const, slots: day.max_afternoon_cap, roster: pmRoster, rosterKey: 'afternoon' as const },
+                                    ]).map(({ label, slots, roster, rosterKey }) => (
+                                        <td key={label} className="px-4 py-3">
+                                            {slots === 0 ? (
+                                                <span className="text-stone-300 italic text-xs">No schedule</span>
+                                            ) : (
+                                                <div className="flex items-center gap-1">
+                                                    <span className={`font-medium ${roster.length >= slots ? "text-red-600" : "text-stone-700"}`}>{roster.length}</span>
+                                                    <span className="text-stone-400">/ {slots}</span>
+
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 w-7 p-0 ml-1 text-stone-400 hover:text-stone-700"
+                                                        title="View Roster"
+                                                        onClick={() => openRosterDialog(day.date, rosterKey, roster)}
+                                                    >
+                                                        <Users className="h-3.5 w-3.5" />
+                                                    </Button>
+
+                                                    {!showHistory && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-7 w-7 p-0 text-stone-400 hover:text-amber-700"
+                                                            title="Edit Capacity"
+                                                            onClick={() => openCapacityDialog(day.date, label, slots, roster.length, day.id)}
+                                                        >
+                                                            <Edit3 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </td>
+                                    ))}
+
+                                    {/* No actionable state on past dates, so the column is dropped entirely */}
+                                    {!showHistory && (
+                                        <td className="px-4 py-3 text-right">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className={
+                                                    day.is_open
+                                                    ? "text-amber-700 border-amber-200 hover:bg-amber-50 h-8 px-3 font-medium bg-white"
+                                                    : "text-green-700 border-green-200 hover:bg-green-50 h-8 px-3 font-medium bg-white"
+                                                }
+                                                onClick={() => {
+                                                    setDateToClose(day.date);
+                                                    setSelectedBookingId(day.id);
+                                                    setIsClosingAction(day.is_open);
+                                                    setIsCloseDateOpen(true);
+                                                }}
+                                            >
+                                                {day.is_open ? <><Lock className="w-4 h-4 mr-1.5" /> Close</> : <><Unlock className="w-4 h-4 mr-1.5" /> Re-open</>}
+                                            </Button>
+                                        </td>
+                                    )}
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        )}
+
         {/* Schedule Cards */}
+        {!isCompactView && (
         <div className="grid gap-6">
-            {schedules.map((day: Schedule, idx) => {
+            {displayedSchedules.map((day: Schedule, idx) => {
 
                 // Calculate booked slots for rendering status
                 const totalBooked = day.bookings.length;
@@ -314,34 +514,43 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
                                     Pressing "Open" actually closes the schedule and vice versa for "Close".
                                     (I have no idea on how did you pass the "not allowed" symbol into this button) */}
                                 <div className="flex items-center gap-3">
-                                    {/* UI/UX Fix: Transformed to a dynamic toggle button with clear open/close states */}
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className={ 
-                                            day.is_open 
-                                            ? "text-amber-700 border-amber-200 hover:bg-amber-50 h-8 px-3 font-medium bg-white" 
-                                            : "text-green-700 border-green-200 hover:bg-green-50 h-8 px-3 font-medium bg-white"
-                                        }
-                                        onClick={() => {
-                                            setDateToClose(day.date);
-                                            setSelectedBookingId(day.id);
-                                            setIsClosingAction(day.is_open); // Determine the intended action for the modal
-                                            setIsCloseDateOpen(true);
-                                        }}
-                                    >
-                                        {day.is_open ? <><Lock className="w-4 h-4 mr-1.5" /> Close Schedule</> : <><Unlock className="w-4 h-4 mr-1.5" /> Re-open</>} 
-                                    </Button>
-
-                                    {/* Status Badge: Now clearly indicates if the day is manually CLOSED */}
-                                    {!day.is_open ? (
+                                    {/* History entries are read-only — no close/re-open action, just a status badge */}
+                                    {showHistory ? (
                                         <Badge variant="outline" className="text-stone-500 border-stone-300 bg-stone-100 uppercase font-bold tracking-wider">
-                                            <Lock className="w-3 h-3 mr-1"/> CLOSED
+                                            <Clock className="w-3 h-3 mr-1"/> PAST
                                         </Badge>
                                     ) : (
-                                        <Badge variant="outline" className={isFull ? "text-red-600 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"}>
-                                            {isFull ? "FULLY BOOKED" : "AVAILABLE"}
-                                        </Badge>
+                                        <>
+                                            {/* UI/UX Fix: Transformed to a dynamic toggle button with clear open/close states */}
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className={
+                                                    day.is_open
+                                                    ? "text-amber-700 border-amber-200 hover:bg-amber-50 h-8 px-3 font-medium bg-white"
+                                                    : "text-green-700 border-green-200 hover:bg-green-50 h-8 px-3 font-medium bg-white"
+                                                }
+                                                onClick={() => {
+                                                    setDateToClose(day.date);
+                                                    setSelectedBookingId(day.id);
+                                                    setIsClosingAction(day.is_open); // Determine the intended action for the modal
+                                                    setIsCloseDateOpen(true);
+                                                }}
+                                            >
+                                                {day.is_open ? <><Lock className="w-4 h-4 mr-1.5" /> Close Schedule</> : <><Unlock className="w-4 h-4 mr-1.5" /> Re-open</>}
+                                            </Button>
+
+                                            {/* Status Badge: Now clearly indicates if the day is manually CLOSED */}
+                                            {!day.is_open ? (
+                                                <Badge variant="outline" className="text-stone-500 border-stone-300 bg-stone-100 uppercase font-bold tracking-wider">
+                                                    <Lock className="w-3 h-3 mr-1"/> CLOSED
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className={isFull ? "text-red-600 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"}>
+                                                    {isFull ? "FULLY BOOKED" : "AVAILABLE"}
+                                                </Badge>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -377,16 +586,18 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
                                                     {is_morning ? '🌤️ Morning Session' : '☀️ Afternoon Session'}
                                                 </h4>
                                                 
-                                                {/* Edit Capacity Button - triggers the edit modal */}
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="sm" 
-                                                    className="h-8 w-8 p-0 text-stone-400 hover:text-amber-700" 
-                                                    title="Edit Capacity"
-                                                    onClick={() => openCapacityDialog(day.date, session.toUpperCase() as 'AM'|'PM', slots, bookedCount, day.id)}
-                                                >
-                                                    <Edit3 className="h-4 w-4" />
-                                                </Button>
+                                                {/* Edit Capacity Button - hidden in history view since past data is read-only */}
+                                                {!showHistory && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 w-8 p-0 text-stone-400 hover:text-amber-700"
+                                                        title="Edit Capacity"
+                                                        onClick={() => openCapacityDialog(day.date, session.toUpperCase() as 'AM'|'PM', slots, bookedCount, day.id)}
+                                                    >
+                                                        <Edit3 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                             </div>
 
                                             {/* Progress bar for visual capacity tracking */}
@@ -431,6 +642,7 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
                 )
             })}
         </div>
+        )}
 
         {/* --- MODAL: ROSTER / ATTENDANCE CHECKER --- */}
         <Dialog open={isRosterOpen} onOpenChange={setIsRosterOpen}>
