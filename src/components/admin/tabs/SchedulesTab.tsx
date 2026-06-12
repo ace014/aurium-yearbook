@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Edit3, Calendar, UserPlus, Hash, Users, CheckCircle2, XCircle, Clock, Filter, Loader2, Ban, Lock, Unlock, LayoutGrid, List } from "lucide-react";
+import { Plus, Edit3, Calendar, Hash, Users, CheckCircle2, Clock, Loader2, Lock, Unlock, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Schedule } from "@/types";
 import * as adminService from "@/app/admin/adminService"
 import toast from "react-hot-toast";
@@ -19,6 +19,20 @@ interface ScheduleProp {
     schedules: Schedule[];
     fetchSchedules: () => Promise<void>;
     userRole: string;
+}
+
+function isPastDate(dateString: string) {
+  const scheduleDate = new Date(dateString);
+  scheduleDate.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return scheduleDate < today;
+}
+
+function byDateDescending(a: Schedule, b: Schedule) {
+  return new Date(b.date).getTime() - new Date(a.date).getTime();
 }
 
 export function SchedulesTab({ schedules, fetchSchedules, userRole }: ScheduleProp) {
@@ -34,13 +48,11 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
   // Student override states
   const [manualStudentId, setManualStudentId] = useState("");
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
-  const [activeAddStudentSession, setActiveAddStudentSession] = useState<{date: string, session: 'am'|'pm'} | null>(null);
+  const [activeAddStudentSession] = useState<{date: string, session: 'am'|'pm'} | null>(null);
 
   // Capacity override states
   const [isEditCapacityOpen, setIsEditCapacityOpen] = useState(false);
   const [editingCapacity, setEditingCapacity] = useState<{date: string, session: 'AM'|'PM', value: number, limit: number, id: number } | null>(null);
-  const [isSessionClosed, setIsSessionClosed] = useState(false);
-  const [previousCapacity, setPreviousCapacity] = useState(50);
 
   // Roster view states
   const [isRosterOpen, setIsRosterOpen] = useState(false);
@@ -74,17 +86,6 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
       return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: '2-digit' });
   };
 
-  // True if the schedule date is strictly before today (time-of-day ignored)
-  const isPastDate = (dateString: string) => {
-      const scheduleDate = new Date(dateString);
-      scheduleDate.setHours(0, 0, 0, 0);
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      return scheduleDate < today;
-  };
-
   // Today's date as "YYYY-MM-DD", used to stop the date picker from offering past dates
   const todayInputValue = (() => {
       const now = new Date();
@@ -93,20 +94,27 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
       return `${now.getFullYear()}-${month}-${day}`;
   })();
 
-  // Newest date first
-  const byDateDescending = (a: Schedule, b: Schedule) => new Date(b.date).getTime() - new Date(a.date).getTime();
-
   // Past dates are hidden from the main list entirely, so they can never be re-opened from here.
   // They remain viewable (read-only) through the History toggle.
-  const upcomingSchedules = schedules.filter((day) => !isPastDate(day.date)).sort(byDateDescending);
-  const pastSchedules = schedules.filter((day) => isPastDate(day.date)).sort(byDateDescending);
+  const { upcomingSchedules, pastSchedules } = useMemo(() => {
+      const upcoming: Schedule[] = [];
+      const past: Schedule[] = [];
+
+      schedules.forEach((day) => {
+          (isPastDate(day.date) ? past : upcoming).push(day);
+      });
+
+      upcoming.sort(byDateDescending);
+      past.sort(byDateDescending);
+
+      return { upcomingSchedules: upcoming, pastSchedules: past };
+  }, [schedules]);
+
   const displayedSchedules = showHistory ? pastSchedules : upcomingSchedules;
 
   // Opens the capacity modal and determines initial lock state
   const openCapacityDialog = (date: string, session: 'AM'|'PM', currentSlots: number, limit: number, id: number) => {
     setEditingCapacity({ date, session, value: currentSlots, limit: limit, id: id });
-    setIsSessionClosed(currentSlots === 0);
-    setPreviousCapacity(currentSlots > 0 ? currentSlots : 50); // Remember the last valid capacity
     setIsEditCapacityOpen(true);
   };
 
@@ -159,13 +167,6 @@ export function SchedulesTab({ schedules, fetchSchedules, userRole }: SchedulePr
       console.error("Error adding schedule", err);
       toast.error("Error connecting to the server");
     }
-  };
-
-  // Opens the modal for adding a student manually
-  const handleOpenStudentOverride = (date: string, session: 'am'|'pm') => {
-    setActiveAddStudentSession({ date, session });
-    setManualStudentId("");
-    setIsAddStudentOpen(true);
   };
 
   // Processes the server request to update the schedule capacity

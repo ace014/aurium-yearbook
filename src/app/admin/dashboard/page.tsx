@@ -1,15 +1,13 @@
 "use client";
 const baseUrl = process.env.NEXT_PUBLIC_LOCAL_URL || "";
 
-import { useState, useEffect, useCallback } from "react";
-import Image from "next/image"; 
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Bell, Menu } from "lucide-react";
 import toast from "react-hot-toast";
 
 // Modular Imports
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminSidebar } from "@/components/layout/AdminSidebar";
+import { AdminDashboardHeader } from "@/components/layout/AdminDashboardHeader";
 import { VerificationTab } from "@/components/admin/tabs/VerificationTab"; // Original Admin Tab
 import { ProfileTab } from "@/components/admin/tabs/ProfileTab";
 import { MasterlistTab } from "@/components/admin/tabs/MasterlistTab";
@@ -39,8 +37,8 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUnverified, setTotalUnverified] = useState(0);
 
-  //Cache
-  const [studentCache, setStudentCache] = useState<{[page: number]: any[]}>({});
+  // The cache does not affect rendering, so keep it outside React state.
+  const studentCache = useRef<{[page: number]: any[]}>({});
   const masterlistProps = useMasterlist();
 
   //Schedules
@@ -55,31 +53,57 @@ export default function AdminDashboard() {
   // Derived role — defaults to MEMBER until the profile loads
   const userRole = staffUser?.role ? String(staffUser.role).toUpperCase() : 'MEMBER';
 
-  const getStaffDetails = useCallback(async () => {
-    try {
-      const res = await adminService.getStaffProfile();
-      if (!res.success) {
-        toast.error(res.reason);
-        return;
-      }
-      
-      setStaffUser(res.data);
+  useEffect(() => {
+    let isActive = true;
 
+    adminService.getStaffProfile()
+      .then((res) => {
+        if (!isActive) return;
+        if (!res.success) {
+          toast.error(res.reason);
+          return;
+        }
+
+        setStaffUser(res.data);
+      })
+      .catch((error) => {
+        console.error("Error loading admin details:", error);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const loadStudents = useCallback(async (page: number, forceRefresh = false) => {
+    const cachedStudents = studentCache.current[page];
+
+    if (cachedStudents && !forceRefresh) {
+      setPendingStudents(cachedStudents);
+      return;
+    }
+
+    try {
+        const students = await adminService.fetchStudents(page);
+        if (!students.success) {
+          setPendingStudents([]);
+          return;
+        }
+
+        setPendingStudents(students.data.student_list);
+        setTotalUnverified(students.data.total);
+        studentCache.current[page] = students.data.student_list;
     } catch (error) {
-      console.error("Error loading admin details:", error);
+        console.error("Error loading students:", error);
     }
   }, []);
 
-  useEffect(() => {
-    getStaffDetails();
-  }, [getStaffDetails]);
-
-  const onPageChange = (page: number) => {
+  const onPageChange = useCallback((page: number) => {
     setCurrentPage(page);
     loadStudents(page);
-  }
+  }, [loadStudents]);
 
-  const searchStudentById = async (student_number: number) => {
+  const searchStudentById = useCallback(async (student_number: number) => {
     try {
       const students = await adminService.searchStudentById(student_number);
       if (!students.success) {
@@ -93,80 +117,43 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error loading student:", error);
     }
-  }
-
-  const loadStudents = useCallback(async (page: number) => {
-
-    if (studentCache[page]) {
-      setPendingStudents(studentCache[page]);
-      return;
-    }
-
-    try {
-        const students = await adminService.fetchStudents(page);
-        if (!students.success) {
-          setPendingStudents([]);
-          return;
-        }
-
-        setPendingStudents(students.data.student_list);
-        setTotalUnverified(students.data.total);
-
-        setStudentCache(prev => ({
-          ...prev,
-          [page]: students.data.student_list
-        }));
-
-    } catch (error) {
-        console.error("Error loading students:", error);
-    }
-  }, [studentCache]);
+  }, []);
 
   useEffect(() => {
     loadStudents(currentPage);
   }, [loadStudents, currentPage]);
 
-  const updateOnVerify = async (studentId: number) => {
+  const updateOnVerify = useCallback(async (studentId: number) => {
     const res = await adminService.handleVerify(studentId);
 
     if (res) {
-      setStudentCache(prev => {
-        const newCache = { ...prev };
-        delete newCache[currentPage];
-        return newCache;
-      });
-
-      loadStudents(currentPage);
+      delete studentCache.current[currentPage];
+      loadStudents(currentPage, true);
 
       toast.success("Student succesfully verified!");
       return;
     }
     toast.error("Something went wrong!");
-  }
+  }, [currentPage, loadStudents]);
 
-  const updateOnCancel = async (studentId: number) => {
+  const updateOnCancel = useCallback(async (studentId: number) => {
     const res = await adminService.handleCancel(studentId);
     if (res) {
-      setStudentCache(prev => {
-        const newCache = { ...prev };
-        delete newCache[currentPage];
-        return newCache;
-      });
-
-      loadStudents(currentPage);
+      delete studentCache.current[currentPage];
+      loadStudents(currentPage, true);
 
       toast.success("Student succesfully rejected!")
       return;
     }
     toast.error("Something went wrong!");
-  }
+  }, [currentPage, loadStudents]);
 
-  const onLogout = async () => {
+  const onLogout = useCallback(async () => {
     const res = await fetch(`${baseUrl}/api/auth/logout`, {
       credentials: 'include'
     });
     if (res.ok) router.push('/');
-  }
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-stone-50 flex font-sans relative">
@@ -197,45 +184,7 @@ export default function AdminDashboard() {
       {/* FIX APPLIED HERE: md:p-8 was changed to md:px-8 md:pt-4 */}
       <main className="flex-1 md:ml-72 p-4 md:px-8 md:pt-4 min-h-screen bg-[#FDFBF7]">
         
-        <header className="flex items-center justify-between mb-8 py-4 border-b border-stone-200/50">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" className="md:hidden text-stone-500" onClick={() => setIsMobileMenuOpen(true)}>
-                    <Menu className="h-6 w-6"/>
-                </Button>
-
-                <div className="flex items-center gap-3 md:hidden">
-                    <div className="relative w-8 h-8 overflow-hidden hover:scale-105 transition-transform duration-300">
-                        <Image src="/images/umtc-logo.png" alt="UMTC" fill className="object-contain" />
-                    </div>
-                    <div className="h-8 w-[1px] bg-stone-300"></div>
-                    <div className="relative w-8 h-8 overflow-hidden hover:scale-105 transition-transform duration-300">
-                        <Image src="/images/aurium-logo.png" alt="Aurium" fill className="object-contain" />
-                    </div>
-                </div>
-
-                {/* Dynamic Title */}
-                <h1 className="text-2xl font-serif font-bold text-stone-800 hidden md:block">
-                    {activeTab === 'verification' && "Verification Queue"}
-                    {activeTab === 'graduate-review' && "Graduate Verification"}
-                    {activeTab === 'notes' && "Staff Notes"}
-                    {activeTab === 'slots' && "Schedule Manager"}
-                    {activeTab === 'masterlist' && "Verified Masterlist"}
-                    {activeTab === 'scanner' && "Attendance Scanner"}
-                    {activeTab === 'profile' && "My Profile"}
-                    {activeTab === 'roles' && "Manage Staffs"}
-                </h1>
-            </div>
-
-            <div className="flex items-center gap-3">
-               <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white border border-stone-200 rounded-full shadow-sm text-xs font-medium text-stone-500">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> System Online
-               </div>
-               <Button variant="ghost" size="icon" className="relative rounded-full text-stone-400 hover:text-amber-800">
-                   <Bell className="h-5 w-5"/>
-                   <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
-               </Button>
-            </div>
-        </header>
+        <AdminDashboardHeader activeTab={activeTab} onOpenMenu={() => setIsMobileMenuOpen(true)} />
 
         {/* CONTENT AREA */}
         <div className={`space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ${activeTab !== 'profile' ? 'max-w-7xl mx-auto' : ''}`}>
@@ -270,7 +219,7 @@ export default function AdminDashboard() {
             {activeTab === "profile" && <ProfileTab user={staffUser} setUser={setStaffUser} onLogout={onLogout} />}
 
             {/* 5. ROLE MANAGEMENT — ADMINISTRATOR only */}
-            {activeTab === 'roles' && <RolesTab staffUser={staffUser} />}
+            {activeTab === 'roles' && <RolesTab />}
         </div>
       </main>
     </div>
