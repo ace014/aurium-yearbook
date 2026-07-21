@@ -58,14 +58,13 @@ async function readMutationResult(res: Response) {
     }
 }
 
-export async function addBook(booking_id: number, period: string) {
+export async function addBook(booking_slot_id: number) {
     try {
         const res = await fetch(`${baseUrl}/api/student/book/create`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                booking_id: booking_id,
-                period: period
+                booking_slot_id
             }),
             credentials: 'include'
         });
@@ -80,14 +79,13 @@ export async function addBook(booking_id: number, period: string) {
     }
 };
 
-export async function updateBook(booking_id: number, booking_day_id: number, period: string) {
+export async function updateBook(booking_id: number, booking_slot_id: number) {
     try {
         const res = await fetch(`${baseUrl}/api/student/book/update/${booking_id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                booking_day_id: booking_day_id,
-                period: period
+                booking_slot_id
             }),
             credentials: 'include'
         });
